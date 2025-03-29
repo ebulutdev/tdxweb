@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TDX Borsa Danışman Botu</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <header>
+        <nav class="navbar">
+            <div class="logo">
+                <i class="fas fa-chart-line"></i>
+                TDX Borsa Danışman
+            </div>
+            <ul class="nav-links" id="navLinks">
+                <li><a href="#hero"><i class="fas fa-home"></i> Ana Sayfa</a></li>
+                <li><a href="#features"><i class="fas fa-info-circle"></i> Özellikler</a></li>
+                <li><a href="#how-it-works"><i class="fas fa-cogs"></i> Nasıl Çalışır?</a></li>
+                <li><a href="#stats"><i class="fas fa-chart-bar"></i> İstatistikler</a></li>
+                <li><a href="#contact"><i class="fas fa-envelope"></i> İletişim</a></li>
+            </ul>
+            <div class="hamburger" onclick="toggleMenu()">
+                <i class="fas fa-bars"></i>
+            </div>
+        </nav>
+    </header>
+
+    <section class="hero" id="hero">
+        <div class="hero-content">
+            <h1>Yapay Zeka Destekli<br>Borsa Danışmanınız</h1>
+            <p>Gerçek zamanlı borsa analizleri, yapay zeka destekli tahminler ve profesyonel yatırım danışmanlığı ile yatırımlarınızı optimize edin.</p>
+            <div class="hero-buttons">
+                <a href="register.html" class="btn-yellow">
+                    <i class="fas fa-rocket"></i> Hemen Başla
+                </a>
+                <a href="pricing.html" class="btn-yellow" style="background: transparent; border: 2px solid var(--primary-color);">
+                    <i class="fas fa-crown"></i> Abonelik Seç
+                </a>
+            </div>
+        </div>
+        <video class="hero-bg-video" autoplay muted loop playsinline>
+            <source src="robot.mp4" type="video/mp4">
+            Tarayıcınız video öğesini desteklemiyor.
+        </video>
+    </section>
+
+    <!-- İstatistikler Bölümü -->
+    <section class="stats-section" id="stats">
+        <h2>Rakamlarla TDX</h2>
+        <div class="stats-grid">
+            <div class="stat-item">
+                <div class="stat-number">10K+</div>
+                <div class="stat-label">Aktif Kullanıcı</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number">95%</div>
+                <div class="stat-label">Doğruluk Oranı</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number">24/7</div>
+                <div class="stat-label">Kesintisiz Hizmet</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number">50+</div>
+                <div class="stat-label">Desteklenen Borsa</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Chatbot -->
+    <div id="chat-toggle-btn" onclick="toggleChatbot()">
+        <i class="fas fa-robot"></i>
+    </div>
+
+    <div id="chatbot-panel" class="ai-sidebar draggable">
+        <div class="ai-sidebar-header" onmousedown="dragStart(event)">
+            <i class="fas fa-robot"></i> TDX Borsa Danışman
+            <button class="close-btn" onclick="toggleChatbot()">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="chat-display" id="chat-display">
+            <div class="bot-message">
+                <strong>Bot:</strong> Merhaba! Ben TDX Borsa Danışman Botu. Size nasıl yardımcı olabilirim? Bir hisse senedi kodu girerek analiz alabilirsiniz.
+            </div>
+        </div>
+        <div class="chat-input">
+            <input type="text" id="user-input" placeholder="Hisse kodunu girin (örn: THYAO)">
+            <button onclick="sendMessage()">
+                <i class="fas fa-paper-plane"></i>
+            </button>
+        </div>
+    </div>
+    
+    <section class="features" id="features">
+        <h2>Özelliklerimiz</h2>
+        <p>Yapay zeka destekli analizler ve gerçek zamanlı verilerle yatırımlarınızı optimize edin.</p>
+        <div class="cards">
+            <div class="card">
+                <i class="fas fa-chart-bar"></i>
+                <h3>Gerçek Zamanlı Analiz</h3>
+                <p>Anlık piyasa verileri ve teknik analizlerle güncel fırsatları yakalayın.</p>
+            </div>
+            <div class="card">
+                <i class="fas fa-robot"></i>
+                <h3>Yapay Zeka Tahminleri</h3>
+                <p>Gelişmiş yapay zeka algoritmaları ile gelecek trendleri öngörün.</p>
+            </div>
+            <div class="card">
+                <i class="fas fa-shield-alt"></i>
+                <h3>Risk Yönetimi</h3>
+                <p>Akıllı risk analizi ve portföy optimizasyonu ile yatırımlarınızı koruyun.</p>
+            </div>
+            <div class="card">
+                <i class="fas fa-bell"></i>
+                <h3>Anlık Bildirimler</h3>
+                <p>Önemli fırsatları ve riskleri anında bildirimlerle takip edin.</p>
+            </div>
+            <div class="card">
+                <i class="fas fa-chart-pie"></i>
+                <h3>Portföy Analizi</h3>
+                <p>Detaylı portföy analizi ve optimizasyon önerileri alın.</p>
+            </div>
+            <div class="card">
+                <i class="fas fa-graduation-cap"></i>
+                <h3>Eğitim İçerikleri</h3>
+                <p>Yatırım eğitimleri ve piyasa analiz rehberleri ile bilginizi artırın.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Nasıl Çalışır Bölümü -->
+    <section class="how-it-works" id="how-it-works">
+        <h2>Nasıl Çalışır?</h2>
+        <div class="steps">
+            <div class="step">
+                <div class="step-number">1</div>
+                <i class="fas fa-user-plus"></i>
+                <h3>Üye Olun</h3>
+                <p>Sadece birkaç tıklama ile ücretsiz hesabınızı oluşturun ve yapay zeka destekli borsa analizlerine hemen başlayın.</p>
+            </div>
+            <div class="step">
+                <div class="step-number">2</div>
+                <i class="fas fa-robot"></i>
+                <h3>Bot ile Tanışın</h3>
+                <p>Gelişmiş yapay zeka asistanımız ile hisse senetleri hakkında detaylı analizler ve tahminler alın.</p>
+            </div>
+            <div class="step">
+                <div class="step-number">3</div>
+                <i class="fas fa-chart-line"></i>
+                <h3>Analizleri İnceleyin</h3>
+                <p>Teknik ve temel analizler, trend tahminleri ve risk değerlendirmeleri ile bilinçli yatırım kararları verin.</p>
+            </div>
+            <div class="step">
+                <div class="step-number">4</div>
+                <i class="fas fa-bell"></i>
+                <h3>Fırsatları Yakalayın</h3>
+                <p>Anlık bildirimler ve özel uyarılar ile piyasadaki önemli fırsatları ve riskleri zamanında değerlendirin.</p>
+            </div>
+        </div>
+    </section>
+
+    <section class="contact" id="contact">
+        <div class="contact-form">
+            <h2>İletişime Geçin</h2>
+            <form>
+                <div class="form-group">
+                    <input type="text" placeholder="Adınız Soyadınız" required>
+                </div>
+                <div class="form-group">
+                    <input type="email" placeholder="E-posta Adresiniz" required>
+                </div>
+                <div class="form-group">
+                    <input type="tel" placeholder="Telefon Numaranız (İsteğe Bağlı)">
+                </div>
+                <div class="form-group">
+                    <select required>
+                        <option value="">Konu Seçiniz</option>
+                        <option value="genel">Genel Bilgi</option>
+                        <option value="teknik">Teknik Destek</option>
+                        <option value="uyelik">Üyelik İşlemleri</option>
+                        <option value="oneri">Öneri/Şikayet</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <textarea placeholder="Mesajınız..." required></textarea>
+                </div>
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" required>
+                        <span>KVKK kapsamında verilerimin işlenmesine izin veriyorum</span>
+                    </label>
+                </div>
+                <button type="submit">
+                    <i class="fas fa-paper-plane"></i>
+                    Mesajı Gönder
+                </button>
+            </form>
+        </div>
+        <div class="contact-info">
+            <h2>İletişim Bilgileri</h2>
+            <div class="info-item">
+                <i class="fas fa-envelope"></i>
+                <div>
+                    <h3>E-posta</h3>
+                    <p>emircanbulut04@gmail.com</p>
+                </div>
+            </div>
+            <div class="info-item">
+                <i class="fas fa-phone-alt"></i>
+                <div>
+                    <h3>Telefon</h3>
+                    <p>+90 (555) 123 45 67</p>
+                </div>
+            </div>
+            <div class="info-item">
+                <i class="fas fa-clock"></i>
+                <div>
+                    <h3>Çalışma Saatleri</h3>
+                    <ul>
+                        <li>Pazartesi - Cuma: 09:00 - 22:00</li>
+                        <li>Cumartesi: 09:00 - 18:00</li>
+                        <li>Pazar: 09:00 - 12:00</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="info-item">
+                <i class="fas fa-map-marker-alt"></i>
+                <div>
+                    <h3>Sosyal Medya</h3>
+                    <div class="social-links">
+                        <a href="https://www.linkedin.com/in/emirbulutsoftwar/" target="_blank" rel="noopener noreferrer"><i class="fab fa-linkedin"></i></a>
+                        <a href="#" target="_blank" rel="noopener noreferrer"><i class="fab fa-twitter"></i></a>
+                        <a href="#" target="_blank" rel="noopener noreferrer"><i class="fab fa-instagram"></i></a>
+                        <a href="#" target="_blank" rel="noopener noreferrer"><i class="fab fa-youtube"></i></a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <footer>
+        <div class="footer-content">
+            <div class="footer-left">
+                <h3><i class="fas fa-chart-line"></i> TDX Borsa Danışman</h3>
+                <p>Yapay zeka destekli borsa danışmanlığı ile yatırımlarınızı optimize edin.</p>
+            </div>
+            <div class="footer-middle">
+                <h4>Son Blog Yazısı</h4>
+                <div class="blog-post">
+                    <a href="#">Yatırımlarınızı TDX ile Maksimize Edin</a>
+                    <span>20 Mart 2025</span>
+                </div>
+            </div>
+            <div class="footer-right">
+                <h4>Hızlı Erişim</h4>
+                <ul>
+                    <li><a href="#"><i class="fas fa-calendar"></i> Randevu Al</a></li>
+                    <li><a href="#"><i class="fas fa-question-circle"></i> S.S.S.</a></li>
+                    <li><a href="#"><i class="fas fa-book"></i> Kaynaklar</a></li>
+                    <li><a href="#"><i class="fas fa-shield-alt"></i> Gizlilik Politikası</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2024 TDX Borsa Danışman. Tüm hakları saklıdır.</p>
+        </div>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>
