@@ -1,0 +1,7 @@
+symbols = [
+    "AKBNK", "THYAO", "ASELS", "GARAN", "ISCTR", "KRDMD", "SISE", "BIMAS", "TUPRS", "EKGYO",
+    "FROTO", "PETKM", "HALKB", "KOZAL", "KCHOL", "VAKBN", "TOASO", "SAHOL", "PGSUS", "DOHOL",
+    "ODAS", "KOZAA", "ENKAI", "TRGYO", "TTKOM", "YKBNK", "HEKTS", "SASA", "EREGL", "ALARK",
+    "SOKM", "MGROS", "CEMTS", "ISGYO", "ULKER", "TKFEN", "VESTL", "TAVHL", "CANTE", "BRSAN",
+    "ZOREN", "TMSN", "BRISA", "ARCLK", "OTKAR", "GWIND", "MPARK", "LOGO"
+]

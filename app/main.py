@@ -16,8 +16,13 @@ app.add_middleware(
 )
 
 @app.get("/predict/{symbol}")
-@app.post("/predict/{symbol}")
-async def predict(symbol: str):
+async def get_predict(symbol: str):
     data = fetch_stock_data(symbol)
     result = run_prediction_analysis(symbol)
-    return result 
+    return result
+
+@app.post("/predict/{symbol}")
+async def post_predict(symbol: str):
+    data = fetch_stock_data(symbol)
+    result = run_prediction_analysis(symbol)
+    return result
