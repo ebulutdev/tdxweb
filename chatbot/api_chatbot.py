@@ -14,6 +14,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 @app.get("/chatbot")
-def get_response(symbol: str = Query(...), detay: bool = Query(False)):
-    print(f"API isteği: symbol={symbol}, detay={detay}")  # Debug için log ekle
-    return {"response": chatbot_response(symbol, detay)}
+def get_response(symbol: str = Query(...), detay: str = Query("false")):
+    # Convert string "true"/"false" to boolean
+    detay_bool = detay.lower() == "true"
+    print(f"API isteği: symbol={symbol}, detay={detay_bool}")  # Debug için log ekle
+    return {"response": chatbot_response(symbol, detay_bool)}
