@@ -6,15 +6,46 @@ async function sendMessage() {
     appendMessage("Siz", message);
     input.value = "";
     appendMessage("TDX Bot", "Analiz yapılıyor...");
+    
+       // Eğer kullanıcı "detaylı analiz yap THYAO.IS" yazarsa:
+       if (message.toLowerCase().startsWith("detaylı analiz yap")) {
+        const parts = message.trim().split(" ");
+        const symbol = parts[parts.length - 1];
+
+        try {
+            const response = await fetch(`http://127.0.0.1:8000/chatbot?symbol=${symbol}&detay=true`, {
+                method: "GET",
+                headers: { "Content-Type": "application/json" }
+            });
+
+            if (!response.ok) {
+                const errorDetails = await response.text();
+                console.error("API Hatası:", errorDetails);
+                updateLastBotMessage("API isteğinde hata oluştu. Lütfen sunucuyu kontrol edin.");
+                return;
+            }
+
+            const data = await response.json();
+            updateLastBotMessage(data.response);
+        } catch (error) {
+            console.error("İstek gönderilirken hata:", error);
+            updateLastBotMessage("Sunucuya ulaşılamadı.");
+        }
+        return;
+    }
+
 
     try {
         // FastAPI tabanlı hisse analiz botuna istek gönder
-        const response = await fetch(`http://127.0.0.1:8000/predict/${message}`, {
+        const response = await fetch(`http://127.0.0.1:8000/chatbot?symbol=${message}&detay=true`, {
+
             method: "GET",
             headers: {
                 "Content-Type": "application/json"
             }
         });
+        
+        
 
         if (!response.ok) {
             const errorDetails = await response.text();
@@ -24,8 +55,8 @@ async function sendMessage() {
         }
 
         const data = await response.json();
-        const aiMessage = formatBotResponse(data);
-        updateLastBotMessage(aiMessage);
+        updateLastBotMessage(data.response.replace(/\n/g, "<br>"));
+
     } catch (error) {
         console.error("İstek gönderilirken hata oluştu:", error);
         updateLastBotMessage("Bir hata oluştu. Lütfen sunucuya bağlanıp bağlanmadığınızı kontrol edin.");
