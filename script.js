@@ -37,7 +37,7 @@ async function sendMessage() {
 
     try {
         // FastAPI tabanlı hisse analiz botuna istek gönder
-        const response = await fetch(`http://127.0.0.1:8000/chatbot?symbol=${message}&detay=true`, {
+        const response = await fetch(`https://tdx-api.onrender.com/chatbot?symbol=${message}`, {
 
             method: "GET",
             headers: {
