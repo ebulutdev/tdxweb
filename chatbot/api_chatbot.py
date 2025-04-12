@@ -13,7 +13,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
 @app.get("/chatbot")
-def get_response(symbol: str = Query(...)):
-    return {"response": chatbot_response(symbol)}
+def get_response(symbol: str = Query(...), detay: bool = False):
+    return {"response": chatbot_response(symbol, detay=detay)}

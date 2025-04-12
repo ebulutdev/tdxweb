@@ -6,67 +6,45 @@ async function sendMessage() {
     appendMessage("Siz", message);
     input.value = "";
     appendMessage("TDX Bot", "Analiz yapılıyor...");
-    
-       // Eğer kullanıcı "detaylı analiz yap THYAO.IS" yazarsa:
-       if (message.toLowerCase().startsWith("detaylı analiz yap")) {
-        const parts = message.trim().split(" ");
-        const symbol = parts[parts.length - 1];
 
-        try {
-            const response = await fetch(`https://tdx-api.onrender.com/chatbot?symbol=${symbol}&detay=true`, {
+    // API URL'sini oluştur
+    let apiUrl = "https://tdx-api.onrender.com/chatbot";
+    let symbol = message;
+    let detayli = false;
 
-                method: "GET",
-                headers: { "Content-Type": "application/json" }
-            });
+    // "detaylı analiz yap THYAO.IS" yazıldıysa, sembolü ayıkla ve detay parametresi ekle
+    if (message.toLowerCase().startsWith("detaylı analiz yap")) {
+        const parts = message.split(" ");
+        symbol = parts[parts.length - 1];
+        detayli = true;
+    }
 
-            if (!response.ok) {
-                const errorDetails = await response.text();
-                console.error("API Hatası:", errorDetails);
-                updateLastBotMessage("API isteğinde hata oluştu. Lütfen sunucuyu kontrol edin.");
-                return;
-            }
-
-            const data = await response.json();
-            updateLastBotMessage(data.response);
-        } catch (error) {
-            console.error("İstek gönderilirken hata:", error);
-            updateLastBotMessage("Sunucuya ulaşılamadı.");
-        }
-        return;
+    // URL'yi parametrelere göre oluştur
+    apiUrl += `?symbol=${symbol}`;
+    if (detayli) {
+        apiUrl += `&detay=true`;
     }
 
     try {
-        let apiUrl = `https://tdx-api.onrender.com/chatbot?symbol=${message}`;
-    
-        // Kullanıcı detaylı analiz istedi mi?
-        if (message.toLowerCase().startsWith("detaylı analiz yap")) {
-            const parts = message.split(" ");
-            const symbol = parts[parts.length - 1];
-            apiUrl = `https://tdx-api.onrender.com/chatbot?symbol=${symbol}&detay=true`;
-        }
-    
         const response = await fetch(apiUrl, {
             method: "GET",
             headers: {
                 "Content-Type": "application/json"
             }
         });
-    
-        
 
         if (!response.ok) {
             const errorDetails = await response.text();
             console.error("API Hatası:", errorDetails);
-            updateLastBotMessage("API isteğinde hata oluştu. Lütfen sunucunuzu kontrol edin.");
+            updateLastBotMessage("API isteğinde hata oluştu. Lütfen sunucuyu kontrol edin.");
             return;
         }
 
         const data = await response.json();
         updateLastBotMessage(data.response.replace(/\n/g, "<br>"));
-
     } catch (error) {
         console.error("İstek gönderilirken hata oluştu:", error);
-        updateLastBotMessage("Bir hata oluştu. Lütfen sunucuya bağlanıp bağlanmadığınızı kontrol edin.");
+        updateLastBotMessage("Bir hata oluştu. Sunucuya ulaşılamıyor olabilir.");
     }
 }
 
@@ -77,27 +55,6 @@ function appendMessage(sender, message) {
     messageDiv.innerHTML = `<strong>${sender}:</strong> ${message}`;
     chatDisplay.appendChild(messageDiv);
     chatDisplay.scrollTop = chatDisplay.scrollHeight;
-}
-
-function formatBotResponse(data) {
-    return `
-    📊 <strong>${data.symbol}</strong> Analizi:
-    
-    💰 Mevcut Fiyat: ${data.mevcut_fiyat}
-    📈 MA5: ${data.ma_5}
-    📉 MA10: ${data.ma_10}
-    🎯 RSI: ${data.rsi}
-    
-    ⬇️ Destek: ${data.destek}
-    ⬆️ Direnç: ${data.direnc}
-    
-    ⚠️ Risk Oranı: ${data.risk_orani}
-    💫 Kar Oranı: ${data.kar_orani}
-    
-    🔮 Tahmin: ${data.tahmin}
-    
-    💡 Yorum: ${data.yorum}
-    `;
 }
 
 function updateLastBotMessage(newText) {
@@ -147,7 +104,6 @@ function toggleMenu() {
     navLinks.classList.toggle("active");
 }
 
-// Smooth Scroll fonksiyonu
 function smoothScroll(target, duration) {
     const targetElement = document.querySelector(target);
     const targetPosition = targetElement.getBoundingClientRect().top + window.pageYOffset;
@@ -173,7 +129,6 @@ function smoothScroll(target, duration) {
     requestAnimationFrame(animation);
 }
 
-// Navigasyon bağlantıları için smooth scroll
 document.addEventListener('DOMContentLoaded', () => {
     const navLinks = document.querySelectorAll('.nav-links a[href^="#"]');
     navLinks.forEach(link => {
@@ -183,13 +138,9 @@ document.addEventListener('DOMContentLoaded', () => {
             if (target !== '#') {
                 smoothScroll(target, 1000);
             }
-            // Mobil menüyü kapat
-            const navLinks = document.getElementById('navLinks');
-            navLinks.classList.remove('active');
+            document.getElementById('navLinks').classList.remove('active');
         });
     });
 
-    // Sayfa yüklendiğinde chatbot'u gizle
-    const panel = document.getElementById("chatbot-panel");
-    panel.style.display = "none";
+    document.getElementById("chatbot-panel").style.display = "none";
 });

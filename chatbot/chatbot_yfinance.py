@@ -40,7 +40,7 @@ def chatbot_response(symbol, detay=False):
         return f"❌ Üzgünüm, {symbol.upper()} için analiz verisine ulaşamadım. Sembol hatalı olabilir ya da son 30 gün içinde yeterli işlem yapılmamış."
 
     response = f"""
-🧠 Merhaba! İşte {symbol.upper()} hissesiyle ilgili detaylı analizim:
+🧠 Merhaba! İşte {symbol.upper()} hissesiyle ilgili analizim:
 
 📊 Teknik Göstergeler:
 🔸 Kapanış Fiyatı: {data['price']} TL
@@ -50,16 +50,15 @@ def chatbot_response(symbol, detay=False):
 🕒 Analiz Zamanı: {datetime.now().strftime('%d-%m-%Y %H:%M:%S')}
 """
 
-    # Yoruma dayalı çıkarım
     if data['price'] > data['sma20']:
         response += "\n📈 Hisse, 20 günlük ortalamanın ÜZERİNDE işlem görüyor. Bu, teknik olarak yukarı yönlü bir ivmenin işareti olabilir. Trend pozitif görünüyor."
     else:
         response += "\n📉 Hisse, 20 günlük ortalamanın ALTINDA. Bu, yatırımcıların daha temkinli davrandığını veya düşüş trendinin devam ettiğini gösterebilir."
 
     if data['rsi'] > 70:
-        response += "\n⚠️ RSI değeri 70'in üzerinde. Bu, hissenin aşırı alım bölgesine girmiş olabileceği anlamına gelir. Dikkatli olmakta fayda var."
+        response += "\n⚠️ RSI değeri 70'in üzerinde. Bu, hissenin aşırı alım bölgesine girmiş olabileceğini gösterir. Dikkatli olunmalı."
     elif data['rsi'] < 30:
-        response += "\n📢 RSI değeri 30'un altında. Bu durum, hissenin aşırı satım bölgesinde olduğunu ve olası bir tepki alımı gelebileceğini gösterebilir."
+        response += "\n📢 RSI değeri 30'un altında. Bu durum, hissenin aşırı satım bölgesinde olduğunu ve tepki alımı gelebileceğini gösterir."
     else:
         response += "\n✅ RSI değeri normal aralıkta. Ne aşırı alım ne de aşırı satım sinyali var. Nötr bölgede dengeli bir görünüm var."
 
@@ -73,12 +72,29 @@ def chatbot_response(symbol, detay=False):
         current = data['price']
 
         konum = ""
+        strateji = ""
+
         if current < support * 1.03:
-            konum = "📉 Fiyat destek seviyesine yakın, bu bölgede alıcıların devreye girmesi beklenebilir."
+            konum = f"📉 Fiyat destek seviyesine oldukça yakın ({support} TL civarı)."
+            strateji = (
+                "💡 Bu seviyeler, genellikle tepki alımlarının geldiği bölgelerdir.\n"
+                "🔎 Destek kırılırsa düşüş hızlanabilir, bu nedenle zarar durdur seviyeleri belirlenmeli.\n"
+                "📥 Alım düşünülüyorsa, hacim artışı ve fiyat tepkisi mutlaka takip edilmelidir."
+            )
         elif current > resistance * 0.97:
-            konum = "📈 Fiyat direnç bölgesine yakın. Bu noktada kâr satışları gelebilir."
+            konum = f"📈 Fiyat direnç seviyesine yaklaşmış durumda ({resistance} TL civarı)."
+            strateji = (
+                "💡 Bu bölge genellikle kar satışlarının geldiği yerdir.\n"
+                "📤 Elinde hisse olanlar için kademeli kar realizasyonu düşünülebilir.\n"
+                "🚀 Ancak direnç yukarı kırılırsa, yeni bir yükseliş dalgası başlayabilir."
+            )
         else:
-            konum = "🔄 Fiyat destek ve direnç arasında dengeli hareket ediyor. Yön netleşmemiş olabilir."
+            konum = "🔄 Fiyat destek ve direnç arasında dengeli seyrediyor."
+            strateji = (
+                "📊 Bu durum yön belirsizliğine işaret eder.\n"
+                "🔄 Kırılım yönü netleşene kadar dikkatli olunmalı.\n"
+                "🛑 Destek altı kapanış veya direnç üstü kırılım takip edilmelidir."
+            )
 
         response += f"""
 
@@ -86,15 +102,18 @@ def chatbot_response(symbol, detay=False):
 {trend}
 
 📊 <strong>Destek / Direnç Seviyeleri</strong>:
-🟦 Destek: {support} TL
-🟥 Direnç: {resistance} TL
+🟦 Destek: {support} TL  
+🟥 Direnç: {resistance} TL  
 
-📌 <strong>Fiyatın Teknik Konumu</strong>:
+📌 <strong>Fiyatın Teknik Konumu:</strong>
 {konum}
 
-🎯 Bu seviyeler yatırımcı psikolojisini yansıtır ve çoğu zaman fiyat bu bölgelerde yön değiştirir. Alım/satım stratejisi için bu bölgeler kritik önemdedir.
+🧭 <strong>Yatırımcı İçin Öneri:</strong>
+{strateji}
+
+📌 Bu seviyeler yatırımcı psikolojisini yansıtır ve çoğu zaman fiyat bu bölgelerde yön değiştirir.
 """
 
-    response += '\n\n💬 Genel Değerlendirme: Bu sadece teknik verilere dayalı bir yorumdur. Piyasa duyarlılığı, haber akışı ve şirketin temelleri gibi etkenler de karar vermede önemlidir. 📬'
+    response += "\n\n💬 Genel Değerlendirme: Bu sadece teknik verilere dayalı bir yorumdur. Piyasa duyarlılığı, haber akışı ve şirketin temelleri gibi etkenler de karar vermede önemlidir. 📬"
 
     return response
