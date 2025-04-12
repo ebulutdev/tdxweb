@@ -13,7 +13,8 @@ async function sendMessage() {
         const symbol = parts[parts.length - 1];
 
         try {
-            const response = await fetch(`http://127.0.0.1:8000/chatbot?symbol=${symbol}&detay=true`, {
+            const response = await fetch(`https://tdx-api.onrender.com/chatbot?symbol=${symbol}&detay=true`, {
+
                 method: "GET",
                 headers: { "Content-Type": "application/json" }
             });
