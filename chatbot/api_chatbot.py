@@ -14,5 +14,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 @app.get("/chatbot")
-def get_response(symbol: str = Query(...), detay: bool = False):
-    return {"response": chatbot_response(symbol, detay=detay)}
+def get_response(symbol: str = Query(...), detay: bool = Query(False)):
+    print(f"API isteği: symbol={symbol}, detay={detay}")  # Debug için log ekle
+    return {"response": chatbot_response(symbol, detay)}

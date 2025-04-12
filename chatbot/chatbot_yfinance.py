@@ -34,13 +34,15 @@ def compute_rsi(series, period=14):
     return rsi
 
 def chatbot_response(symbol, detay=False):
+    print(f"Analiz isteği: {symbol}, Detay: {detay}")  # Debug için log ekle
+    
     data, full_data = get_yahoo_data(symbol)
 
     if not data:
         return f"❌ Üzgünüm, {symbol.upper()} için analiz verisine ulaşamadım. Sembol hatalı olabilir ya da son 30 gün içinde yeterli işlem yapılmamış."
 
     response = f"""
-🧠 Merhaba! İşte {symbol.upper()} hissesiyle ilgili analizim:
+🧠 Merhaba! İşte {symbol.upper()} hissesiyle ilgili {'detaylı ' if detay else ''}analizim:
 
 📊 Teknik Göstergeler:
 🔸 Kapanış Fiyatı: {data['price']} TL
@@ -63,55 +65,64 @@ def chatbot_response(symbol, detay=False):
         response += "\n✅ RSI değeri normal aralıkta. Ne aşırı alım ne de aşırı satım sinyali var. Nötr bölgede dengeli bir görünüm var."
 
     if detay:
-        trend = "📉 Son günlerde fiyatlarda bir düşüş gözlemleniyor. Bu durum düzeltme hareketi ya da negatif haber etkisi olabilir."
-        if full_data['Close'].iloc[-1] > full_data['Close'].iloc[-3]:
-            trend = "📈 Hisse son birkaç gündür yukarı yönlü toparlanma işaretleri gösteriyor. Bu kısa vadeli momentumun güçlendiğini gösterebilir."
+        print("Detaylı analiz yapılıyor...")  # Debug için log ekle
+        
+        # Son 5 günlük trend analizi
+        last_5_days = full_data.tail(5)
+        price_change = ((last_5_days['Close'].iloc[-1] - last_5_days['Close'].iloc[0]) / last_5_days['Close'].iloc[0]) * 100
+        volume_change = ((last_5_days['Volume'].iloc[-1] - last_5_days['Volume'].iloc[0]) / last_5_days['Volume'].iloc[0]) * 100
 
+        trend = "📉 Son 5 günde fiyatlarda düşüş gözlemleniyor."
+        if price_change > 0:
+            trend = "📈 Son 5 günde fiyatlarda yükseliş gözlemleniyor."
+
+        # Destek ve direnç seviyeleri
         support = round(full_data['Close'][-10:].min(), 2)
         resistance = round(full_data['Close'][-10:].max(), 2)
         current = data['price']
 
-        konum = ""
-        strateji = ""
-
+        # Fiyatın teknik konumu
+        price_position = ""
         if current < support * 1.03:
-            konum = f"📉 Fiyat destek seviyesine oldukça yakın ({support} TL civarı)."
-            strateji = (
-                "💡 Bu seviyeler, genellikle tepki alımlarının geldiği bölgelerdir.\n"
-                "🔎 Destek kırılırsa düşüş hızlanabilir, bu nedenle zarar durdur seviyeleri belirlenmeli.\n"
-                "📥 Alım düşünülüyorsa, hacim artışı ve fiyat tepkisi mutlaka takip edilmelidir."
-            )
+            price_position = f"📉 Fiyat destek seviyesine yakın ({support} TL)"
         elif current > resistance * 0.97:
-            konum = f"📈 Fiyat direnç seviyesine yaklaşmış durumda ({resistance} TL civarı)."
-            strateji = (
-                "💡 Bu bölge genellikle kar satışlarının geldiği yerdir.\n"
-                "📤 Elinde hisse olanlar için kademeli kar realizasyonu düşünülebilir.\n"
-                "🚀 Ancak direnç yukarı kırılırsa, yeni bir yükseliş dalgası başlayabilir."
-            )
+            price_position = f"📈 Fiyat direnç seviyesine yakın ({resistance} TL)"
         else:
-            konum = "🔄 Fiyat destek ve direnç arasında dengeli seyrediyor."
-            strateji = (
-                "📊 Bu durum yön belirsizliğine işaret eder.\n"
-                "🔄 Kırılım yönü netleşene kadar dikkatli olunmalı.\n"
-                "🛑 Destek altı kapanış veya direnç üstü kırılım takip edilmelidir."
-            )
+            price_position = "🔄 Fiyat destek ve direnç arasında dengeli seyrediyor"
+
+        # Hacim analizi
+        volume_analysis = ""
+        if volume_change > 20:
+            volume_analysis = "📊 Hacimde önemli artış var, bu hareketin güçlü olduğunu gösterir."
+        elif volume_change < -20:
+            volume_analysis = "📉 Hacimde düşüş var, hareketin zayıf olabileceğini gösterir."
+        else:
+            volume_analysis = "📊 Hacim normal seviyelerde seyrediyor."
 
         response += f"""
 
-🔍 <strong>Detaylı Teknik Bakış</strong>:
+🔍 <strong>Detaylı Teknik Analiz</strong>:
+
 {trend}
+{price_position}
+{volume_analysis}
 
-📊 <strong>Destek / Direnç Seviyeleri</strong>:
-🟦 Destek: {support} TL  
-🟥 Direnç: {resistance} TL  
+📊 <strong>Son 5 Günlük Değişim</strong>:
+🔸 Fiyat Değişimi: %{round(price_change, 2)}
+🔸 Hacim Değişimi: %{round(volume_change, 2)}
 
-📌 <strong>Fiyatın Teknik Konumu:</strong>
-{konum}
+📌 <strong>Teknik Seviyeler</strong>:
+🟦 Destek: {support} TL
+🟥 Direnç: {resistance} TL
 
-🧭 <strong>Yatırımcı İçin Öneri:</strong>
-{strateji}
+💡 <strong>Yatırımcı İçin Öneriler</strong>:
+• Destek seviyesi: {support} TL - Bu seviye altına düşülürse dikkatli olunmalı
+• Direnç seviyesi: {resistance} TL - Bu seviye üzerine çıkılırsa yeni hedefler belirlenebilir
+• RSI: {data['rsi']} - {'Aşırı alım bölgesinde, dikkatli olunmalı' if data['rsi'] > 70 else 'Aşırı satım bölgesinde, fırsat olabilir' if data['rsi'] < 30 else 'Normal seviyelerde'}
+• Hacim: {'Yükselen hacim trendi güçlendiriyor' if volume_change > 0 else 'Düşen hacim trendi zayıflatıyor'}
 
-📌 Bu seviyeler yatırımcı psikolojisini yansıtır ve çoğu zaman fiyat bu bölgelerde yön değiştirir.
+⚠️ <strong>Önemli Not</strong>:
+Bu analiz sadece teknik verilere dayanmaktadır. Piyasa duyarlılığı, haber akışı ve şirketin temel göstergeleri gibi faktörler de değerlendirilmelidir.
 """
 
     response += "\n\n💬 Genel Değerlendirme: Bu sadece teknik verilere dayalı bir yorumdur. Piyasa duyarlılığı, haber akışı ve şirketin temelleri gibi etkenler de karar vermede önemlidir. 📬"

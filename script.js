@@ -12,18 +12,22 @@ async function sendMessage() {
     let symbol = message;
     let detayli = false;
 
-    // "detaylı analiz yap THYAO.IS" yazıldıysa, sembolü ayıkla ve detay parametresi ekle
-    if (message.toLowerCase().startsWith("detaylı analiz yap")) {
-        const parts = message.split(" ");
-        symbol = parts[parts.length - 1];
+    // "detaylı analiz yap" veya "detaylı" kelimelerini kontrol et
+    if (message.toLowerCase().includes("detaylı")) {
         detayli = true;
+        // Sembolü ayıkla (son kelimeyi al)
+        const words = message.split(" ");
+        symbol = words[words.length - 1];
+        console.log("Detaylı analiz isteği:", symbol, detayli);
     }
-
+    
     // URL'yi parametrelere göre oluştur
     apiUrl += `?symbol=${symbol}`;
     if (detayli) {
         apiUrl += `&detay=true`;
     }
+    
+    console.log("API URL:", apiUrl);
 
     try {
         const response = await fetch(apiUrl, {
