@@ -34,17 +34,23 @@ async function sendMessage() {
         return;
     }
 
-
     try {
-        // FastAPI tabanlı hisse analiz botuna istek gönder
-        const response = await fetch(`https://tdx-api.onrender.com/chatbot?symbol=${message}`, {
-
+        let apiUrl = `https://tdx-api.onrender.com/chatbot?symbol=${message}`;
+    
+        // Kullanıcı detaylı analiz istedi mi?
+        if (message.toLowerCase().startsWith("detaylı analiz yap")) {
+            const parts = message.split(" ");
+            const symbol = parts[parts.length - 1];
+            apiUrl = `https://tdx-api.onrender.com/chatbot?symbol=${symbol}&detay=true`;
+        }
+    
+        const response = await fetch(apiUrl, {
             method: "GET",
             headers: {
                 "Content-Type": "application/json"
             }
         });
-        
+    
         
 
         if (!response.ok) {
