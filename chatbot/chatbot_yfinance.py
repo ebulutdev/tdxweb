@@ -39,7 +39,10 @@ def chatbot_response(symbol, detay=False):
     data, full_data = get_yahoo_data(symbol)
 
     if not data:
+        print(f"Veri alınamadı: {symbol}")  # Debug için log ekle
         return f"❌ Üzgünüm, {symbol.upper()} için analiz verisine ulaşamadım. Sembol hatalı olabilir ya da son 30 gün içinde yeterli işlem yapılmamış."
+
+    print(f"Veri alındı: {symbol}, Detay: {detay}")  # Debug için log ekle
 
     response = f"""
 🧠 Merhaba! İşte {symbol.upper()} hissesiyle ilgili {'detaylı ' if detay else ''}analizim:
@@ -124,6 +127,8 @@ def chatbot_response(symbol, detay=False):
 ⚠️ <strong>Önemli Not</strong>:
 Bu analiz sadece teknik verilere dayanmaktadır. Piyasa duyarlılığı, haber akışı ve şirketin temel göstergeleri gibi faktörler de değerlendirilmelidir.
 """
+    else:
+        print("Normal analiz yapılıyor...")  # Debug için log ekle
 
     response += "\n\n💬 Genel Değerlendirme: Bu sadece teknik verilere dayalı bir yorumdur. Piyasa duyarlılığı, haber akışı ve şirketin temelleri gibi etkenler de karar vermede önemlidir. 📬"
 

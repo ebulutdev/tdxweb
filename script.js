@@ -21,6 +21,11 @@ async function sendMessage() {
         console.log("Detaylı analiz isteği:", symbol, detayli);
     }
     
+    // Sembolün sonunda .IS yoksa ekle
+    if (!symbol.toUpperCase().endsWith(".IS")) {
+        symbol = symbol + ".IS";
+    }
+    
     // URL'yi parametrelere göre oluştur
     apiUrl += `?symbol=${symbol}`;
     if (detayli) {

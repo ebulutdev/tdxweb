@@ -18,4 +18,10 @@ def get_response(symbol: str = Query(...), detay: str = Query("false")):
     # Convert string "true"/"false" to boolean
     detay_bool = detay.lower() == "true"
     print(f"API isteği: symbol={symbol}, detay={detay_bool}")  # Debug için log ekle
+    
+    # Ensure symbol has .IS suffix
+    if not symbol.upper().endswith(".IS"):
+        symbol = symbol + ".IS"
+        print(f"Sembol düzeltildi: {symbol}")
+    
     return {"response": chatbot_response(symbol, detay_bool)}
