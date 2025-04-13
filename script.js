@@ -200,7 +200,8 @@ async function updateChart() {
             formattedSymbol += '.IS';
         }
 
-        const response = await fetch(`http://localhost:8000/stock-data?symbol=${formattedSymbol}&period=${period}&interval=${interval}`);
+        const response = await fetch(`https://tdx-backend.onrender.com/stock-data?symbol=${formattedSymbol}&period=${period}&interval=${interval}`);
+
         
         if (!response.ok) {
             const errorText = await response.text();
