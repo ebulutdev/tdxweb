@@ -153,3 +153,240 @@ document.addEventListener('DOMContentLoaded', () => {
 
     document.getElementById("chatbot-panel").style.display = "none";
 });
+
+// Chart Configuration and Functions
+let stockChart;
+
+async function updateChart() {
+    const symbol = document.getElementById('stockSymbol').value;
+    const activeTimeframe = document.querySelector('.timeframe-btn.active') || 
+                          document.querySelector('[data-timeframe="6mo"]'); // Varsayılan 6 ay
+    
+    if (!activeTimeframe) {
+        console.error('Timeframe butonu bulunamadı');
+        return;
+    }
+
+    // Period ve interval ayarları
+    let period = activeTimeframe.dataset.timeframe;
+    let interval = activeTimeframe.dataset.interval;
+
+    // THYAO gibi BIST hisseleri için yfinance sınırlı veri dönüyor
+    // Örneğin 1mo+1d bazen çalışmıyor, onun yerine güvenli kombinasyonlar:
+    if (period === '1mo') {
+        interval = '1d'; // bazı hisselerde çalışmıyor!
+    } else if (period === '3mo') {
+        interval = '1d';
+    } else if (period === '6mo' || period === '1y') {
+        interval = '1wk';
+    } else if (period === '2y') {
+        interval = '1wk';
+    } else {
+        // default fallback
+        period = '6mo';
+        interval = '1wk';
+    }
+
+    try {
+        // Loading durumunu göster
+        document.getElementById('currentPrice').textContent = 'Yükleniyor...';
+        document.getElementById('closePrice').textContent = 'Yükleniyor...';
+        document.getElementById('priceChange').textContent = '...';
+        document.getElementById('volume').textContent = '...';
+
+        // Symbol kontrolü ve .IS ekleme
+        let formattedSymbol = symbol.toUpperCase();
+        if (!formattedSymbol.endsWith('.IS')) {
+            formattedSymbol += '.IS';
+        }
+
+        const response = await fetch(`http://localhost:8000/stock-data?symbol=${formattedSymbol}&period=${period}&interval=${interval}`);
+        
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`Veri alınamadı: ${errorText}`);
+        }
+        
+        const data = await response.json();
+
+        // Veri kontrolü
+        if (!data || !data.prices || data.prices.length === 0) {
+            throw new Error('Geçerli veri bulunamadı');
+        }
+
+        // Mevcut grafik varsa yok et
+        if (stockChart) {
+            stockChart.destroy();
+        }
+
+        // Grafik verilerini hazırla
+        const chartData = {
+            labels: data.timestamps.map(ts => {
+                const date = new Date(ts);
+                if (interval === '1d') {
+                    return date.toLocaleDateString('tr-TR', { 
+                        day: '2-digit',
+                        month: '2-digit'
+                    });
+                } else {
+                    return date.toLocaleDateString('tr-TR', { 
+                        day: '2-digit',
+                        month: '2-digit',
+                        year: 'numeric'
+                    });
+                }
+            }),
+            datasets: [{
+                label: formattedSymbol,
+                data: data.prices,
+                borderColor: '#2ecc71',
+                backgroundColor: 'rgba(46, 204, 113, 0.1)',
+                borderWidth: 2,
+                fill: true,
+                tension: 0.1
+            }]
+        };
+
+        // Grafik ayarları
+        const config = {
+            type: 'line',
+            data: chartData,
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                interaction: {
+                    intersect: false,
+                    mode: 'index'
+                },
+                plugins: {
+                    legend: {
+                        display: true,
+                        position: 'top'
+                    },
+                    tooltip: {
+                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                        padding: 12,
+                        titleColor: '#fff',
+                        bodyColor: '#fff',
+                        bodyFont: {
+                            size: 14
+                        },
+                        displayColors: false,
+                        callbacks: {
+                            label: function(context) {
+                                return `Fiyat: ${context.parsed.y.toFixed(2)} TL`;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        display: true,
+                        title: {
+                            display: true,
+                            text: 'Tarih'
+                        },
+                        grid: {
+                            display: false
+                        },
+                        ticks: {
+                            maxRotation: 45,
+                            minRotation: 45
+                        }
+                    },
+                    y: {
+                        display: true,
+                        title: {
+                            display: true,
+                            text: 'Fiyat (TL)'
+                        },
+                        grid: {
+                            color: 'rgba(0, 0, 0, 0.1)'
+                        }
+                    }
+                }
+            }
+        };
+
+        // Canvas kontrolü
+        const canvas = document.getElementById('stockChart');
+        if (!canvas) {
+            throw new Error('Canvas elementi bulunamadı');
+        }
+
+        const ctx = canvas.getContext('2d');
+        stockChart = new Chart(ctx, config);
+
+        // Bilgileri güncelle
+        if (data.current) document.getElementById('currentPrice').textContent = data.current.toFixed(2) + ' TL';
+        if (data.close) document.getElementById('closePrice').textContent = data.close.toFixed(2) + ' TL';
+        if (data.change) {
+            const priceChangeElement = document.getElementById('priceChange');
+            const change = parseFloat(data.change);
+            priceChangeElement.textContent = `${change >= 0 ? '+' : ''}${change.toFixed(2)}%`;
+            priceChangeElement.style.color = change >= 0 ? '#2ecc71' : '#e74c3c';
+        }
+        if (data.volume) document.getElementById('volume').textContent = parseInt(data.volume).toLocaleString('tr-TR');
+
+    } catch (error) {
+        console.error('Hata:', error);
+        alert('Veri alınırken bir hata oluştu: ' + error.message);
+        
+        // Hata durumunda bilgileri sıfırla
+        document.getElementById('currentPrice').textContent = '0.00';
+        document.getElementById('closePrice').textContent = '0.00';
+        document.getElementById('priceChange').textContent = '0.00%';
+        document.getElementById('volume').textContent = '0';
+        
+        // Mevcut grafik varsa temizle
+        if (stockChart) {
+            stockChart.destroy();
+            stockChart = null;
+        }
+    }
+}
+
+// Timeframe butonları için event listener
+document.querySelectorAll('.timeframe-btn').forEach(button => {
+    button.addEventListener('click', (e) => {
+        // Aktif butonu güncelle
+        const activeButton = document.querySelector('.timeframe-btn.active');
+        if (activeButton) {
+            activeButton.classList.remove('active');
+        }
+        e.target.classList.add('active');
+        // Grafiği güncelle
+        updateChart();
+    });
+});
+
+// Sayfa yüklendiğinde ilk grafiği çiz
+document.addEventListener('DOMContentLoaded', () => {
+    // Canvas kontrolü
+    const canvas = document.getElementById('stockChart');
+    if (!canvas) {
+        console.error('Canvas elementi bulunamadı');
+        return;
+    }
+
+    // İlk timeframe butonu kontrolü
+    const defaultTimeframe = document.querySelector('[data-timeframe="5d"]');
+    if (!defaultTimeframe) {
+        console.error('Varsayılan timeframe butonu bulunamadı');
+        return;
+    }
+
+    // Varsayılan timeframe'i aktif yap
+    if (!document.querySelector('.timeframe-btn.active')) {
+        defaultTimeframe.classList.add('active');
+    }
+
+    updateChart();
+});
+
+// Enter tuşu ile arama yapma
+document.getElementById('stockSymbol').addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') {
+        updateChart();
+    }
+});

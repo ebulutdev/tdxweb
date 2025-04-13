@@ -2040,4 +2040,214 @@ html {
         animation: none;
     }
 }
+
+/* Chart Section Styles */
+.chart-section {
+    padding: 2rem;
+    background: var(--background-color);
+    min-height: 80vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.chart-container {
+    background: var(--card-bg);
+    border-radius: 15px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    padding: 2rem;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.chart-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.chart-header h2 {
+    color: var(--text-color);
+    font-size: 1.8rem;
+    margin: 0;
+}
+
+.chart-controls {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.symbol-input {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+.symbol-input input {
+    padding: 0.8rem 1rem;
+    border: 2px solid var(--border-color);
+    border-radius: 8px;
+    background: var(--input-bg);
+    color: var(--text-color);
+    font-size: 1rem;
+    width: 200px;
+    transition: all 0.3s ease;
+}
+
+.symbol-input input:focus {
+    border-color: var(--primary-color);
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.1);
+}
+
+.symbol-input button {
+    padding: 0.8rem 1.2rem;
+    background: var(--primary-color);
+    border: none;
+    border-radius: 8px;
+    color: white;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.symbol-input button:hover {
+    background: var(--primary-dark);
+    transform: translateY(-2px);
+}
+
+.timeframe-selector {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.timeframe-btn {
+    padding: 0.8rem 1.2rem;
+    background: var(--card-bg);
+    border: 2px solid var(--border-color);
+    border-radius: 8px;
+    color: var(--text-color);
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.timeframe-btn:hover {
+    border-color: var(--primary-color);
+    color: var(--primary-color);
+}
+
+.timeframe-btn.active {
+    background: var(--primary-color);
+    border-color: var(--primary-color);
+    color: white;
+}
+
+.chart-wrapper {
+    flex: 1;
+    min-height: 400px;
+    position: relative;
+}
+
+.chart-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem;
+    background: var(--card-bg);
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+}
+
+.price-info {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+}
+
+.current-price, .price-change, .volume-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+}
+
+.label {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+}
+
+.value {
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: var(--text-color);
+}
+
+.price-change.positive .value {
+    color: #4CAF50;
+}
+
+.price-change.negative .value {
+    color: #f44336;
+}
+
+.current-price .value, .close-price .value {
+    font-size: 1.4rem;
+    font-weight: 600;
+}
+
+.current-price .value.positive {
+    color: #4CAF50;
+}
+
+.current-price .value.negative {
+    color: #f44336;
+}
+
+.close-price {
+    margin-right: 1.5rem;
+}
+
+@media (max-width: 768px) {
+    .chart-section {
+        padding: 1rem;
+    }
+    
+    .chart-container {
+        padding: 1rem;
+    }
+    
+    .chart-header {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .chart-controls {
+        flex-direction: column;
+    }
+    
+    .symbol-input {
+        width: 100%;
+    }
+    
+    .symbol-input input {
+        width: 100%;
+    }
+    
+    .timeframe-selector {
+        overflow-x: auto;
+        padding-bottom: 0.5rem;
+    }
+    
+    .chart-info {
+        flex-direction: column;
+        gap: 1rem;
+    }
+    
+    .price-info {
+        width: 100%;
+        justify-content: space-between;
+    }
+}
   

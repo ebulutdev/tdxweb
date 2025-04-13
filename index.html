@@ -46,6 +46,53 @@
         </video>
     </section>
 
+    <!-- Chart Section -->
+    <section class="chart-section" id="chart">
+        <div class="chart-container">
+            <div class="chart-header">
+                <h2>TDX - The Beast Chart</h2>
+                <div class="chart-controls">
+                    <div class="symbol-input">
+                        <input type="text" id="stockSymbol" placeholder="Hisse Kodu Girin (örn: THYAO)" value="THYAO">
+                        <button onclick="updateChart()">
+                            <i class="fas fa-search"></i>
+                        </button>
+                    </div>
+                    <div class="timeframe-selector">
+                        <button class="timeframe-btn" data-timeframe="1mo" data-interval="1d">1 Ay</button>
+                        <button class="timeframe-btn" data-timeframe="3mo" data-interval="1d">3 Ay</button>
+                        <button class="timeframe-btn active" data-timeframe="6mo" data-interval="1wk">6 Ay</button>
+                        <button class="timeframe-btn" data-timeframe="1y" data-interval="1wk">1 Yıl</button>
+                        <button class="timeframe-btn" data-timeframe="2y" data-interval="1wk">2 Yıl</button>
+                    </div>
+                </div>
+            </div>
+            <div class="chart-wrapper">
+                <canvas id="stockChart"></canvas>
+            </div>
+            <div class="chart-info">
+                <div class="price-info">
+                    <div class="current-price">
+                        <span class="label">Güncel Fiyat</span>
+                        <span class="value" id="currentPrice">0.00</span>
+                    </div>
+                    <div class="close-price">
+                        <span class="label">Kapanış</span>
+                        <span class="value" id="closePrice">0.00</span>
+                    </div>
+                    <div class="price-change">
+                        <span class="label">Değişim</span>
+                        <span class="value" id="priceChange">0.00%</span>
+                    </div>
+                </div>
+                <div class="volume-info">
+                    <span class="label">Hacim</span>
+                    <span class="value" id="volume">0</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
     <!-- İstatistikler Bölümü -->
     <section class="stats-section" id="stats">
         <h2>Rakamlarla TDX</h2>
@@ -268,6 +315,7 @@
         </div>
     </footer>
 
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="script.js"></script>
 </body>
 </html>
