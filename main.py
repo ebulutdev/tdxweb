@@ -1,5 +1,6 @@
 from fastapi import FastAPI, Query, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 import yfinance as yf
 from datetime import datetime
 import logging
@@ -15,14 +16,43 @@ price_cache = TTLCache(maxsize=100, ttl=300)
 
 app = FastAPI()
 
-# CORS ayarları
+# CORS ayarları - daha detaylı
+origins = [
+    "http://localhost",
+    "http://localhost:8000",
+    "http://localhost:3000",
+    "http://127.0.0.1:8000",
+    "http://127.0.0.1:3000",
+    "capacitor://localhost",
+    "http://localhost:8100",
+    "http://localhost:8101",
+    "http://192.168.1.*",
+    "*"  # Geliştirme aşamasında tüm originlere izin ver
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+    expose_headers=["*"]
 )
+
+# Hata yakalama middleware'i
+@app.middleware("http")
+async def catch_exceptions_middleware(request, call_next):
+    try:
+        return await call_next(request)
+    except Exception as e:
+        logger.error(f"İstek işlenirken hata oluştu: {str(e)}")
+        return JSONResponse(
+            status_code=500,
+            content={
+                "detail": "Sunucu hatası oluştu",
+                "message": str(e)
+            }
+        )
 
 def try_symbols(base_symbol: str, period: str) -> Optional[Dict[str, Any]]:
     """Farklı sembol formatlarını dene"""
@@ -49,6 +79,7 @@ def try_symbols(base_symbol: str, period: str) -> Optional[Dict[str, Any]]:
                     continue
                     
                 return {
+                    "success": True,
                     "prices": prices,
                     "timestamps": timestamps,
                     "volume": sum(volumes),
@@ -56,7 +87,7 @@ def try_symbols(base_symbol: str, period: str) -> Optional[Dict[str, Any]]:
                     "close": prices[0],
                     "change": round(((prices[-1] - prices[0]) / prices[0]) * 100, 2),
                     "last_updated": datetime.now().isoformat(),
-                    "used_symbol": symbol  # Hangi sembolün çalıştığını bildir
+                    "used_symbol": symbol
                 }
         except Exception as e:
             logger.warning(f"Sembol denemesi başarısız ({symbol}): {str(e)}")
@@ -65,7 +96,7 @@ def try_symbols(base_symbol: str, period: str) -> Optional[Dict[str, Any]]:
     return None
 
 @app.get("/stock-data")
-def get_stock_data(
+async def get_stock_data(
     symbol: str = Query(..., description="Hisse senedi sembolü"),
     period: str = Query("6mo", description="Zaman aralığı (1d, 5d, 1mo, 3mo, 6mo, 1y, 2y)")
 ):
@@ -76,33 +107,40 @@ def get_stock_data(
         # Önbellekte veri var mı kontrol et
         if cache_key in price_cache:
             logger.info(f"Veri önbellekten alındı: {cache_key}")
-            return price_cache[cache_key]
+            return JSONResponse(content=price_cache[cache_key])
 
         # Farklı sembol formatlarını dene
         logger.info(f"Veri çekiliyor: {symbol}")
         data = try_symbols(symbol.upper(), period)
         
         if not data:
-            raise HTTPException(
+            return JSONResponse(
                 status_code=404,
-                detail=f"Hisse senedi verisi bulunamadı: {symbol} (Tüm alternatifler denendi)"
+                content={
+                    "success": False,
+                    "detail": f"Hisse senedi verisi bulunamadı: {symbol} (Tüm alternatifler denendi)"
+                }
             )
         
         # Veriyi önbelleğe kaydet
         price_cache[cache_key] = data
         
         logger.info(f"Veri başarıyla alındı: {data['used_symbol']}")
-        return data
+        return JSONResponse(content=data)
         
-    except HTTPException as he:
-        raise he
     except Exception as e:
         logger.error(f"Beklenmeyen hata: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Sunucu hatası: {str(e)}")
+        return JSONResponse(
+            status_code=500,
+            content={
+                "success": False,
+                "detail": f"Sunucu hatası: {str(e)}"
+            }
+        )
 
 @app.get("/")
-def read_root():
-    return {"message": "Hisse Senedi API'sine Hoş Geldiniz"}
+async def read_root():
+    return {"message": "Hisse Senedi API'sine Hoş Geldiniz", "status": "active"}
 
 if __name__ == "__main__":
     import uvicorn
