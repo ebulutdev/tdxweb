@@ -1,3 +1,6 @@
+// API URL'sini belirle
+const BASE_URL = "https://tdx-combined-service.onrender.com";
+
 async function sendMessage() {
     const input = document.getElementById("user-input");
     const message = input.value.trim();
@@ -7,31 +10,21 @@ async function sendMessage() {
     input.value = "";
     appendMessage("TDX Bot", "Analiz yapılıyor...");
 
-    // API URL'sini oluştur
-    let apiUrl = "http://localhost:8001/chatbot";  // Port değiştirildi
     let symbol = message;
     let detayli = false;
 
-    // "detaylı analiz yap" veya "detaylı" kelimelerini kontrol et
     if (message.toLowerCase().includes("detaylı")) {
         detayli = true;
-        // Sembolü ayıkla (son kelimeyi al)
         const words = message.split(" ");
         symbol = words[words.length - 1];
         console.log("Detaylı analiz isteği:", symbol, detayli);
     }
     
-    // Sembolün sonunda .IS yoksa ekle
-    if (!symbol.toUpperCase().endsWith(".IS")) {
-        symbol = symbol + ".IS";
-    }
+    // Remove .IS suffix if present
+    symbol = symbol.replace('.IS', '').toUpperCase();
     
-    // URL'yi parametrelere göre oluştur
-    apiUrl += `?symbol=${symbol}&detay=${detayli}`;
-    console.log("API URL:", apiUrl);
-
     try {
-        const response = await fetch(apiUrl);
+        const response = await fetch(`${BASE_URL}/chatbot?symbol=${symbol}&detay=${detayli}`);
 
         if (!response.ok) {
             const errorDetails = await response.text();
@@ -154,21 +147,18 @@ let stockChart;
 async function updateChart() {
     const symbol = document.getElementById('stockSymbol').value;
     const activeTimeframe = document.querySelector('.timeframe-btn.active') || 
-                          document.querySelector('[data-timeframe="6mo"]'); // Varsayılan 6 ay
+                        document.querySelector('[data-timeframe="6mo"]');
     
     if (!activeTimeframe) {
         console.error('Timeframe butonu bulunamadı');
         return;
     }
 
-    // Period ve interval ayarları
     let period = activeTimeframe.dataset.timeframe;
     let interval = activeTimeframe.dataset.interval;
 
-    // THYAO gibi BIST hisseleri için yfinance sınırlı veri dönüyor
-    // Örneğin 1mo+1d bazen çalışmıyor, onun yerine güvenli kombinasyonlar:
     if (period === '1mo') {
-        interval = '1d'; // bazı hisselerde çalışmıyor!
+        interval = '1d';
     } else if (period === '3mo') {
         interval = '1d';
     } else if (period === '6mo' || period === '1y') {
@@ -176,28 +166,21 @@ async function updateChart() {
     } else if (period === '2y') {
         interval = '1wk';
     } else {
-        // default fallback
         period = '6mo';
         interval = '1wk';
     }
 
     try {
-        // Loading durumunu göster
         document.getElementById('currentPrice').textContent = 'Yükleniyor...';
         document.getElementById('closePrice').textContent = 'Yükleniyor...';
         document.getElementById('priceChange').textContent = '...';
         document.getElementById('volume').textContent = '...';
 
-        // Symbol kontrolü ve .IS ekleme
-        let formattedSymbol = symbol.toUpperCase();
-        if (!formattedSymbol.endsWith('.IS')) {
-            formattedSymbol += '.IS';
-        }
+        // Remove .IS suffix if present and convert to uppercase
+        let formattedSymbol = symbol.replace('.IS', '').toUpperCase();
 
-        const response = await fetch(`http://localhost:8001/stock-data?symbol=${formattedSymbol}&period=${period}&interval=${interval}`);
+        const response = await fetch(`${BASE_URL}/stock-data?symbol=${formattedSymbol}&period=${period}&interval=${interval}`);
 
-
-        
         if (!response.ok) {
             const errorText = await response.text();
             throw new Error(`Veri alınamadı: ${errorText}`);
@@ -205,17 +188,15 @@ async function updateChart() {
         
         const data = await response.json();
 
-        // Veri kontrolü
         if (!data || !data.prices || data.prices.length === 0) {
             throw new Error('Geçerli veri bulunamadı');
         }
 
-        // Mevcut grafik varsa yok et
+        // Grafik verilerini güncelle
         if (stockChart) {
             stockChart.destroy();
         }
 
-        // Grafik verilerini hazırla
         const chartData = {
             labels: data.timestamps.map(ts => {
                 const date = new Date(ts);
@@ -243,102 +224,15 @@ async function updateChart() {
             }]
         };
 
-        // Grafik ayarları
-        const config = {
-            type: 'line',
-            data: chartData,
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                interaction: {
-                    intersect: false,
-                    mode: 'index'
-                },
-                plugins: {
-                    legend: {
-                        display: true,
-                        position: 'top'
-                    },
-                    tooltip: {
-                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
-                        padding: 12,
-                        titleColor: '#fff',
-                        bodyColor: '#fff',
-                        bodyFont: {
-                            size: 14
-                        },
-                        displayColors: false,
-                        callbacks: {
-                            label: function(context) {
-                                return `Fiyat: ${context.parsed.y.toFixed(2)} TL`;
-                            }
-                        }
-                    }
-                },
-                scales: {
-                    x: {
-                        display: true,
-                        title: {
-                            display: true,
-                            text: 'Tarih'
-                        },
-                        grid: {
-                            display: false
-                        },
-                        ticks: {
-                            maxRotation: 45,
-                            minRotation: 45
-                        }
-                    },
-                    y: {
-                        display: true,
-                        title: {
-                            display: true,
-                            text: 'Fiyat (TL)'
-                        },
-                        grid: {
-                            color: 'rgba(0, 0, 0, 0.1)'
-                        }
-                    }
-                }
-            }
-        };
-
-        // Canvas kontrolü
-        const canvas = document.getElementById('stockChart');
-        if (!canvas) {
-            throw new Error('Canvas elementi bulunamadı');
-        }
-
-        const ctx = canvas.getContext('2d');
-        stockChart = new Chart(ctx, config);
-
-        // Bilgileri güncelle
-        if (data.current) document.getElementById('currentPrice').textContent = data.current.toFixed(2) + ' TL';
-        if (data.close) document.getElementById('closePrice').textContent = data.close.toFixed(2) + ' TL';
-        if (data.change) {
-            const priceChangeElement = document.getElementById('priceChange');
-            const change = parseFloat(data.change);
-            priceChangeElement.textContent = `${change >= 0 ? '+' : ''}${change.toFixed(2)}%`;
-            priceChangeElement.style.color = change >= 0 ? '#2ecc71' : '#e74c3c';
-        }
-        if (data.volume) document.getElementById('volume').textContent = parseInt(data.volume).toLocaleString('tr-TR');
+        // Fiyat bilgilerini güncelle
+        document.getElementById('currentPrice').textContent = data.current.toFixed(2);
+        document.getElementById('closePrice').textContent = data.close.toFixed(2);
+        document.getElementById('priceChange').textContent = `${data.change}%`;
+        document.getElementById('volume').textContent = data.volume.toLocaleString();
 
     } catch (error) {
         console.error('Hata:', error);
         alert('Veri alınırken bir hata oluştu: ' + error.message);
-        
-        // Hata durumunda bilgileri sıfırla
-        document.getElementById('currentPrice').textContent = '0.00';
-        document.getElementById('closePrice').textContent = '0.00';
-        document.getElementById('priceChange').textContent = '0.00%';
-        document.getElementById('volume').textContent = '0';
-        
-        // Mevcut grafik varsa temizle
-        if (stockChart) {
-            stockChart.destroy();
-            stockChart = null;
-        }
     }
 }
 

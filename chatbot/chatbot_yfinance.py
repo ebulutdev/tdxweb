@@ -7,31 +7,53 @@ logger = logging.getLogger(__name__)
 
 def get_yahoo_data(symbol):
     logger.info(f"Getting Yahoo data for symbol: {symbol}")
-    try:
-        stock = yf.Ticker(symbol)
-        data = stock.history(period="30d", interval="1d")  # 30 günlük kapanış verisi
-        
-        if data.empty or len(data) < 10:
-            logger.warning(f"No data or insufficient data for {symbol}")
-            return None, None
+    
+    # Remove .IS suffix if present
+    base_symbol = symbol.replace('.IS', '')
+    
+    # Try different symbol formats for Turkish stocks
+    alternatives = [
+        base_symbol,  # Try without any suffix first
+        f"{base_symbol}.IS",
+        base_symbol.upper(),  # Try uppercase version
+        f"{base_symbol.upper()}.IS",
+        f"{base_symbol}.IS.E",  # Try with .IS.E suffix
+        f"{base_symbol}.E"  # Try with .E suffix
+    ]
+    
+    for alt_symbol in alternatives:
+        try:
+            logger.info(f"Trying symbol format: {alt_symbol}")
+            stock = yf.Ticker(alt_symbol)
+            
+            # Try to get historical data directly without checking info first
+            data = stock.history(period="30d", interval="1d")  # 30 günlük kapanış verisi
+            
+            if data.empty or len(data) < 10:
+                logger.warning(f"No data or insufficient data for {alt_symbol}")
+                continue
 
-        data["SMA20"] = data["Close"].rolling(window=20).mean()
-        data["RSI"] = compute_rsi(data["Close"])
-        latest = data.iloc[-1]
-        
-        logger.info(f"Successfully retrieved data for {symbol}")
-        return {
-            "price": round(latest["Close"], 2),
-            "open": round(latest["Open"], 2),
-            "high": round(latest["High"], 2),
-            "low": round(latest["Low"], 2),
-            "volume": int(latest["Volume"]),
-            "sma20": round(latest["SMA20"], 2),
-            "rsi": round(latest["RSI"], 2),
-        }, data
-    except Exception as e:
-        logger.error(f"Error getting Yahoo data: {str(e)}")
-        return None, None
+            data["SMA20"] = data["Close"].rolling(window=20).mean()
+            data["RSI"] = compute_rsi(data["Close"])
+            latest = data.iloc[-1]
+            
+            logger.info(f"Successfully retrieved data for {alt_symbol}")
+            return {
+                "price": round(latest["Close"], 2),
+                "open": round(latest["Open"], 2),
+                "high": round(latest["High"], 2),
+                "low": round(latest["Low"], 2),
+                "volume": int(latest["Volume"]),
+                "sma20": round(latest["SMA20"], 2),
+                "rsi": round(latest["RSI"], 2),
+                "used_symbol": alt_symbol  # Return the symbol that worked
+            }, data
+        except Exception as e:
+            logger.error(f"Error getting Yahoo data for {alt_symbol}: {str(e)}")
+            continue
+    
+    logger.warning(f"Failed to get data for any symbol variation of {symbol}")
+    return None, None
 
 def compute_rsi(series, period=14):
     delta = series.diff()
@@ -52,10 +74,12 @@ def chatbot_response(symbol, detay=False):
         print(f"Veri alınamadı: {symbol}")  # Debug için log ekle
         return f"❌ Üzgünüm, {symbol.upper()} için analiz verisine ulaşamadım. Sembol hatalı olabilir ya da son 30 gün içinde yeterli işlem yapılmamış."
 
-    print(f"Veri alındı: {symbol}, Detay: {detay}")  # Debug için log ekle
+    # Use the symbol that actually worked
+    working_symbol = data.get("used_symbol", symbol.upper())
+    print(f"Veri alındı: {working_symbol}, Detay: {detay}")  # Debug için log ekle
 
     response = f"""
-🧠 Merhaba! İşte {symbol.upper()} hissesiyle ilgili {'detaylı ' if detay else ''}analizim:
+🧠 Merhaba! İşte {working_symbol} hissesiyle ilgili {'detaylı ' if detay else ''}analizim:
 
 📊 Teknik Göstergeler:
 🔸 Kapanış Fiyatı: {data['price']} TL
