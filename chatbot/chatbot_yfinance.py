@@ -1,70 +1,36 @@
-from datetime import datetime, timedelta
+from datetime import datetime
 import yfinance as yf
 import pandas as pd
-import time
+import logging
+
+logger = logging.getLogger(__name__)
 
 def get_yahoo_data(symbol):
+    logger.info(f"Getting Yahoo data for symbol: {symbol}")
     try:
-        # Sembol formatını düzenle
-        if not symbol.endswith('.IS'):
-            symbol = f"{symbol}.IS"
-            
-        print(f"Veri çekme başlıyor: {symbol}")
-        
-        # Doğrudan ticker oluştur
         stock = yf.Ticker(symbol)
+        data = stock.history(period="30d", interval="1d")  # 30 günlük kapanış verisi
         
-        # Önce basit bir veri kontrolü yap
-        try:
-            current_price = stock.fast_info['last_price']
-            if current_price is None or current_price == 0:
-                print("Geçerli fiyat alınamadı")
-                return None, None
-        except:
-            pass  # fast_info başarısız olursa history ile devam et
-            
-        # Veriyi çek
-        end_date = datetime.now()
-        start_date = end_date - timedelta(days=30)  # Son 30 gün
-        
-        print(f"Tarih aralığı: {start_date.date()} - {end_date.date()}")
-        
-        data = stock.history(period="1mo")  # Son 1 ay
-        
-        if data.empty:
-            print(f"Veri boş geldi: {symbol}")
-            return None, None
-            
-        if len(data) < 2:
-            print(f"Yetersiz veri noktası: {symbol}")
+        if data.empty or len(data) < 10:
+            logger.warning(f"No data or insufficient data for {symbol}")
             return None, None
 
-        # Teknik göstergeleri hesapla
         data["SMA20"] = data["Close"].rolling(window=20).mean()
         data["RSI"] = compute_rsi(data["Close"])
         latest = data.iloc[-1]
         
-        # Son fiyat kontrolü
-        if latest["Close"] == 0 or pd.isna(latest["Close"]):
-            print("Geçersiz fiyat verisi")
-            return None, None
-
-        result = {
+        logger.info(f"Successfully retrieved data for {symbol}")
+        return {
             "price": round(latest["Close"], 2),
             "open": round(latest["Open"], 2),
             "high": round(latest["High"], 2),
             "low": round(latest["Low"], 2),
             "volume": int(latest["Volume"]),
-            "sma20": round(latest["SMA20"], 2) if not pd.isna(latest["SMA20"]) else 0,
-            "rsi": round(latest["RSI"], 2) if not pd.isna(latest["RSI"]) else 0,
-            "data_points": len(data)
-        }
-        
-        print(f"Veri başarıyla çekildi: {len(data)} gün")
-        return result, data
-        
+            "sma20": round(latest["SMA20"], 2),
+            "rsi": round(latest["RSI"], 2),
+        }, data
     except Exception as e:
-        print(f"Veri çekme hatası ({symbol}): {str(e)}")
+        logger.error(f"Error getting Yahoo data: {str(e)}")
         return None, None
 
 def compute_rsi(series, period=14):
@@ -78,36 +44,18 @@ def compute_rsi(series, period=14):
     return rsi
 
 def chatbot_response(symbol, detay=False):
-    print(f"Analiz isteği: {symbol}, Detay: {detay}")
+    print(f"Analiz isteği: {symbol}, Detay: {detay}")  # Debug için log ekle
     
-    # Sembol formatını temizle
-    symbol = symbol.strip().upper().replace(".IS", "")
-    
-    # 3 deneme hakkı
-    for attempt in range(3):
-        try:
-            data, full_data = get_yahoo_data(symbol)
-            if data:
-                break
-            print(f"Deneme {attempt + 1} başarısız, tekrar deneniyor...")
-            time.sleep(2)  # 2 saniye bekle
-        except Exception as e:
-            print(f"Hata oluştu (Deneme {attempt + 1}): {str(e)}")
-            time.sleep(2)
-            continue
+    data, full_data = get_yahoo_data(symbol)
 
     if not data:
-        error_msg = f"❌ Üzgünüm, {symbol} için analiz verisine ulaşamadım. Sebepler:\n"
-        error_msg += "• Borsa verilerine erişimde geçici bir sorun olabilir\n"
-        error_msg += "• Sembol geçici olarak işlem görmüyor olabilir\n"
-        error_msg += "• Veri sağlayıcıda teknik bir sorun olabilir\n"
-        error_msg += "\nLütfen birkaç dakika sonra tekrar deneyin. 🔄"
-        return error_msg
+        print(f"Veri alınamadı: {symbol}")  # Debug için log ekle
+        return f"❌ Üzgünüm, {symbol.upper()} için analiz verisine ulaşamadım. Sembol hatalı olabilir ya da son 30 gün içinde yeterli işlem yapılmamış."
 
-    print(f"Veri alındı: {symbol}")
+    print(f"Veri alındı: {symbol}, Detay: {detay}")  # Debug için log ekle
 
     response = f"""
-🧠 Merhaba! İşte {symbol} hissesiyle ilgili {'detaylı ' if detay else ''}analizim:
+🧠 Merhaba! İşte {symbol.upper()} hissesiyle ilgili {'detaylı ' if detay else ''}analizim:
 
 📊 Teknik Göstergeler:
 🔸 Kapanış Fiyatı: {data['price']} TL
@@ -115,7 +63,6 @@ def chatbot_response(symbol, detay=False):
 🔸 RSI (Göreceli Güç Endeksi): {data['rsi']}
 🔸 Günlük Hacim: {data['volume']} lot
 🕒 Analiz Zamanı: {datetime.now().strftime('%d-%m-%Y %H:%M:%S')}
-📅 Veri Aralığı: Son {data['data_points']} gün
 """
 
     if data['price'] > data['sma20']:

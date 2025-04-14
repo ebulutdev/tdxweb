@@ -1,49 +1,59 @@
 from fastapi import FastAPI, Query, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, FileResponse
+from fastapi.staticfiles import StaticFiles
 import yfinance as yf
 from datetime import datetime
 import logging
 from typing import Dict, Any, Optional
 from cachetools import TTLCache
 import os
+import sys
 
-# Loglama ayarları
+# Add the current directory to Python path
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+
+# Import chatbot function
+from chatbot.chatbot_yfinance import chatbot_response
+
+# Logging configuration
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# Önbellek oluştur (5 dakika TTL)
+# Cache configuration (5 minutes TTL)
 price_cache = TTLCache(maxsize=100, ttl=300)
 
 app = FastAPI()
 
-# CORS ayarları - tüm originlere izin ver
+# CORS configuration - update with your Render.com domain when deployed
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Tüm originlere izin ver
+    allow_origins=["*"],  # In production, replace with your actual domain
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
-    expose_headers=["*"]
 )
 
-# Hata yakalama middleware'i
+# Serve static files from root directory
+app.mount("/static", StaticFiles(directory="."), name="static")
+
+# Error handling middleware
 @app.middleware("http")
 async def catch_exceptions_middleware(request, call_next):
     try:
         return await call_next(request)
     except Exception as e:
-        logger.error(f"İstek işlenirken hata oluştu: {str(e)}")
+        logger.error(f"Request processing error: {str(e)}")
         return JSONResponse(
             status_code=500,
             content={
-                "detail": "Sunucu hatası oluştu",
+                "detail": "Server error occurred",
                 "message": str(e)
             }
         )
 
 def try_symbols(base_symbol: str, period: str) -> Optional[Dict[str, Any]]:
-    """Farklı sembol formatlarını dene"""
+    """Try different symbol formats"""
     alternatives = [
         base_symbol,
         f"{base_symbol}.IS",
@@ -53,7 +63,7 @@ def try_symbols(base_symbol: str, period: str) -> Optional[Dict[str, Any]]:
     
     for symbol in alternatives:
         try:
-            logger.info(f"Alternatif deneniyor: {symbol}")
+            logger.info(f"Trying alternative: {symbol}")
             ticker = yf.Ticker(symbol)
             df = ticker.history(period=period)
             
@@ -63,7 +73,7 @@ def try_symbols(base_symbol: str, period: str) -> Optional[Dict[str, Any]]:
                 volumes = df['Volume'].tolist()
                 
                 if not prices or len(prices) < 2:
-                    logger.warning(f"Yetersiz veri noktası: {symbol}")
+                    logger.warning(f"Insufficient data points: {symbol}")
                     continue
                     
                 return {
@@ -78,27 +88,25 @@ def try_symbols(base_symbol: str, period: str) -> Optional[Dict[str, Any]]:
                     "used_symbol": symbol
                 }
         except Exception as e:
-            logger.warning(f"Sembol denemesi başarısız ({symbol}): {str(e)}")
+            logger.warning(f"Symbol attempt failed ({symbol}): {str(e)}")
             continue
             
     return None
 
+# Stock data endpoint
 @app.get("/stock-data")
 async def get_stock_data(
-    symbol: str = Query(..., description="Hisse senedi sembolü"),
-    period: str = Query("6mo", description="Zaman aralığı (1d, 5d, 1mo, 3mo, 6mo, 1y, 2y)")
+    symbol: str = Query(..., description="Stock symbol"),
+    period: str = Query("6mo", description="Time period (1d, 5d, 1mo, 3mo, 6mo, 1y, 2y)")
 ):
     try:
-        # Cache key oluştur (temel sembol ile)
         cache_key = f"{symbol.upper()}:{period}"
         
-        # Önbellekte veri var mı kontrol et
         if cache_key in price_cache:
-            logger.info(f"Veri önbellekten alındı: {cache_key}")
+            logger.info(f"Data retrieved from cache: {cache_key}")
             return JSONResponse(content=price_cache[cache_key])
 
-        # Farklı sembol formatlarını dene
-        logger.info(f"Veri çekiliyor: {symbol}")
+        logger.info(f"Fetching data: {symbol}")
         data = try_symbols(symbol.upper(), period)
         
         if not data:
@@ -106,32 +114,58 @@ async def get_stock_data(
                 status_code=404,
                 content={
                     "success": False,
-                    "detail": f"Hisse senedi verisi bulunamadı: {symbol} (Tüm alternatifler denendi)"
+                    "detail": f"Stock data not found: {symbol} (All alternatives tried)"
                 }
             )
         
-        # Veriyi önbelleğe kaydet
         price_cache[cache_key] = data
         
-        logger.info(f"Veri başarıyla alındı: {data['used_symbol']}")
+        logger.info(f"Data successfully retrieved: {data['used_symbol']}")
         return JSONResponse(content=data)
         
     except Exception as e:
-        logger.error(f"Beklenmeyen hata: {str(e)}")
+        logger.error(f"Unexpected error: {str(e)}")
         return JSONResponse(
             status_code=500,
             content={
                 "success": False,
-                "detail": f"Sunucu hatası: {str(e)}"
+                "detail": f"Server error: {str(e)}"
             }
         )
 
+# Chatbot endpoint
+@app.get("/chatbot")
+def get_chatbot_response(symbol: str = Query(...), detay: str = Query("false")):
+    try:
+        detay_bool = detay.lower() == "true"
+        logger.info(f"Chatbot request received: symbol={symbol}, detay={detay_bool}")
+        
+        if not symbol.upper().endswith(".IS"):
+            symbol = symbol + ".IS"
+            logger.info(f"Symbol corrected to: {symbol}")
+        
+        logger.info("Calling chatbot_response function...")
+        response = chatbot_response(symbol, detay_bool)
+        logger.info(f"Chatbot response received: {response[:100]}...")  # Log first 100 chars
+        
+        if not response:
+            logger.error("Empty response from chatbot")
+            raise HTTPException(status_code=500, detail="Chatbot yanıt vermedi")
+            
+        return {"response": response}
+        
+    except Exception as e:
+        logger.error(f"Error in chatbot endpoint: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+# Root endpoint - serve the combined interface
 @app.get("/")
 async def read_root():
-    return {"message": "Hisse Senedi API'sine Hoş Geldiniz", "status": "active"}
+    return FileResponse("combined_interface.html")
 
 if __name__ == "__main__":
     import uvicorn
-    port = int(os.environ.get("PORT", 8000))
-    logger.info("API servisi başlatılıyor...")
-    uvicorn.run(app, host="0.0.0.0", port=port)
+    port = int(os.environ.get("PORT", 8001))
+    host = "0.0.0.0"  # Required for Render.com
+    logger.info(f"Starting combined API service on {host}:{port}...")
+    uvicorn.run(app, host=host, port=port) 
