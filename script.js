@@ -182,39 +182,27 @@ async function updateChart() {
         const response = await fetch(`${BASE_URL}/stock-data?symbol=${formattedSymbol}&period=${period}&interval=${interval}`);
 
         if (!response.ok) {
-            const errorText = await response.text();
-            throw new Error(`Veri alınamadı: ${errorText}`);
+            const errorData = await response.json();
+            throw new Error(errorData.detail || `Veri alınamadı: ${formattedSymbol}`);
         }
         
         const data = await response.json();
 
-        if (!data || !data.prices || data.prices.length === 0) {
+        if (!data || !data.success || !data.prices || data.prices.length === 0) {
             throw new Error('Geçerli veri bulunamadı');
         }
 
-        // Grafik verilerini güncelle
-        if (stockChart) {
-            stockChart.destroy();
-        }
+        // Update price information
+        document.getElementById('currentPrice').textContent = data.current.toFixed(2);
+        document.getElementById('closePrice').textContent = data.close.toFixed(2);
+        document.getElementById('priceChange').textContent = `${data.change > 0 ? '+' : ''}${data.change.toFixed(2)}%`;
+        document.getElementById('volume').textContent = data.volume.toLocaleString();
 
+        // Update chart
         const chartData = {
-            labels: data.timestamps.map(ts => {
-                const date = new Date(ts);
-                if (interval === '1d') {
-                    return date.toLocaleDateString('tr-TR', { 
-                        day: '2-digit',
-                        month: '2-digit'
-                    });
-                } else {
-                    return date.toLocaleDateString('tr-TR', { 
-                        day: '2-digit',
-                        month: '2-digit',
-                        year: 'numeric'
-                    });
-                }
-            }),
+            labels: data.timestamps.map(ts => new Date(ts)),
             datasets: [{
-                label: formattedSymbol,
+                label: `${formattedSymbol} Fiyat`,
                 data: data.prices,
                 borderColor: '#2ecc71',
                 backgroundColor: 'rgba(46, 204, 113, 0.1)',
@@ -224,15 +212,86 @@ async function updateChart() {
             }]
         };
 
-        // Fiyat bilgilerini güncelle
-        document.getElementById('currentPrice').textContent = data.current.toFixed(2);
-        document.getElementById('closePrice').textContent = data.close.toFixed(2);
-        document.getElementById('priceChange').textContent = `${data.change}%`;
-        document.getElementById('volume').textContent = data.volume.toLocaleString();
+        if (window.myChart) {
+            window.myChart.destroy();
+        }
+
+        const ctx = document.getElementById('priceChart').getContext('2d');
+        window.myChart = new Chart(ctx, {
+            type: 'line',
+            data: chartData,
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                interaction: {
+                    intersect: false,
+                    mode: 'index'
+                },
+                scales: {
+                    x: {
+                        type: 'time',
+                        time: {
+                            unit: period === '1mo' || period === '3mo' ? 'day' : 'week',
+                            displayFormats: {
+                                day: 'dd MMM',
+                                week: 'dd MMM yyyy'
+                            }
+                        },
+                        title: {
+                            display: true,
+                            text: 'Tarih'
+                        }
+                    },
+                    y: {
+                        beginAtZero: false,
+                        title: {
+                            display: true,
+                            text: 'Fiyat (TL)'
+                        }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        display: true,
+                        position: 'top'
+                    },
+                    tooltip: {
+                        mode: 'index',
+                        intersect: false,
+                        callbacks: {
+                            label: function(context) {
+                                return `${context.dataset.label}: ${context.parsed.y.toFixed(2)} TL`;
+                            }
+                        }
+                    }
+                }
+            }
+        });
 
     } catch (error) {
-        console.error('Hata:', error);
-        alert('Veri alınırken bir hata oluştu: ' + error.message);
+        console.error('Veri alınırken bir hata oluştu:', error);
+        document.getElementById('currentPrice').textContent = 'Hata';
+        document.getElementById('closePrice').textContent = 'Hata';
+        document.getElementById('priceChange').textContent = 'Hata';
+        document.getElementById('volume').textContent = 'Hata';
+        
+        // Show error message to user
+        const errorMessage = document.createElement('div');
+        errorMessage.className = 'alert alert-danger';
+        errorMessage.textContent = `Veri alınırken bir hata oluştu: ${error.message}`;
+        
+        // Remove any existing error messages
+        const existingErrors = document.querySelectorAll('.alert-danger');
+        existingErrors.forEach(err => err.remove());
+        
+        // Add the new error message
+        document.querySelector('.chart-container').prepend(errorMessage);
+        
+        // Destroy chart if it exists
+        if (window.myChart) {
+            window.myChart.destroy();
+            window.myChart = null;
+        }
     }
 }
 
@@ -253,14 +312,14 @@ document.querySelectorAll('.timeframe-btn').forEach(button => {
 // Sayfa yüklendiğinde ilk grafiği çiz
 document.addEventListener('DOMContentLoaded', () => {
     // Canvas kontrolü
-    const canvas = document.getElementById('stockChart');
+    const canvas = document.getElementById('priceChart');
     if (!canvas) {
         console.error('Canvas elementi bulunamadı');
         return;
     }
 
     // İlk timeframe butonu kontrolü
-    const defaultTimeframe = document.querySelector('[data-timeframe="5d"]');
+    const defaultTimeframe = document.querySelector('[data-timeframe="6mo"]');
     if (!defaultTimeframe) {
         console.error('Varsayılan timeframe butonu bulunamadı');
         return;
