@@ -7,6 +7,7 @@ import logging
 from typing import Dict, Any, Optional
 from cachetools import TTLCache
 import os
+from chatbot.chatbot_yfinance import chatbot_response
 
 # Loglama ayarları
 logging.basicConfig(level=logging.INFO)
@@ -17,10 +18,16 @@ price_cache = TTLCache(maxsize=100, ttl=300)
 
 app = FastAPI()
 
-# CORS ayarları - tüm originlere izin ver
+# CORS ayarları
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Tüm originlere izin ver
+    allow_origins=[
+        "http://localhost:3000",
+        "http://localhost:5000",
+        "https://tdxbotum.netlify.app",
+        "https://tdxbotum.vercel.app",
+        "*"  # Geliştirme aşamasında tüm originlere izin ver
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -123,6 +130,39 @@ async def get_stock_data(
             content={
                 "success": False,
                 "detail": f"Sunucu hatası: {str(e)}"
+            }
+        )
+
+@app.get("/chatbot")
+async def get_chatbot_analysis(
+    symbol: str = Query(..., description="Hisse senedi sembolü"),
+    detay: bool = Query(False, description="Detaylı analiz isteniyor mu?")
+):
+    try:
+        # Cache key oluştur
+        cache_key = f"chatbot:{symbol}:{detay}"
+        
+        # Önbellekte var mı kontrol et
+        if cache_key in price_cache:
+            logger.info(f"Chatbot analizi önbellekten alındı: {cache_key}")
+            return JSONResponse(content={"response": price_cache[cache_key]})
+
+        # Chatbot analizi yap
+        logger.info(f"Chatbot analizi yapılıyor: {symbol}")
+        response = chatbot_response(symbol, detay)
+        
+        # Önbelleğe kaydet
+        price_cache[cache_key] = response
+        
+        return JSONResponse(content={"response": response})
+        
+    except Exception as e:
+        logger.error(f"Chatbot hatası: {str(e)}")
+        return JSONResponse(
+            status_code=500,
+            content={
+                "success": False,
+                "detail": f"Chatbot hatası: {str(e)}"
             }
         )
 
