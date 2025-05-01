@@ -15,6 +15,7 @@ templates = Jinja2Templates(directory="templates")
 
 # Ana sayfa - form ekranı
 @app.get("/", response_class=HTMLResponse)
+@app.head("/", response_class=HTMLResponse)
 async def form_view(request: Request):
     return templates.TemplateResponse("index.html", {"request": request})
 
