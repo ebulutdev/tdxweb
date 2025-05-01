@@ -3,16 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TDX Borsa Danışman Botu</title>
+    <title>TDX Borsa Botu</title>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
 <body>
+    
     <header>
         <nav class="navbar">
             <div class="logo">
                 <i class="fas fa-chart-line"></i>
-                TDX Borsa Danışman
+                TDX Borsa Botu
             </div>
             <ul class="nav-links" id="navLinks">
                 <li><a href="#hero"><i class="fas fa-home"></i> Ana Sayfa</a></li>
@@ -29,8 +30,14 @@
 
     <section class="hero" id="hero">
         <div class="hero-content">
-            <h1>Yapay Zeka Destekli<br>Borsa Danışmanınız</h1>
-            <p>Gerçek zamanlı borsa analizleri, yapay zeka destekli tahminler ve profesyonel yatırım danışmanlığı ile yatırımlarınızı optimize edin.</p>
+            <h1>Yapay Zeka Destekli<br>Borsa Botunuz</h1>
+            <p>Gerçek zamanlı borsa analizleri, yapay zeka destekli tahminler ve profesyonel yatırım botu ile yatırımlarınızı optimize edin.</p>
+            <div style="width:100%;display:flex;justify-content:center;align-items:center;margin:2.2rem 0 2.2rem 0;">
+                <a href="http://127.0.0.1:8000/" class="analiz-kesfet-coolbox">
+                    <span class="analiz-kesfet-icon"><i class="fas fa-magic"></i></span>
+                    <span class="analiz-kesfet-text">Analizi Keşfet</span>
+                </a>
+            </div>
             <div class="hero-buttons">
                 <a href="register.html" class="btn-yellow">
                     <i class="fas fa-rocket"></i> Hemen Başla
@@ -46,52 +53,62 @@
         </video>
     </section>
 
-    <!-- Chart Section -->
-    <section class="chart-section" id="chart">
-        <div class="chart-container">
-            <div class="chart-header">
-                <h2>TDX - The Beast Chart</h2>
-                <div class="chart-controls">
-                    <div class="symbol-input">
-                        <input type="text" id="stockSymbol" placeholder="Hisse Kodu Girin (örn: THYAO)" value="THYAO">
-                        <button onclick="updateChart()">
-                            <i class="fas fa-search"></i>
-                        </button>
-                    </div>
-                    <div class="timeframe-selector">
-                        <button class="timeframe-btn" data-timeframe="1mo" data-interval="1d">1 Ay</button>
-                        <button class="timeframe-btn" data-timeframe="3mo" data-interval="1d">3 Ay</button>
-                        <button class="timeframe-btn active" data-timeframe="6mo" data-interval="1wk">6 Ay</button>
-                        <button class="timeframe-btn" data-timeframe="1y" data-interval="1wk">1 Yıl</button>
-                        <button class="timeframe-btn" data-timeframe="2y" data-interval="1wk">2 Yıl</button>
-                    </div>
-                </div>
-            </div>
-            <div class="chart-wrapper">
-                <canvas id="priceChart"></canvas>
-            </div>
-            <div class="chart-info">
-                <div class="price-info">
-                    <div class="current-price">
-                        <span class="label">Güncel Fiyat</span>
-                        <span class="value" id="currentPrice">0.00</span>
-                    </div>
-                    <div class="close-price">
-                        <span class="label">Kapanış</span>
-                        <span class="value" id="closePrice">0.00</span>
-                    </div>
-                    <div class="price-change">
-                        <span class="label">Değişim</span>
-                        <span class="value" id="priceChange">0.00%</span>
-                    </div>
-                </div>
-                <div class="volume-info">
-                    <span class="label">Hacim</span>
-                    <span class="value" id="volume">0</span>
-                </div>
-            </div>
-        </div>
+   
+
+    <!-- Mumapp Analiz Alanı Başlangıç -->
+    
+        <style>
+        .analiz-kesfet-coolbox {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 1.1rem;
+            padding: 1.2rem 2.8rem;
+            border-radius: 22px;
+            background: linear-gradient(120deg, rgba(79,70,229,0.22) 0%, rgba(129,140,248,0.18) 100%);
+            box-shadow: 0 8px 40px 0 rgba(79,70,229,0.18), 0 1.5px 16px 0 rgba(0,0,0,0.10);
+            color: #fff;
+            font-size: 1.45rem;
+            font-weight: 800;
+            letter-spacing: 0.5px;
+            text-decoration: none;
+            margin: 0 auto;
+            transition: transform 0.22s cubic-bezier(.4,2,.6,1), box-shadow 0.22s, background 0.22s;
+            backdrop-filter: blur(16px) saturate(1.2);
+            opacity: 0.92;
+            border: 1.5px solid rgba(129,140,248,0.18);
+            animation: coolboxPulse 2.2s infinite alternate;
+        }
+        .analiz-kesfet-coolbox:hover {
+            transform: scale(1.08) translateY(-2px);
+            box-shadow: 0 16px 60px 0 rgba(79,70,229,0.28), 0 2.5px 24px 0 rgba(0,0,0,0.13);
+            background: linear-gradient(120deg, rgba(99,102,241,0.32) 0%, rgba(129,140,248,0.22) 100%);
+            opacity: 1;
+        }
+        .analiz-kesfet-icon {
+            font-size: 1.7em;
+            display: flex;
+            align-items: center;
+            animation: iconSparkle 1.8s infinite alternate;
+        }
+        .analiz-kesfet-text {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 1.25em;
+            font-weight: 900;
+            letter-spacing: 0.7px;
+            text-shadow: 0 2px 12px rgba(79,70,229,0.18);
+        }
+        @keyframes coolboxPulse {
+            0% { box-shadow: 0 8px 40px 0 rgba(79,70,229,0.18); }
+            100% { box-shadow: 0 16px 60px 0 rgba(79,70,229,0.28); }
+        }
+        @keyframes iconSparkle {
+            0% { filter: drop-shadow(0 0 0px #fff); color: #fff; }
+            100% { filter: drop-shadow(0 0 8px #a5b4fc); color: #a5b4fc; }
+        }
+        </style>
     </section>
+    <!-- Mumapp Analiz Alanı Bitiş -->
 
     <!-- İstatistikler Bölümü -->
     <section class="stats-section" id="stats">
@@ -123,14 +140,14 @@
 
     <div id="chatbot-panel" class="ai-sidebar draggable">
         <div class="ai-sidebar-header" onmousedown="dragStart(event)">
-            <i class="fas fa-robot"></i> TDX Borsa Danışman
+            <i class="fas fa-robot"></i> TDX Borsa Botu
             <button class="close-btn" onclick="toggleChatbot()">
                 <i class="fas fa-times"></i>
             </button>
         </div>
         <div class="chat-display" id="chat-display">
             <div class="bot-message">
-                <strong>Bot:</strong> Merhaba! TDX Borsa Danışman Asistanınız olarak size yardımcı olmaktan memnuniyet duyarım. Hisse senedi analizi için lütfen bir hisse kodu girin (Örnek: THYAO). Detaylı teknik analiz için "detaylı analiz yap THYAO" şeklinde yazabilirsiniz.</div>
+                <strong>Bot:</strong> Merhaba! TDX Borsa Bot Asistanınız olarak size yardımcı olmaktan memnuniyet duyarım. Hisse senedi analizi için lütfen bir hisse kodu girin (Örnek: THYAO). Detaylı teknik analiz için "detaylı analiz yap THYAO" şeklinde yazabilirsiniz.</div>
         </div>
         <div class="chat-input">
             <input type="text" id="user-input" placeholder="Hisse kodunu girin (örn: THYAO)">
@@ -203,10 +220,72 @@
                 <div class="step-number">4</div>
                 <i class="fas fa-bell"></i>
                 <h3>Fırsatları Yakalayın</h3>
-                <p>Anlık bildirimler ve özel uyarılar ile piyasadaki önemli fırsatları ve riskleri zamanında değerlendirin.</p>
+                <p>Anlık analizler ve öneriler ile piyasadaki önemli fırsatları ve riskleri zamanında değerlendirin.</p>
             </div>
         </div>
     </section>
+</section>
+<section id="fullpage-video-section" style="position:relative;width:100vw;min-height:100vh;overflow:hidden;">
+    <video class="gg-bg-video" autoplay muted loop playsinline style="position:absolute;top:0;left:0;width:100vw;height:100vh;object-fit:cover;z-index:0;opacity:0.38;pointer-events:none;">
+        <source src="gg3.mp4" type="video/mp4">
+        Tarayıcınız video öğesini desteklemiyor.
+    </video>
+    <div style="position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;text-align:center;">
+        <h2 style="font-size:2.7rem;font-family:'Space Grotesk',sans-serif;font-weight:900;color:#fff;text-shadow:0 4px 24px rgba(62,207,255,0.18);margin-bottom:1.5rem;">Katkılarınızla Geliştiriyoruz</h2>
+        <p style="font-size:1.25rem;color:#e0e7ef;max-width:700px;"><p>TDX Bot, BIST (Borsa İstanbul) enstrümanlarına ait kullanıcıdan alınan fiyat grafiklerini bilgisayarla görme ve sinyal işleme teknikleriyle analiz eden bir yapay zekâ sistemidir.</p>
+        <p>Görsel veriyi işleyerek grafik üzerinde:</p>
+        <ul>
+          <li>Yatay destek ve direnç seviyelerini (piksel yoğunluğu ve uç değer analizine dayalı),</li>
+          <li>Yüksek temas frekansına sahip fiyat bölgelerini (frekans analizleri ile),</li>
+          <li>Mum yoğunluk kümelerini (yoğunluk haritaları ve eşikleme yöntemleriyle),</li>
+          <li>Eğim yönlerini (pencere ortalaması ve trend ivmesi ile),</li>
+          <li>Reaksiyon alanlarını (ani yoğunluk geçişleri ve fiyat tepki bölgeleri)</li>
+        </ul>
+        <p>otomatik olarak tespit eder.</p>
+        <p>Sistemimiz, yatırımcıların teknik analiz sürecini otomatikleştirerek:</p>
+        <ul>
+          <li>Subjektif yorumları minimize etmeyi,</li>
+          <li>Analiz süresini kısaltmayı,</li>
+          <li>Veriye dayalı karar desteği sunmayı hedefler.</li>
+        </ul></div>
+</section>
+
+    <section id="fullpage-video-section" style="position:relative;width:100vw;min-height:100vh;overflow:hidden;">
+        <video class="gg-bg-video" autoplay muted loop playsinline style="position:absolute;top:0;left:0;width:100vw;height:100vh;object-fit:cover;z-index:0;opacity:0.38;pointer-events:none;">
+            <source src="g1.mp4" type="video/mp4">
+            Tarayıcınız video öğesini desteklemiyor.
+        </video>
+        <div style="position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;text-align:center;">
+            <h2 style="font-size:2.7rem;font-family:'Space Grotesk',sans-serif;font-weight:900;color:#fff;text-shadow:0 4px 24px rgba(62,207,255,0.18);margin-bottom:1.5rem;">Katkılarınızla Geliştiriyoruz</h2>
+            <p style="font-size:1.25rem;color:#e0e7ef;max-width:700px;">TDX Botu, yapay zeka destekli bir sistemdir. Her yapılan analiz, algoritmalarımızı daha da geliştirir ve bir sonraki tahmin için daha isabetli sonuçlar üretmemizi sağlar. Böylece her kullanımda daha akıllı, daha güçlü bir botla karşılaşırsınız.</p>
+        </div>
+    </section>
+    <!-- Arka Plan Video Bölümü Bitiş -->
+
+    <!-- Arka Plan Video Bölümü Başlangıç -->
+    <section id="fullpage-video-section" style="position:relative;width:100vw;min-height:100vh;overflow:hidden;">
+        <video class="gg-bg-video" autoplay muted loop playsinline style="position:absolute;top:0;left:0;width:100vw;height:100vh;object-fit:cover;z-index:0;opacity:0.38;pointer-events:none;">
+            <source src="gg.mp4" type="video/mp4">
+            Tarayıcınız video öğesini desteklemiyor.
+        </video>
+        <div style="position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;text-align:center;">
+            <h2 style="font-size:2.7rem;font-family:'Space Grotesk',sans-serif;font-weight:900;color:#fff;text-shadow:0 4px 24px rgba(62,207,255,0.18);margin-bottom:1.5rem;">Katkılarınızla Geliştiriyoruz</h2>
+            <p style="font-size:1.25rem;color:#e0e7ef;max-width:700px;">Bizimle her analiz yaptığınızda, TDX Bot sizinle birlikte gelişir. Öğrenen yapay zekamız sayesinde analiz kalitemizi sürekli artırıyor, size her seferinde daha iyi bir performans
+                 sunuyoruz.</p>
+        </div>
+    </section>
+    <section id="fullpage-video-section" style="position:relative;width:100vw;min-height:100vh;overflow:hidden;">
+        <video class="gg-bg-video" autoplay muted loop playsinline style="position:absolute;top:0;left:0;width:100vw;height:100vh;object-fit:cover;z-index:0;opacity:0.38;pointer-events:none;">
+            <source src="gg2.mp4" type="video/mp4">
+            Tarayıcınız video öğesini desteklemiyor.
+        </video>
+        <div style="position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;text-align:center;">
+            <h2 style="font-size:2.7rem;font-family:'Space Grotesk',sans-serif;font-weight:900;color:#fff;text-shadow:0 4px 24px rgba(62,207,255,0.18);margin-bottom:1.5rem;">Katkılarınızla Geliştiriyoruz</h2>
+            <p style="font-size:1.25rem;color:#e0e7ef;max-width:700px;">TDX Bot, Borsa İstanbul (BIST) odaklı olarak yüklediğiniz fiyat grafiklerini analiz eder, destek/direnç seviyelerini, yoğun mum bölgelerini, fiyat kümelenmelerini, trend yönlerini ve reaksiyon alanlarını otomatik olarak belirler. Amaç, yatırımcının teknik analiz sürecini kolaylaştırmak ve insan hatasını azaltmaktır.</p>
+        </div>
+    </section>
+    
+    <!-- Arka Plan Video Bölümü Bitiş -->
 
     <section class="contact" id="contact">
         <div class="contact-form">
@@ -255,10 +334,9 @@
                 </div>
             </div>
             <div class="info-item">
-                <i class="fas fa-phone-alt"></i>
+               
                 <div>
-                    <h3>Telefon</h3>
-                    <p>+90 (555) 123 45 67</p>
+                    
                 </div>
             </div>
             <div class="info-item">
@@ -290,8 +368,8 @@
     <footer>
         <div class="footer-content">
             <div class="footer-left">
-                <h3><i class="fas fa-chart-line"></i> TDX Borsa Danışman</h3>
-                <p>Yapay zeka destekli borsa danışmanlığı ile yatırımlarınızı optimize edin.</p>
+                <h3><i class="fas fa-chart-line"></i> TDX Borsa Botu</h3>
+                <p>Yapay zeka destekli borsa botu ile yatırımlarınızı optimize edin.</p>
             </div>
             <div class="footer-middle">
                 <h4>Son Blog Yazısı</h4>
@@ -311,7 +389,7 @@
             </div>
         </div>
         <div class="footer-bottom">
-            <p>&copy; 2024 TDX Borsa Danışman. Tüm hakları saklıdır.</p>
+            <p>&copy; 2024 TDX Borsa Botu. Tüm hakları saklıdır.</p>
         </div>
     </footer>
 

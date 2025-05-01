@@ -3,7 +3,7 @@ const BASE_URL = "https://tdx-combined-service.onrender.com";
 
 async function sendMessage() {
     const input = document.getElementById("user-input");
-    const message = input.value.trim();
+    const message = input.value.trim(); 
     if (message === "") return;
 
     appendMessage("Siz", message);
@@ -13,7 +13,7 @@ async function sendMessage() {
     let symbol = message;
     let detayli = false;
 
-    if (message.toLowerCase().includes("detaylı")) {
+    if (message.toLowerCase().includes("detaylı")) { 
         detayli = true;
         const words = message.split(" ");
         symbol = words[words.length - 1];
