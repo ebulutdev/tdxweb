@@ -5,8 +5,8 @@
 {% block content %}
 <div class="row justify-content-center">
     <div class="col-md-8 text-center">
-        <h1 class="display-4 mb-4">Güvenli Site'ye Hoş Geldiniz</h1>
-        <p class="lead mb-4">Güvenli bir şekilde kayıt olun ve hesabınıza giriş yapın.</p>
+        <h1 class="main-title display-4 mb-4">TDX BORSA'ya Hoş Geldiniz</h1>
+        <p class="main-desc lead mb-4">Borsa analizleri, hisse değerleme ve finansal araçlar tek platformda!<br> Güvenli şekilde kayıt olun, portföyünüzü yönetin ve hisse değerleme araçlarımızı kullanın.</p>
         {% if not current_user.is_authenticated %}
             <div class="d-grid gap-2 d-sm-flex justify-content-sm-center">
                 <a href="{{ url_for('register') }}" class="btn btn-primary btn-lg px-4 gap-3">Kayıt Ol</a>
@@ -14,7 +14,7 @@
             </div>
         {% else %}
             <div class="d-grid gap-2 d-sm-flex justify-content-sm-center">
-                <a href="{{ url_for('dashboard') }}" class="btn btn-primary btn-lg px-4 gap-3">Dashboard'a Git</a>
+                <a href="{{ url_for('hisse_fiyat_hesapla') }}" class="btn btn-success btn-lg px-4 gap-3">Hisse Fiyatı Hesapla</a>
             </div>
         {% endif %}
     </div>

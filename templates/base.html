@@ -3,22 +3,171 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}{% endblock %} - Güvenli Site</title>
+    <title>{% block title %}{% endblock %} - TDX BORSA</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700;900&display=swap" rel="stylesheet">
     <style>
+        html, body {
+            height: 100%;
+            font-family: 'Montserrat', Arial, sans-serif !important;
+        }
+        body, h1, h2, h3, h4, h5, h6, p, a, .navbar-brand, .navbar-nav .nav-link, .btn, .card, .table, .site-subtitle, .site-description, .animated-gradient-title {
+            font-family: 'Montserrat', Arial, sans-serif !important;
+        }
         body {
-            padding-top: 2rem;
-            background-color: #f8f9fa;
+            min-height: 100vh;
+            background: #181a1b;
+            color: #e0e0e0;
+            position: relative;
+            overflow-x: hidden;
+        }
+        .bg-video {
+            position: fixed;
+            top: 0;
+            left: 0;
+            min-width: 100vw;
+            min-height: 100vh;
+            width: 100vw;
+            height: 100vh;
+            object-fit: cover;
+            z-index: -2;
+        }
+        .bg-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(10, 10, 10, 0.82);
+            z-index: -1;
         }
         .navbar {
-            margin-bottom: 2rem;
+            margin-bottom: 0;
+            background: transparent !important;
+            box-shadow: none !important;
+            padding-top: 0.5rem;
+            padding-bottom: 0.5rem;
+        }
+        .navbar-brand {
+            font-weight: bold;
+            letter-spacing: 2px;
+            color: #fff !important;
+        }
+        .navbar-nav .nav-link {
+            color: #e0e0e0 !important;
+        }
+        .navbar-nav .nav-link.active, .navbar-nav .nav-link:focus, .navbar-nav .nav-link:hover {
+            color: #ffd600 !important;
+        }
+        .container {
+            position: relative;
+            z-index: 1;
+        }
+        .card {
+            background: #232526;
+            color: #e0e0e0;
+            border: 1px solid #333;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+        }
+        .card-header {
+            background: #181a1b;
+            color: #ffd600;
+            font-weight: bold;
+        }
+        .btn-primary {
+            background: #232526;
+            color: #f5f5f5;
+            border: none;
+            font-weight: 700;
+            transition: background 0.2s, color 0.2s;
+        }
+        .btn-primary:hover, .btn-primary:focus {
+            background: #33373a;
+            color: #fff;
+        }
+        .btn-success {
+            background: #44474a;
+            color: #f5f5f5;
+            border: none;
+            font-weight: 700;
+            transition: background 0.2s, color 0.2s;
+        }
+        .btn-success:hover, .btn-success:focus {
+            background: #232526;
+            color: #fff;
+        }
+        .table {
+            color: #e0e0e0;
+            background: #232526;
+        }
+        .table th, .table td {
+            border-color: #333;
+        }
+        .table-info {
+            background: #232526 !important;
+            color: #ffd600 !important;
+        }
+        .table-warning {
+            background: #232526 !important;
+            color: #00e676 !important;
+        }
+        .alert {
+            background: #232526;
+            color: #ffd600;
+            border: 1px solid #ffd600;
+        }
+        a, a:visited {
+            color: #ffd600;
+        }
+        a:hover, a:focus {
+            color: #fff200;
+        }
+        .animated-gradient-title {
+            font-size: 3.5rem;
+            font-weight: 900;
+            background: linear-gradient(90deg, #111 0%, #444 50%, #111 100%);
+            background-size: 200% auto;
+            color: transparent;
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: gradientMove 3s linear infinite;
+            text-shadow: 0 4px 24px rgba(0,0,0,0.5), 0 1px 0 #fff;
+        }
+        @keyframes gradientMove {
+            0% { background-position: 0% 50%; }
+            100% { background-position: 100% 50%; }
+        }
+        .site-subtitle {
+            color: #e0e0e0;
+            font-size: 1.4rem;
+            margin-bottom: 0.8rem;
+            font-weight: 700;
+            text-shadow: 0 2px 8px rgba(0,0,0,0.18);
+        }
+        .site-description {
+            color: #bdbdbd;
+            font-size: 1.1rem;
+            max-width: 700px;
+            margin: 0 auto;
+            text-shadow: 0 1px 4px rgba(0,0,0,0.10);
+        }
+        .main-title {
+            color: #cccccc;
+            font-weight: bold;
+            font-size: 2.5rem;
+            letter-spacing: 1px;
+        }
+        .main-desc {
+            color: #bdbdbd;
+            font-size: 1.15rem;
         }
     </style>
 </head>
 <body>
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <nav class="navbar navbar-expand-lg navbar-dark">
         <div class="container">
-            <a class="navbar-brand" href="{{ url_for('home') }}">Güvenli Site</a>
+            <a class="navbar-brand" href="{{ url_for('home') }}">TDX BORSA</a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                 <span class="navbar-toggler-icon"></span>
             </button>
@@ -36,10 +185,10 @@
                         </li>
                     {% else %}
                         <li class="nav-item">
-                            <a class="nav-link" href="{{ url_for('login') }}">Giriş Yap</a>
+                            <a href="#" class="btn btn-primary btn-sm mx-1" style="font-weight:700;border-radius:0.5rem;" data-bs-toggle="modal" data-bs-target="#loginModal">Giriş Yap</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="{{ url_for('register') }}">Kayıt Ol</a>
+                            <a href="#" class="btn btn-success btn-sm mx-1" style="font-weight:700;border-radius:0.5rem;" data-bs-toggle="modal" data-bs-target="#registerModal">Kayıt Ol</a>
                         </li>
                     {% endif %}
                 </ul>
@@ -47,18 +196,175 @@
         </div>
     </nav>
 
-    <div class="container">
-        {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
-                {% for category, message in messages %}
-                    <div class="alert alert-{{ category }}">{{ message }}</div>
-                {% endfor %}
-            {% endif %}
-        {% endwith %}
-        
-        {% block content %}{% endblock %}
+   
+
+    <section id="welcome-section" style="position:relative;width:100vw;height:100vh;overflow:hidden;margin:0;padding:0;">
+        <video class="welcome-bg-video" autoplay muted loop playsinline style="position:absolute;top:0;left:0;width:100vw;height:100vh;object-fit:cover;z-index:0;opacity:0.38;pointer-events:none;">
+            <source src="{{ url_for('static', filename='gg4.mp4') }}" type="video/mp4">
+            Tarayıcınız video öğesini desteklemiyor.
+        </video>
+        <div style="position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;width:100vw;text-align:center;">
+            <h1 class="animated-gradient-title">TDX BORSA'ya Hoş Geldiniz</h1>
+            <h3 class="site-subtitle">Borsa analizleri, hisse değerleme ve finansal araçlar tek platformda!</h3>
+            <p class="site-description">Güvenli şekilde kayıt olun, portföyünüzü yönetin ve hisse değerleme araçlarımızı kullanın.</p>
+            <div style="margin-top:2.2rem;display:flex;gap:1.2rem;justify-content:center;">
+                <!-- Giriş ve Kayıt Ol butonları kaldırıldı -->
+            </div>
+        </div>
+    </section>
+
+    <section id="fullpage-video-section" style="position:relative;width:100vw;height:100vh;overflow:hidden;margin:0;padding:0;">
+        <video class="gg-bg-video" autoplay muted loop playsinline style="position:absolute;top:0;left:0;width:100vw;height:100vh;object-fit:cover;z-index:0;opacity:0.38;pointer-events:none;">
+            <source src="{{ url_for('static', filename='gg3.mp4') }}" type="video/mp4">
+            Tarayıcınız video öğesini desteklemiyor.
+        </video>
+        <div style="position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;width:100vw;text-align:center;">
+            <h2 style="font-size:2.7rem;font-weight:900;color:#fff;text-shadow:0 4px 24px rgba(62,207,255,0.18);margin-bottom:1.5rem;">Katkılarınızla Geliştiriyoruz</h2>
+            <p style="font-size:1.25rem;color:#e0e7ef;max-width:700px;">TDX Bot, BIST (Borsa İstanbul) enstrümanlarına ait kullanıcıdan alınan fiyat grafiklerini bilgisayarla görme ve sinyal işleme teknikleriyle analiz eden bir yapay zekâ sistemidir.</p>
+            <p style="font-size:1.25rem;color:#e0e7ef;max-width:700px;">Görsel veriyi işleyerek grafik üzerinde:</p>
+            <ul style="color:#e0e7ef;text-align:left;max-width:700px;margin:0 auto;">
+                <li>Yatay destek ve direnç seviyelerini (piksel yoğunluğu ve uç değer analizine dayalı),</li>
+                <li>Yüksek temas frekansına sahip fiyat bölgelerini (frekans analizleri ile),</li>
+                <li>Mum yoğunluk kümelerini (yoğunluk haritaları ve eşikleme yöntemleriyle),</li>
+                <li>Eğim yönlerini (pencere ortalaması ve trend ivmesi ile),</li>
+                <li>Reaksiyon alanlarını (ani yoğunluk geçişleri ve fiyat tepki bölgeleri)</li>
+            </ul>
+            <p style="font-size:1.25rem;color:#e0e7ef;max-width:700px;">otomatik olarak tespit eder.</p>
+            <p style="font-size:1.25rem;color:#e0e7ef;max-width:700px;">Sistemimiz, yatırımcıların teknik analiz sürecini otomatikleştirerek:</p>
+            <ul style="color:#e0e7ef;text-align:left;max-width:700px;margin:0 auto;">
+                <li>Subjektif yorumları minimize etmeyi,</li>
+                <li>Analiz süresini kısaltmayı,</li>
+                <li>Veriye dayalı karar desteği sunmayı hedefler.</li>
+            </ul>
+        </div>
+    </section>
+    <section id="fullpage-video-section" style="position:relative;width:100vw;height:100vh;overflow:hidden;margin:0;padding:0;">
+        <video class="gg-bg-video" autoplay muted loop playsinline style="position:absolute;top:0;left:0;width:100vw;height:100vh;object-fit:cover;z-index:0;opacity:0.38;pointer-events:none;">
+            <source src="{{ url_for('static', filename='gg5.mp4') }}" type="video/mp4">
+            Tarayıcınız video öğesini desteklemiyor.
+        </video>
+        <div style="position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;width:100vw;text-align:center;">
+            <h2 style="font-size:2.7rem;font-weight:900;color:#fff;text-shadow:0 4px 24px rgba(62,207,255,0.18);margin-bottom:1.5rem;">Katkılarınızla Geliştiriyoruz</h2>
+            <p style="font-size:1.25rem;color:#e0e7ef;max-width:700px;">TDX Bot, BIST (Borsa İstanbul) enstrümanlarına ait kullanıcıdan alınan fiyat grafiklerini bilgisayarla görme ve sinyal işleme teknikleriyle analiz eden bir yapay zekâ sistemidir.</p>
+            <p style="font-size:1.25rem;color:#e0e7ef;max-width:700px;">Görsel veriyi işleyerek grafik üzerinde:</p>
+            <ul style="color:#e0e7ef;text-align:left;max-width:700px;margin:0 auto;">
+                <li>Yatay destek ve direnç seviyelerini (piksel yoğunluğu ve uç değer analizine dayalı),</li>
+                
+        </div>
+    </section>
+</section>
+<section id="fullpage-video-section" style="position:relative;width:100vw;height:100vh;overflow:hidden;margin:0;padding:0;">
+    <video class="gg-bg-video" autoplay muted loop playsinline style="position:absolute;top:0;left:0;width:100vw;height:100vh;object-fit:cover;z-index:0;opacity:0.38;pointer-events:none;">
+        <source src="{{ url_for('static', filename='gg6.mp4') }}" type="video/mp4">
+        Tarayıcınız video öğesini desteklemiyor.
+    </video>
+    <div style="position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;width:100vw;text-align:center;">
+        <h2 style="font-size:2.7rem;font-weight:900;color:#fff;text-shadow:0 4px 24px rgba(62,207,255,0.18);margin-bottom:1.5rem;">Katkılarınızla Geliştiriyoruz</h2>
+        <p style="font-size:1.25rem;color:#e0e7ef;max-width:700px;">TDX Bot, BIST (Borsa İstanbul) enstrümanlarına ait kullanıcıdan alınan fiyat grafiklerini bilgisayarla görme ve sinyal işleme teknikleriyle analiz eden bir yapay zekâ sistemidir.</p>
+        <p style="font-size:1.25rem;color:#e0e7ef;max-width:700px;">Görsel veriyi işleyerek grafik üzerinde:</p>
+        <ul style="color:#e0e7ef;text-align:left;max-width:700px;margin:0 auto;">
+            <li>Yatay destek ve direnç seviyelerini (piksel yoğunluğu ve uç değer analizine dayalı),</li>
+            
+    </div>
+</section>
+</section>
+<section id="fullpage-video-section" style="position:relative;width:100vw;height:100vh;overflow:hidden;margin:0;padding:0;">
+    <video class="gg-bg-video" autoplay muted loop playsinline style="position:absolute;top:0;left:0;width:100vw;height:100vh;object-fit:cover;z-index:0;opacity:0.38;pointer-events:none;">
+        <source src="{{ url_for('static', filename='gg7.mp4') }}" type="video/mp4">
+        Tarayıcınız video öğesini desteklemiyor.
+    </video>
+    <div style="position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;width:100vw;text-align:center;">
+        <h2 style="font-size:2.7rem;font-weight:900;color:#fff;text-shadow:0 4px 24px rgba(62,207,255,0.18);margin-bottom:1.5rem;">Katkılarınızla Geliştiriyoruz</h2>
+        <p style="font-size:1.25rem;color:#e0e7ef;max-width:700px;">TDX Bot, BIST (Borsa İstanbul) enstrümanlarına ait kullanıcıdan alınan fiyat grafiklerini bilgisayarla görme ve sinyal işleme teknikleriyle analiz eden bir yapay zekâ sistemidir.</p>
+        <p style="font-size:1.25rem;color:#e0e7ef;max-width:700px;">Görsel veriyi işleyerek grafik üzerinde:</p>
+        <ul style="color:#e0e7ef;text-align:left;max-width:700px;margin:0 auto;">
+            <li>Yatay destek ve direnç seviyelerini (piksel yoğunluğu ve uç değer analizine dayalı),</li>
+            
+    </div>
+</section>
+
+
+ 
+    <!-- Login Modal -->
+    <div class="modal fade" id="loginModal" tabindex="-1" aria-labelledby="loginModalLabel" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" style="background:#181a1b;color:#e0e0e0;">
+          <div class="modal-header border-0">
+            <h5 class="modal-title w-100 text-center" id="loginModalLabel" style="font-weight:700;">Giriş Yap</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <form method="POST" action="{{ url_for('login') }}">
+              {{ login_form.csrf_token }}
+              <div class="mb-3">
+                <label for="username" class="form-label">Kullanıcı Adı</label>
+                <input type="text" class="form-control" id="username" name="username" required>
+              </div>
+              <div class="mb-3">
+                <label for="password" class="form-label">Şifre</label>
+                <input type="password" class="form-control" id="password" name="password" required>
+              </div>
+              <button type="submit" class="btn btn-primary w-100">Giriş Yap</button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Register Modal -->
+    <div class="modal fade" id="registerModal" tabindex="-1" aria-labelledby="registerModalLabel" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" style="background:#181a1b;color:#e0e0e0;">
+          <div class="modal-header border-0">
+            <h5 class="modal-title w-100 text-center" id="registerModalLabel" style="font-weight:700;">Kayıt Ol</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <form method="POST" action="{{ url_for('register') }}">
+              {{ register_form.csrf_token }}
+              <div class="mb-3">
+                <label for="username" class="form-label">Kullanıcı Adı</label>
+                <input type="text" class="form-control" id="username" name="username" required>
+              </div>
+              <div class="mb-3">
+                <label for="email" class="form-label">E-posta</label>
+                <input type="email" class="form-control" id="email" name="email" required>
+              </div>
+              <div class="mb-3">
+                <label for="password" class="form-label">Şifre</label>
+                <input type="password" class="form-control" id="password" name="password" required>
+              </div>
+              <div class="mb-3">
+                <label for="confirm_password" class="form-label">Şifreyi Onayla</label>
+                <input type="password" class="form-control" id="confirm_password" name="confirm_password" required>
+              </div>
+              <button type="submit" class="btn btn-success w-100">Kayıt Ol</button>
+            </form>
+          </div>
+        </div>
+      </div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Initialize all modals
+        document.addEventListener('DOMContentLoaded', function() {
+            var loginModal = new bootstrap.Modal(document.getElementById('loginModal'));
+            var registerModal = new bootstrap.Modal(document.getElementById('registerModal'));
+            
+            // Add click event listeners to the buttons
+            document.querySelectorAll('[data-bs-toggle="modal"]').forEach(function(button) {
+                button.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    var target = this.getAttribute('data-bs-target');
+                    if (target === '#loginModal') {
+                        loginModal.show();
+                    } else if (target === '#registerModal') {
+                        registerModal.show();
+                    }
+                });
+            });
+        });
+    </script>
 </body>
 </html> 

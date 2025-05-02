@@ -33,7 +33,9 @@ class LoginForm(FlaskForm):
 
 @app.route('/')
 def home():
-    return render_template('home.html')
+    login_form = LoginForm()
+    register_form = RegistrationForm()
+    return render_template('home.html', login_form=login_form, register_form=register_form)
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
@@ -46,14 +48,14 @@ def register():
         ).first()
         if existing_user:
             flash('Bu kullanıcı adı veya e-posta zaten kayıtlı.', 'danger')
-            return render_template('register.html', form=form)
+            return redirect(url_for('home'))
         user = User(username=form.username.data, email=form.email.data)
         user.set_password(form.password.data)
         db.session.add(user)
         db.session.commit()
         flash('Kayıt başarılı! Şimdi giriş yapabilirsiniz.', 'success')
-        return redirect(url_for('login'))
-    return render_template('register.html', form=form)
+        return redirect(url_for('home'))
+    return redirect(url_for('home'))
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -64,9 +66,10 @@ def login():
         user = User.query.filter_by(username=form.username.data).first()
         if user and user.check_password(form.password.data):
             login_user(user)
+            flash('Başarıyla giriş yaptınız!', 'success')
             return redirect(url_for('home'))
         flash('Kullanıcı adı veya şifre hatalı!', 'danger')
-    return render_template('login.html', form=form)
+    return redirect(url_for('home'))
 
 @app.route('/logout')
 @login_required
