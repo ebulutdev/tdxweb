@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+
+{% block title %}Ana Sayfa{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8 text-center">
+        <h1 class="display-4 mb-4">Güvenli Site'ye Hoş Geldiniz</h1>
+        <p class="lead mb-4">Güvenli bir şekilde kayıt olun ve hesabınıza giriş yapın.</p>
+        {% if not current_user.is_authenticated %}
+            <div class="d-grid gap-2 d-sm-flex justify-content-sm-center">
+                <a href="{{ url_for('register') }}" class="btn btn-primary btn-lg px-4 gap-3">Kayıt Ol</a>
+                <a href="{{ url_for('login') }}" class="btn btn-outline-secondary btn-lg px-4">Giriş Yap</a>
+            </div>
+        {% else %}
+            <div class="d-grid gap-2 d-sm-flex justify-content-sm-center">
+                <a href="{{ url_for('dashboard') }}" class="btn btn-primary btn-lg px-4 gap-3">Dashboard'a Git</a>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %} 

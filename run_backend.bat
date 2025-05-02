@@ -1,9 +1,0 @@
-@echo off
-echo TDX Borsa Danisman Backend Servisi Baslatiliyor...
-echo.
-echo Gerekli paketler yukleniyor...
-pip install -r requirements.txt
-echo.
-echo Backend servisi baslatiliyor...
-python main.py
-pause 
