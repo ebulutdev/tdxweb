@@ -10,3 +10,7 @@ gunicorn
 Flask-Mail==0.9.1
 itsdangerous==2.1.2
 Flask-Migrate==4.0.5
+requests
+yfinance
+flask-migrate
+wtforms
