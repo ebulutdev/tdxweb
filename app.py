@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, flash
+from flask import Flask, render_template, request, redirect, url_for, flash, jsonify
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
 from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, SubmitField
@@ -6,6 +6,8 @@ from wtforms.validators import DataRequired, Email, Length, EqualTo
 from config import Config
 from models import db, User
 from flask_migrate import Migrate
+import requests
+import yfinance as yf
 
 app = Flask(__name__)
 app.config.from_object(Config)
@@ -181,18 +183,31 @@ def hisse_fiyat_hesapla():
         sektor_pddd = request.form.get('sektor_pddd')
         sektor_fk = float(sektor_fk) if sektor_fk else None
         sektor_pddd = float(sektor_pddd) if sektor_pddd else None
+        analiz_tipi = request.form.get('analiz_tipi', 'hisse_basi')
 
         # F/K ve PD/DD analizleri
         fk, fk_yorum = fk_degerleme(hisse_fiyati, net_kar, odenmis_sermaye, sektor_fk)
         pddd, pddd_yorum = pddd_degerleme(hisse_fiyati, ozsermaye, odenmis_sermaye, sektor_pddd)
 
-        # Diğer klasik yöntemler
-        fiyat_fk = (net_kar * fk_orani) / odenmis_sermaye
-        fiyat_future_fk = (net_kar * fk_orani * 1.27) / odenmis_sermaye
-        fiyat_pddd = (ozsermaye * pddd_orani) / odenmis_sermaye
-        fiyat_sermaye = piyasa_degeri / odenmis_sermaye
-        fiyat_potansiyel = (piyasa_degeri * 1.1) / odenmis_sermaye
-        fiyat_ozsermaye_kar = (net_kar * 2) / odenmis_sermaye
+        if analiz_tipi == 'hisse_basi':
+            eps = net_kar / odenmis_sermaye if odenmis_sermaye else 0
+            bvps = ozsermaye / odenmis_sermaye if odenmis_sermaye else 0
+            fiyat_fk = eps * fk_orani
+            fiyat_future_fk = eps * fk_orani * 1.27
+            fiyat_pddd = bvps * pddd_orani
+            fiyat_sermaye = piyasa_degeri / odenmis_sermaye if odenmis_sermaye else 0
+            fiyat_potansiyel = (piyasa_degeri * 1.1) / odenmis_sermaye if odenmis_sermaye else 0
+            fiyat_ozsermaye_kar = (eps * 2) * fk_orani
+            analiz_tipi_aciklama = 'Hisse başı fiyat (EPS/BVPS bazlı)' 
+        else:
+            # Toplam şirket değeri bazlı hesaplama (örnek: diğer botun mantığı)
+            fiyat_fk = (net_kar * fk_orani) / odenmis_sermaye if odenmis_sermaye else 0
+            fiyat_future_fk = (net_kar * fk_orani * 1.27) / odenmis_sermaye if odenmis_sermaye else 0
+            fiyat_pddd = (ozsermaye * pddd_orani) / odenmis_sermaye if odenmis_sermaye else 0
+            fiyat_sermaye = piyasa_degeri / odenmis_sermaye if odenmis_sermaye else 0
+            fiyat_potansiyel = (piyasa_degeri * 1.1) / odenmis_sermaye if odenmis_sermaye else 0
+            fiyat_ozsermaye_kar = (net_kar * 2) / odenmis_sermaye if odenmis_sermaye else 0
+            analiz_tipi_aciklama = 'Toplam şirket değeri bazlı (diğer bot mantığı)'
 
         fiyatlar = [
             fiyat_fk,
@@ -208,6 +223,44 @@ def hisse_fiyat_hesapla():
         yorumlar['fk'] = fk_yorum
         yorumlar['pddd'] = pddd_yorum
 
+        # Koşullu profesyonel analiz ve yatırımcıya rehber açıklamalar
+        negatif_yontemler = []
+        cok_dusuk_yontemler = []
+        yontem_etiketleri = [
+            ('Cari F/K Oranına Göre', fiyat_fk),
+            ("Future's F/K Oranına Göre", fiyat_future_fk),
+            ('PD/DD Oranına Göre', fiyat_pddd),
+            ('Ödenmiş Sermayeye Göre', fiyat_sermaye),
+            ('Potansiyel Piyasa Değerine Göre', fiyat_potansiyel),
+            ('Yıl Sonu Tahmini Özsermaye Karlılığına Göre', fiyat_ozsermaye_kar)
+        ]
+        for etiket, deger in yontem_etiketleri:
+            if deger < 0:
+                negatif_yontemler.append(etiket)
+            elif deger < (0.2 * hisse_fiyati):
+                cok_dusuk_yontemler.append(etiket)
+
+        if net_kar < 0:
+            yorumlar['Negatif ve Düşük Fiyatlar Neden Oluştu?'] = f'''
+Net kârınız negatif olduğu için (ör. {net_kar:,.0f} TL), F/K oranına dayalı hesaplamalarda hisse başı fiyat negatif veya anlamlı olmayan bir değer alır. Bu nedenle "Cari F/K" ve "Future's F/K" gibi yöntemlerde negatif sonuçlar oluşur. Yıl Sonu Tahmini Özsermaye Karlılığına Göre hesaplamada da net kâr negatif olduğu için sonuç anlamlı değildir. PD/DD, Ödenmiş Sermaye ve Potansiyel Piyasa Değeri gibi yöntemler ise pozitif büyüklüklerle hesaplandığından pozitif değerler üretir. Bu durum, şirketin son dönemde zarar açıklamasının değerleme modellerini doğrudan etkilediğini gösterir.'''
+        if negatif_yontemler or cok_dusuk_yontemler:
+            aciklama = 'Ortalama fiyatın düşük çıkmasının ana nedeni: '
+            if negatif_yontemler:
+                aciklama += f"{', '.join(negatif_yontemler)} yöntem(ler)inde negatif değerler oluştu. "
+            if cok_dusuk_yontemler:
+                aciklama += f"{', '.join(cok_dusuk_yontemler)} yöntem(ler)inde ise fiyat, güncel fiyatın %20'sinden daha düşük hesaplandı. "
+            aciklama += 'Bu tür yöntemler ortalamayı ciddi şekilde aşağıya çeker. Lütfen sonuçları değerlendirirken bu yöntemlerin etkisini göz önünde bulundurun.'
+            yorumlar['Ortalama Fiyatın Çok Düşük Olmasının Sebebi'] = aciklama
+
+        # Dinamik özet-sonuç
+        anahtar_yorumlar = []
+        if 'Negatif ve Düşük Fiyatlar Neden Oluştu?' in yorumlar:
+            anahtar_yorumlar.append('Şirketin son dönemde zarar açıklaması, bazı değerleme yöntemlerinde negatif veya düşük fiyatlar oluşmasına neden olmuştur.')
+        if 'Ortalama Fiyatın Çok Düşük Olmasının Sebebi' in yorumlar:
+            anahtar_yorumlar.append('Ortalama fiyatın düşük çıkmasının ana nedenleri yukarıda açıklanmıştır. Bu tür yöntemlerin ortalamayı ciddi şekilde aşağıya çektiğini unutmayın.')
+        anahtar_yorumlar.append('Yatırım kararı verirken, finansal oranların yanında şirketin iş modeli, yönetim kalitesi, sektörel konumu ve geleceğe yönelik stratejileri de mutlaka dikkate alınmalıdır. Analiz sonuçları, tek başına kesin yatırım tavsiyesi değildir; genel bir değerlendirme sunar.')
+        yorumlar['Bu Sonuçlar Ne Anlama Geliyor?'] = ' '.join(anahtar_yorumlar)
+
         results = {
             'hisse_adi': hisse_adi,
             'fiyat_fk': f'{fiyat_fk:.2f}',
@@ -217,9 +270,42 @@ def hisse_fiyat_hesapla():
             'fiyat_potansiyel': f'{fiyat_potansiyel:.2f}',
             'fiyat_ozsermaye_kar': f'{fiyat_ozsermaye_kar:.2f}',
             'ortalama_fiyat': f'{ortalama_fiyat:.2f}',
-            'prim_potansiyeli': f'{prim_potansiyeli:.2f}'
+            'prim_potansiyeli': f'{prim_potansiyeli:.2f}',
+            'analiz_tipi_aciklama': analiz_tipi_aciklama
         }
     return render_template('index.html', results=results, yorumlar=yorumlar)
+
+@app.route('/api/hisse_bilgi_yf')
+def hisse_bilgi_yf():
+    kod = request.args.get('kod')
+    if not kod:
+        return jsonify({'error': 'Kod gerekli'}), 400
+    if not kod.endswith('.IS'):
+        kod = kod + '.IS'
+    hisse = yf.Ticker(kod)
+    try:
+        info = hisse.info
+        fiyat = info.get('regularMarketPrice')
+        piyasa_degeri = info.get('marketCap')
+        fk_orani = info.get('trailingPE')
+        pddd_orani = info.get('priceToBook')
+        odenmis_sermaye = info.get('sharesOutstanding')
+        ozsermaye_hisse_basi = info.get('bookValue')
+        net_kar = info.get('netIncomeToCommon')
+        # Toplam özsermaye = hisse başı defter değeri * ödenmiş sermaye
+        ozsermaye = ozsermaye_hisse_basi * odenmis_sermaye if ozsermaye_hisse_basi and odenmis_sermaye else None
+        return jsonify({
+            'fiyat': fiyat,
+            'net_kar': net_kar,
+            'ozsermaye': ozsermaye,
+            'odenmis_sermaye': odenmis_sermaye,
+            'fk_orani': fk_orani,
+            'pddd_orani': pddd_orani,
+            'piyasa_degeri': piyasa_degeri,
+            'kullanilan_kod': kod
+        })
+    except Exception as e:
+        return jsonify({'error': 'Veri işlenemedi', 'detail': str(e)}), 500
 
 if __name__ == '__main__':
     with app.app_context():

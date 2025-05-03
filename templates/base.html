@@ -57,7 +57,7 @@
             color: #e0e0e0 !important;
         }
         .navbar-nav .nav-link.active, .navbar-nav .nav-link:focus, .navbar-nav .nav-link:hover {
-            color: #ffd600 !important;
+            color: #f0eddd !important;
         }
         .container {
             position: relative;
@@ -105,7 +105,7 @@
         }
         .table-info {
             background: #232526 !important;
-            color: #ffd600 !important;
+            color: #d3cfba !important;
         }
         .table-warning {
             background: #232526 !important;
@@ -113,11 +113,11 @@
         }
         .alert {
             background: #232526;
-            color: #ffd600;
-            border: 1px solid #ffd600;
+            color: #c5c4bd;
+            border: 1px solid #cfccbe;
         }
         a, a:visited {
-            color: #ffd600;
+            color: #d1cfc3;
         }
         a:hover, a:focus {
             color: #fff200;
@@ -162,6 +162,17 @@
             color: #bdbdbd;
             font-size: 1.15rem;
         }
+        .btn-hisse-fiyat {
+            background: #232526;
+            color: #fff;
+            border: none;
+            font-weight: 700;
+            transition: background 0.2s, color 0.2s;
+        }
+        .btn-hisse-fiyat:hover, .btn-hisse-fiyat:focus {
+            background: #33373a;
+            color: #ffd600;
+        }
     </style>
 </head>
 <body>
@@ -178,18 +189,20 @@
                             <a class="nav-link" href="{{ url_for('dashboard') }}">Dashboard</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="{{ url_for('hisse_fiyat_hesapla') }}">Hisse Fiyatı Hesapla</a>
+                            <a class="nav-link" href="{{ url_for('hisse_fiyat_hesapla') }}" class="btn btn-hisse-fiyat btn-sm w-100" style="font-weight:700;border-radius:0.5rem;">Hisse Fiyatı Hesapla</a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link" href="{{ url_for('logout') }}">Çıkış Yap</a>
                         </li>
                     {% else %}
-                        <li class="nav-item">
-                            <a href="#" class="btn btn-primary btn-sm mx-1" style="font-weight:700;border-radius:0.5rem;" data-bs-toggle="modal" data-bs-target="#loginModal">Giriş Yap</a>
-                        </li>
-                        <li class="nav-item">
-                            <a href="#" class="btn btn-success btn-sm mx-1" style="font-weight:700;border-radius:0.5rem;" data-bs-toggle="modal" data-bs-target="#registerModal">Kayıt Ol</a>
-                        </li>
+                        <div class="row g-2 justify-content-end flex-nowrap align-items-center m-0">
+                            <div class="col-12 col-sm-auto d-grid">
+                                <a href="#" class="btn btn-primary btn-sm w-100" style="font-weight:700;border-radius:0.5rem;" data-bs-toggle="modal" data-bs-target="#loginModal">Giriş Yap</a>
+                            </div>
+                            <div class="col-12 col-sm-auto d-grid">
+                                <a href="#" class="btn btn-success btn-sm w-100" style="font-weight:700;border-radius:0.5rem;" data-bs-toggle="modal" data-bs-target="#registerModal">Kayıt Ol</a>
+                            </div>
+                        </div>
                     {% endif %}
                 </ul>
             </div>
@@ -208,7 +221,20 @@
             <h3 class="site-subtitle">Borsa analizleri, hisse değerleme ve finansal araçlar tek platformda!</h3>
             <p class="site-description">Güvenli şekilde kayıt olun, portföyünüzü yönetin ve hisse değerleme araçlarımızı kullanın.</p>
             <div style="margin-top:2.2rem;display:flex;gap:1.2rem;justify-content:center;">
-                <!-- Giriş ve Kayıt Ol butonları kaldırıldı -->
+                <div class="row g-2 justify-content-end flex-nowrap align-items-center m-0">
+                    {% if current_user.is_authenticated %}
+                        <div class="col-12 col-sm-auto d-grid">
+                            <a href="{{ url_for('hisse_fiyat_hesapla') }}" class="btn btn-hisse-fiyat btn-sm w-100" style="font-weight:700;border-radius:0.5rem;">Hisse Fiyatı Hesapla</a>
+                        </div>
+                    {% else %}
+                        <div class="col-12 col-sm-auto d-grid">
+                            <a href="#" class="btn btn-primary btn-sm w-100" style="font-weight:700;border-radius:0.5rem;" data-bs-toggle="modal" data-bs-target="#loginModal">Giriş Yap</a>
+                        </div>
+                        <div class="col-12 col-sm-auto d-grid">
+                            <a href="#" class="btn btn-success btn-sm w-100" style="font-weight:700;border-radius:0.5rem;" data-bs-toggle="modal" data-bs-target="#registerModal">Kayıt Ol</a>
+                        </div>
+                    {% endif %}
+                </div>
             </div>
         </div>
     </section>

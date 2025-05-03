@@ -69,55 +69,70 @@
         <div class="col-lg-10">
             <div class="card card-dark p-4">
                 <h2 class="mb-4 text-center">Hissenin Olması Gereken Fiyatı Hesaplama</h2>
+                <p class="mb-3 text-warning" style="font-size:1rem;"><b>Not:</b> Bu hesaplama <u>hisse başı fiyat</u> içindir, toplam şirket değeri veya milyon TL bazlı değildir. Aşağıdan analiz tipini seçebilirsiniz.</p>
                 <form method="post">
+                    <div class="mb-4">
+                        <label class="form-label mb-2"><b>Analiz Tipi:</b></label><br>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="radio" name="analiz_tipi" id="analiz_hisse_basi" value="hisse_basi" checked>
+                            <label class="form-check-label" for="analiz_hisse_basi">Hisse başı fiyat</label>
+                        </div>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="radio" name="analiz_tipi" id="analiz_toplam" value="toplam">
+                            <label class="form-check-label" for="analiz_toplam">Toplam şirket değeri bazlı</label>
+                        </div>
+                    </div>
                     <div class="row mb-3">
                         <div class="col-md-6">
                             <label class="form-label">Hisse Adı</label>
-                            <input type="text" class="form-control" name="hisse_adi" required placeholder="Örn: DOAS">
+                            <div class="input-group">
+                                <input type="text" class="form-control" id="hisse_adi" name="hisse_adi" required placeholder="Örn: DOAS">
+                                <button type="button" class="btn btn-secondary" id="verileri_getir">Verileri Getir</button>
+                            </div>
                         </div>
                         <div class="col-md-6">
                             <label class="form-label">Hisse Fiyatı</label>
-                            <input type="number" step="0.01" class="form-control" name="hisse_fiyati" required placeholder="Örn: 280.80">
+                            <input type="number" step="0.01" class="form-control" id="hisse_fiyati" name="hisse_fiyati" required placeholder="Örn: 280.80">
                         </div>
                     </div>
                     <div class="row mb-3">
                         <div class="col-md-6">
                             <label class="form-label">Ödenmiş Sermaye</label>
-                            <input type="number" step="0.01" class="form-control" name="odenmis_sermaye" required placeholder="Örn: 220000000">
+                            <input type="number" step="0.01" class="form-control" id="odenmis_sermaye" name="odenmis_sermaye" required placeholder="Örn: 220000000">
                         </div>
                         <div class="col-md-6">
                             <label class="form-label">6/9 Aylık Net Kar</label>
-                            <input type="number" step="0.01" class="form-control" name="net_kar" required placeholder="Örn: 9034795000">
+                            <input type="number" step="0.01" class="form-control" id="net_kar" name="net_kar" required placeholder="Örn: 9034795000">
                         </div>
                     </div>
                     <div class="row mb-3">
                         <div class="col-md-6">
                             <label class="form-label">Özsermaye</label>
-                            <input type="number" step="0.01" class="form-control" name="ozsermaye" required placeholder="Örn: 18949693252">
+                            <input type="number" step="0.01" class="form-control" id="ozsermaye" name="ozsermaye" required placeholder="Örn: 18949693252">
                         </div>
                         <div class="col-md-6">
                             <label class="form-label">Güncel Piyasa Değeri</label>
-                            <input type="number" step="0.01" class="form-control" name="piyasa_degeri" required placeholder="Örn: 61776000000">
+                            <input type="number" step="0.01" class="form-control" id="piyasa_degeri" name="piyasa_degeri" required placeholder="Örn: 61776000000">
                         </div>
                     </div>
                     <div class="row mb-3">
                         <div class="col-md-6">
                             <label class="form-label">F/K Oranı</label>
-                            <input type="number" step="0.01" class="form-control" name="fk_orani" required placeholder="Örn: 4.35">
+                            <input type="number" step="0.01" class="form-control" id="fk_orani" name="fk_orani" required placeholder="Örn: 4.35">
                         </div>
                         <div class="col-md-6">
                             <label class="form-label">PD/DD Oranı</label>
-                            <input type="number" step="0.01" class="form-control" name="pddd_orani" required placeholder="Örn: 3.26">
+                            <input type="number" step="0.01" class="form-control" id="pddd_orani" name="pddd_orani" required placeholder="Örn: 3.26">
                         </div>
                     </div>
                     <div class="row mb-3">
                         <div class="col-md-6">
                             <label class="form-label">Sektör F/K Ortalaması (isteğe bağlı)</label>
-                            <input type="number" step="0.01" class="form-control" name="sektor_fk" placeholder="Örn: 10">
+                            <input type="number" step="0.01" class="form-control" id="sektor_fk" name="sektor_fk" placeholder="Örn: 10">
                         </div>
                         <div class="col-md-6">
                             <label class="form-label">Sektör PD/DD Ortalaması (isteğe bağlı)</label>
-                            <input type="number" step="0.01" class="form-control" name="sektor_pddd" placeholder="Örn: 1.2">
+                            <input type="number" step="0.01" class="form-control" id="sektor_pddd" name="sektor_pddd" placeholder="Örn: 1.2">
                         </div>
                     </div>
                     <div class="d-grid">
@@ -139,6 +154,7 @@
                 {% if results %}
                 <div class="mt-5">
                     <h4 class="mb-3">Sonuçlar - {{ results.hisse_adi }}</h4>
+                    <div class="mb-2"><b>Kullanılan analiz tipi:</b> {{ results.analiz_tipi_aciklama }}</div>
                     <table class="table table-bordered">
                         <tbody>
                             <tr><th>1) Cari F/K Oranına Göre</th><td>{{ results.fiyat_fk }}</td></tr>
@@ -157,5 +173,26 @@
         </div>
     </div>
 </div>
+<script>
+document.getElementById('verileri_getir').onclick = function() {
+    var kod = document.getElementById('hisse_adi').value.trim().toUpperCase();
+    if (!kod) return;
+    fetch('/api/hisse_bilgi_yf?kod=' + kod)
+        .then(response => response.json())
+        .then(data => {
+            if (data.error) {
+                alert('Veri alınamadı: ' + data.error);
+                return;
+            }
+            document.getElementById('hisse_fiyati').value = data.fiyat || '';
+            document.getElementById('net_kar').value = data.net_kar || '';
+            document.getElementById('ozsermaye').value = data.ozsermaye || '';
+            document.getElementById('odenmis_sermaye').value = data.odenmis_sermaye || '';
+            document.getElementById('fk_orani').value = data.fk_orani || '';
+            document.getElementById('pddd_orani').value = data.pddd_orani || '';
+            document.getElementById('piyasa_degeri').value = data.piyasa_degeri || '';
+        });
+};
+</script>
 </body>
 </html> 
