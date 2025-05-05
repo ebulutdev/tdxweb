@@ -9,3 +9,5 @@ numpy
 Pillow
 scipy
 requests
+flask_sqlalchemy
+flask_migrate
