@@ -8,6 +8,12 @@ from models import db, User
 from flask_migrate import Migrate
 import requests
 import yfinance as yf
+import os
+import cv2
+import numpy as np
+from PIL import Image
+from io import BytesIO
+import scipy.ndimage
 
 app = Flask(__name__)
 app.config.from_object(Config)
@@ -83,6 +89,10 @@ def logout():
 @login_required
 def dashboard():
     return render_template('dashboard.html')
+
+@app.route('/grafik-analizi')
+def grafik_analizi():
+    return render_template('grafik_analizi.html')
 
 # --- Gelişmiş Hisse Değerleme Fonksiyonları ---
 def fk_degerleme(hisse_fiyati, net_kar, hisse_adedi, sektor_fk=None):
@@ -306,6 +316,481 @@ def hisse_bilgi_yf():
         })
     except Exception as e:
         return jsonify({'error': 'Veri işlenemedi', 'detail': str(e)}), 500
+
+def draw_last_candle_center(img, coords):
+    """
+    Son mumun gövdesinin ortasını tespit eder ve daire ile işaretler.
+    :param img: OpenCV görüntüsü
+    :param coords: Mum koordinatları (y, x)
+    :return: img, son_x, son_y (daire merkez koordinatları)
+    """
+    import numpy as np
+    import cv2
+
+    coords_array = np.array(coords)
+
+    # En sağdaki mumun x koordinatını bul
+    max_x = np.max(coords_array[:, 1])
+
+    # Bu muma ait tüm piksel koordinatlarını al (gövde)
+    rightmost_candle = coords_array[np.abs(coords_array[:, 1] - max_x) < 5]
+
+    # Eğer mumu bulamadıysa fallback
+    if len(rightmost_candle) == 0:
+        return img, img.shape[1] - 120, img.shape[0] // 2
+
+    # Gövde ortasının koordinatlarını hesapla
+    son_x = int(np.mean(rightmost_candle[:, 1]))
+    son_y = int(np.mean(rightmost_candle[:, 0]))
+
+    # Dış kırmızı daire
+    cv2.circle(img, (son_x, son_y), 18, (0, 0, 255), 3)
+
+    # İç beyaz dolgu
+    cv2.circle(img, (son_x, son_y), 10, (255, 255, 255), -1)
+
+    return img, son_x, son_y
+
+def draw_ghost_scenario(image_bytes, son_fiyat, destek, direnç, bolgeler, coords=None):
+    import cv2
+    import numpy as np
+
+    img_array = np.frombuffer(image_bytes, np.uint8)
+    img = cv2.imdecode(img_array, cv2.IMREAD_COLOR)
+    h, w = img.shape[:2]
+    center_x = w // 2
+    center_y = h // 2
+    # Kırmızı daire tam ortada
+    cv2.circle(img, (center_x, center_y), 18, (0, 0, 255), 3)
+    cv2.circle(img, (center_x, center_y), 10, (255, 255, 255), -1)
+
+    if bolgeler:
+        sorted_boxes = sorted(bolgeler, key=lambda b: b['y1'])
+        max_strength = max(b['strength'] for b in bolgeler)
+        for box in bolgeler:
+            box['relative_strength'] = box['strength'] / max_strength
+
+        # 1. Durum: Siyah zigzag (dirençten desteğe, sade)
+        points1 = [[center_x, center_y]]
+        x_step = 60
+        for box in sorted_boxes:
+            points1.append([points1[-1][0] + x_step, box['y1']])
+            points1.append([points1[-1][0] + x_step, box['y2']])
+        points1.append([points1[-1][0] + x_step, box['y2'] + 60])
+        cv2.polylines(img, [np.array(points1, np.int32)], False, (0,0,0), 3)
+        cv2.putText(img, '1. Durum', (center_x, center_y - 25), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0,0,0), 2)
+
+        # 2. Durum: Sarı kutular direnç, çizgi sadece altlarına kadar inip en alt kırmızı desteğe kadar satıcılı iner
+        points2 = [[center_x, center_y]]
+        yellow_boxes = [b for b in sorted_boxes if 'Zayif' in b.get('label','') or 'Bolge' in b.get('label','')]
+        if yellow_boxes:
+            for box in yellow_boxes:
+                # Sadece sarı kutunun altına in (direnç)
+                points2.append([points2[-1][0] + x_step, box['y2']])
+            # Son sarı kutunun altından en alt kırmızı desteğe in
+            points2.append([points2[-1][0] + x_step, destek])
+        else:
+            # Sarı kutu yoksa klasik zigzag
+            for box in sorted_boxes:
+                points2.append([points2[-1][0] + x_step, box['y2']])
+                points2.append([points2[-1][0] + x_step, box['y1']])
+            points2.append([points2[-1][0] + x_step, box['y1'] - 60])
+        cv2.polylines(img, [np.array(points2, np.int32)], False, (0,128,0), 3)
+        cv2.putText(img, '2. Durum', (center_x, center_y - 45), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0,128,0), 2)
+
+        # 3. Durum: Kırmızı çizgi (güçlü bölgede kırılım)
+        points3 = [[center_x, center_y]]
+        for box in sorted_boxes:
+            if box['relative_strength'] > 0.7:
+                points3.append([points3[-1][0] + x_step, box['y1']])
+                points3.append([points3[-1][0] + x_step, box['y2']])
+                points3.append([points3[-1][0] + x_step, box['y2'] + 80])
+                break
+        cv2.polylines(img, [np.array(points3, np.int32)], False, (0,0,255), 3)
+        cv2.putText(img, '3. Durum', (center_x, center_y - 65), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0,0,255), 2)
+
+        # 4. Durum: Sarı kutularda zigzagdan sonra yukarı kırılım (tepeye dokunan yeşil çizgi)
+        points4 = [[center_x, center_y]]
+        for box in sorted_boxes:
+            points4.append([points4[-1][0] + x_step, box['y2']])
+            points4.append([points4[-1][0] + x_step, box['y1']])
+        # Son noktayı direnç parametresine veya grafiğin üstüne uzat
+        if direnç is not None:
+            top_y = int(direnç)
+        else:
+            top_y = 30
+        final_x4 = points4[-1][0] + x_step
+        points4.append([final_x4, top_y])
+        cv2.polylines(img, [np.array(points4, np.int32)], False, (0,200,0), 3)
+        cv2.putText(img, '4. Durum', (center_x, center_y - 85), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0,200,0), 2)
+    else:
+        zigzag_points = np.array([
+            [center_x, center_y],
+            [center_x+30, center_y-20],
+            [center_x+60, center_y+20],
+            [center_x+90, center_y-20],
+            [center_x+120, center_y]
+        ], np.int32)
+        cv2.polylines(img, [zigzag_points], False, (0,0,0), 3)
+        cv2.arrowedLine(img, tuple(zigzag_points[-2]), tuple(zigzag_points[-1]), (0,0,0), 3, tipLength=0.4)
+
+    # Senaryo metinleri
+    base_x = int(w * 0.68)
+    base_y = int(h * 0.06)
+    line_spacing = int(h * 0.045)
+    # Statik başlıkları tamamen kaldırdım, hiçbir şey yazılmayacak.
+
+    _, buffer = cv2.imencode('.png', img)
+    return buffer.tobytes()
+
+def improved_mum_graph_analysis(image_bytes):
+    # Görseli byte dizisinden OpenCV formatına çevir
+    nparr = np.frombuffer(image_bytes, np.uint8)
+    img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+    h, w = img.shape[:2]
+
+    # Grafik bölgesini kırp (üst, alt, sol, sağ boşlukları çıkar)
+    crop_top = int(h * 0.18)
+    crop_bottom = int(h * 0.92)
+    crop_left = int(w * 0.08)
+    crop_right = int(w * 0.97)
+    cropped_img = img[crop_top:crop_bottom, crop_left:crop_right]
+
+    # Mumları tespit etmek için renk maskeleri oluştur (kırmızı ve yeşil mumlar)
+    hsv = cv2.cvtColor(cropped_img, cv2.COLOR_BGR2HSV)
+    red1 = cv2.inRange(hsv, (0, 70, 50), (10, 255, 255))
+    red2 = cv2.inRange(hsv, (170, 70, 50), (180, 255, 255))
+    green = cv2.inRange(hsv, (36, 50, 50), (89, 255, 255))
+    mask = red1 | red2 | green
+
+    # Maskeleme sonucunda mum piksel koordinatlarını al
+    coords = np.column_stack(np.where(mask > 0))
+    if coords.shape[0] == 0:
+        return "Mum çubukları tespit edilemedi."
+
+    # En yüksek ve en düşük mum pikselini bul (y koordinatına göre)
+    top = tuple(coords[coords[:, 0].argmin()][::-1])
+    bottom = tuple(coords[coords[:, 0].argmax()][::-1])
+    top_global = (top[0] + crop_left, top[1] + crop_top)
+    bottom_global = (bottom[0] + crop_left, bottom[1] + crop_top)
+
+    # En yüksek ve en düşük seviyeye yatay çizgi çiz
+    cv2.line(img, (0, top_global[1]), (w, top_global[1]), (0, 255, 0), 2)  # yeşil = direnç
+    cv2.putText(img, 'Direnç', (10, top_global[1] - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2)
+
+    cv2.line(img, (0, bottom_global[1]), (w, bottom_global[1]), (0, 0, 255), 2)  # kırmızı = destek
+    cv2.putText(img, 'Destek', (10, bottom_global[1] - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 0, 255), 2)
+
+    # Sık dokunulan seviye analizleri için dokunma sayısı haritası oluştur
+    touch_counts = {}
+    y_tolerance = 3  # yakın seviyeler gruplanır
+    for y in coords[:, 0]:
+        found = False
+        for key in list(touch_counts.keys()):
+            if abs(y - key) <= y_tolerance:
+                touch_counts[key] += 1
+                found = True
+                break
+        if not found:
+            touch_counts[y] = 1
+
+    # En çok temas edilen ilk 4 yatay seviye → SeviyeX sayısı olarak yazılır
+    most_touched = sorted(touch_counts.items(), key=lambda x: x[1], reverse=True)[:4]
+    most_touched_levels = []
+    for y_local, count in most_touched:
+        y_global = int(y_local + crop_top)
+        color = (255, 0, 255) if y_global > h // 2 else (255, 165, 0)
+        cv2.line(img, (0, y_global), (w, y_global), color, 1)
+        
+        # Etiket pozisyonlarını dönüşümlü olarak değiştir
+        text_positions = [
+            (w - 160, y_global - 5),      # sağ üst
+            (w - 160, y_global + 15),     # sağ alt
+            (10, y_global - 5),           # sol üst
+            (10, y_global + 15)           # sol alt
+        ]
+        text_pos = text_positions[len(most_touched_levels) % len(text_positions)]
+        
+        cv2.putText(img, f'Seviyex{count}', text_pos, cv2.FONT_HERSHEY_SIMPLEX, 0.6, color, 1)
+        most_touched_levels.append({
+            'y': int(y_global),
+            'count': int(count)
+        })
+
+    # Yoğunluk analizi için dikey (y ekseni) yoğunluk haritası oluştur
+    density_map = np.zeros((cropped_img.shape[0],), dtype=int)
+    for y in coords[:, 0]:
+        density_map[y] += 1
+
+    # Sadece üst %25 yoğunlukta olan seviyeleri kümeye al
+    threshold = np.percentile(density_map, 75)
+    clusters = []
+    in_cluster = False
+    cluster_start = 0
+    for y in range(len(density_map)):
+        if density_map[y] >= threshold and not in_cluster:
+            in_cluster = True
+            cluster_start = y
+        elif density_map[y] < threshold and in_cluster:
+            in_cluster = False
+            cluster_end = y
+            density_sum = np.sum(density_map[cluster_start:cluster_end])
+            clusters.append((cluster_start, cluster_end, density_sum))
+
+    # Kümeler içinde en yoğunu referans alarak göreceli yoğunluk renklerini ayarla
+    cluster_results = []
+    if clusters:
+        max_density = max([c[2] for c in clusters])
+
+    for i, (start, end, strength) in enumerate(clusters):
+        y1 = start + crop_top
+        y2 = end + crop_top
+        norm_strength = strength / max_density if clusters else 0
+
+        # Göreceli yoğunluğa göre renk ve etiket seçimi
+        if norm_strength > 0.75:
+            label = "Bolge 1"
+        elif norm_strength > 0.5:
+            label = "Bolge 2"
+        elif norm_strength > 0.3:
+            label = "Bolge 3"
+        else:
+            label = "Zayif"
+
+        # Etiket pozisyonunu döngüsel olarak değiştir
+        text_positions = [
+            (crop_left + 5, y1 - 6),           # sol üst
+            (crop_left + 5, y2 + 15),          # sol alt
+            (w - 150, y1 - 6),                 # sağ üst
+            (w - 150, y2 + 15)                 # sağ alt
+        ]
+        text_pos = text_positions[i % len(text_positions)]
+
+        # Kümeyi grafik üzerinde kutu olarak çiz ve üzerine etiket yaz
+        cv2.rectangle(img, (crop_left, y1), (crop_right, y2), (0, 255, 255), 2)
+        cv2.putText(img, f"{label} ({strength})", text_pos, cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0), 2)
+        cluster_results.append({
+            'y1': int(y1),
+            'y2': int(y2),
+            'strength': int(strength),
+            'label': label
+        })
+
+    # Sonuç görüntüyü PIL Image olarak PNG byte'ına çevir ve döndür
+    img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+    pil_img = Image.fromarray(img_rgb)
+    buffer = BytesIO()
+    pil_img.save(buffer, format="PNG")
+    image_bytes = buffer.getvalue()
+
+    # X ekseni: Gerçek mum sayısı
+    num_mum = len(coords)
+    trend_labels = [str(i+1) for i in range(num_mum)]
+
+    # Y ekseni: crop_top + y_raw (fiyat gibi) -> TERSLE!
+    y_raw = coords[:, 0]
+    y_fiyat = h - (crop_top + y_raw)
+
+    # Outlier temizliği
+    low, high = np.percentile(y_fiyat, [2, 98])
+    y_filtered = np.clip(y_fiyat, low, high)
+
+    # Hareketli ortalama
+    window = 10
+    y_smooth = scipy.ndimage.uniform_filter1d(y_filtered, size=window, mode='nearest')
+
+    # Çizgi seviyelerini al
+    direnc_y = int(top_global[1])
+    destek_y = int(bottom_global[1])
+    mor_y = [lvl['y'] for lvl in most_touched_levels]
+    sari_y = []
+    for c in cluster_results:
+        sari_y.append(c['y1'])
+        sari_y.append(c['y2'])
+
+    # Her pencere için ortalama y (veya y_smooth)
+    window = 30
+    y_values = coords[:, 0]
+    pencere_ort = []
+    for i in range(0, len(y_values), max(1, len(y_values)//window)):
+        window_y = y_values[i:i+max(1, len(y_values)//window)]
+        if len(window_y) > 0:
+            pencere_ort.append(np.mean(window_y) + crop_top)
+
+    # Her pencere için uzaklıkları hesapla
+    uzaklik_direnc = [abs(y - direnc_y) for y in pencere_ort]
+    uzaklik_destek = [abs(y - destek_y) for y in pencere_ort]
+    uzaklik_mor = [min([abs(y - m) for m in mor_y]) if mor_y else 0 for y in pencere_ort]
+    uzaklik_sari = [min([abs(y - s) for s in sari_y]) if sari_y else 0 for y in pencere_ort]
+
+    # Trend yönü ve gücü hesapla (dinamik: son pencere hareketine göre)
+    if len(pencere_ort) >= 2:
+        short_trend_delta = pencere_ort[-1] - pencere_ort[-2]
+        if abs(short_trend_delta) < 2:
+            trend_yon = "Yatay"
+        elif short_trend_delta < 0:
+            trend_yon = "Yukarı"
+        else:
+            trend_yon = "Aşağı"
+        short_abs_delta = abs(short_trend_delta)
+        if short_abs_delta < 5:
+            trend_guc = "Zayıf"
+        elif short_abs_delta < 20:
+            trend_guc = "Orta"
+        else:
+            trend_guc = "Güçlü"
+    else:
+        trend_yon = ""
+        trend_guc = ""
+
+    trend_data = {
+        "labels": [str(i) for i in range(len(pencere_ort))],
+        "uzaklik_direnc": uzaklik_direnc,
+        "uzaklik_destek": uzaklik_destek,
+        "uzaklik_mor": uzaklik_mor,
+        "uzaklik_sari": uzaklik_sari,
+        "yon": trend_yon,
+        "guc": trend_guc
+    }
+
+    # Son fiyatı belirle (sağdan 3. mumun kapanış fiyatı)
+    son_fiyat = None
+    if len(coords) >= 3:
+        son_3_mum = sorted(coords, key=lambda x: x[1])[-3:]
+        son_fiyat = np.mean([mum[0] for mum in son_3_mum]) + crop_top
+    
+    # Analiz sonuçlarını hazırla
+    result = {
+        'image_bytes': image_bytes,
+        'direnc_y': int(top_global[1]),
+        'destek_y': int(bottom_global[1]),
+        'son_fiyat': int(son_fiyat) if son_fiyat else None,
+        'most_touched_levels': [
+            {'y': lvl['y'], 'dokunma_sayisi': lvl.get('count', None), 'type': 'sarı kutu'} for lvl in most_touched_levels
+        ],
+        'clusters': cluster_results,
+        'trend_data': trend_data
+    }
+    # Destek ve direnç seviyelerini de önemli seviyelere ekle
+    result['most_touched_levels'].append({'y': int(top_global[1]), 'dokunma_sayisi': None, 'type': 'direnç'})
+    result['most_touched_levels'].append({'y': int(bottom_global[1]), 'dokunma_sayisi': None, 'type': 'destek'})
+    
+    # Hayalet senaryoları çiz
+    if son_fiyat:
+        ghost_image = draw_ghost_scenario(
+            image_bytes,
+            son_fiyat,
+            result['destek_y'],
+            result['direnc_y'],
+            result['clusters'],
+            coords=coords
+        )
+        result['ghost_image_bytes'] = ghost_image
+    
+    # --- Senaryo Açıklamaları ---
+    scenario_comments = []
+    yellow_boxes = [b for b in result['clusters'] if 'Zayif' in b.get('label','') or 'Bolge' in b.get('label','')]
+    yellow_levels = [b['y1'] for b in yellow_boxes]
+    yellow_levels_str = ', '.join(str(y) for y in yellow_levels) if yellow_levels else 'yok'
+    destek = result.get('destek_y')
+    direnc = result.get('direnc_y')
+    # 1. Durum (Siyah çizgi)
+    if yellow_levels:
+        scenario_comments.append(
+            f"1. Durum: Fiyat, {yellow_levels[0]} seviyesindeki ilk sarı direnç kutusundan aşağı kırılırsa, satıcılı bir seyir izlenebilir ve {destek} destek seviyesini test etmesi muhtemeldir."
+        )
+    else:
+        scenario_comments.append(
+            "1. Durum: Fiyat, ilk dirençten aşağı kırılırsa, alt destek seviyeleri test edilebilir."
+        )
+    # 2. Durum (Yeşil çizgi)
+    if yellow_levels:
+        scenario_comments.append(
+            f"2. Durum: Fiyat, {yellow_levels_str} dirençlerini aşarak yukarı yönlü hareket ederse, {direnc} seviyesine kadar yükseliş potansiyeli oluşur."
+        )
+    else:
+        scenario_comments.append(
+            "2. Durum: Fiyat, dirençleri aşarsa üst seviyelere kadar yükseliş potansiyeli oluşur."
+        )
+    # 3. Durum (Kırmızı çizgi)
+    guclu_bolge = next((b for b in yellow_boxes if 'Bolge' in b.get('label','')), None)
+    if guclu_bolge:
+        scenario_comments.append(
+            f"3. Durum: Güçlü direnç bölgesi ({guclu_bolge['y1']}) civarında sert bir kırılım yaşanırsa, fiyat hızla {destek} seviyesine çekilebilir."
+        )
+    else:
+        scenario_comments.append(
+            "3. Durum: Güçlü direnç bölgesinde kırılım olursa, fiyat alt desteklere çekilebilir."
+        )
+    # 4. Durum (Zigzag sonrası yukarı kırılım)
+    if yellow_levels:
+        scenario_comments.append(
+            f"4. Durum: Fiyat, {yellow_levels_str} dirençlerinde yatay hareket ettikten sonra yukarı kırılırsa, {direnc} seviyesine kadar ivmelenebilir."
+        )
+    else:
+        scenario_comments.append(
+            "4. Durum: Fiyat, dirençlerde yatay hareket sonrası yukarı kırılırsa üst seviyelere ivmelenebilir."
+        )
+    # Ek uyarıcı ve rehber metinler
+    if yellow_levels:
+        scenario_comments.append(
+            "Sarı direnç kutularında uzun süre yatay hareket eden fiyatlarda, yukarı kırılım gelmediği sürece güçlü bir yükseliş beklenmemelidir. Bu seviyelerdeki sıkışma sonrası aşağı kırılım, satış baskısını artırabilir."
+        )
+        scenario_comments.append(
+            f"Fiyat, sarı direnç ({yellow_levels_str}) altında kaldığı sürece, mumlar satıcılı seyir izleyebilir ve {destek} destek seviyeleri test edilebilir."
+        )
+        scenario_comments.append(
+            f"Sarı direnç kutularında yatay hareket sonrası yukarı kırılım gerçekleşirse, güçlü bir yükseliş ivmesi ve {direnc} seviyesine hareket beklenebilir."
+        )
+    result['scenario_comments'] = scenario_comments
+    return result
+
+@app.route('/analyze-image', methods=['POST'])
+@login_required
+def analyze_image():
+    if 'image' not in request.files:
+        return jsonify({'error': 'Görsel yüklenmedi'}), 400
+    
+    file = request.files['image']
+    if file.filename == '':
+        return jsonify({'error': 'Dosya seçilmedi'}), 400
+    
+    try:
+        # Görseli analiz et
+        image_bytes = file.read()
+        print("Görsel boyutu:", len(image_bytes))
+        
+        result = improved_mum_graph_analysis(image_bytes)
+        print("Analiz sonucu:", result)
+        
+        if isinstance(result, str):
+            return jsonify({'error': result}), 400
+            
+        # Base64 formatına çevir
+        import base64
+        image_base64 = base64.b64encode(result['image_bytes']).decode('utf-8')
+        ghost_image_base64 = base64.b64encode(result['ghost_image_bytes']).decode('utf-8') if 'ghost_image_bytes' in result else None
+        
+        response_data = {
+            'image': image_base64,
+            'ghost_image': ghost_image_base64,
+            'analysis': {
+                'direnc': result['direnc_y'],
+                'destek': result['destek_y'],
+                'son_fiyat': result['son_fiyat'],
+                'seviyeler': result['most_touched_levels'],
+                'bolgeler': result['clusters'],
+                'trend': result['trend_data'],
+                'scenario_comments': result['scenario_comments']
+            }
+        }
+        print("Gönderilen veri:", response_data)
+        
+        return jsonify(response_data)
+        
+    except Exception as e:
+        print("Hata:", str(e))
+        return jsonify({'error': str(e)}), 500
 
 if __name__ == '__main__':
     with app.app_context():

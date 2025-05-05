@@ -173,6 +173,18 @@
             background: #33373a;
             color: #ffd600;
         }
+        .btn-grafik-analiz {
+            background: #232526;
+            color: #fff;
+            border: none;
+            font-weight: 700;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.18);
+            transition: background 0.2s, color 0.2s;
+        }
+        .btn-grafik-analiz:hover, .btn-grafik-analiz:focus {
+            background: #181a1b;
+            color: #ffd600;
+        }
     </style>
 </head>
 <body>
@@ -189,7 +201,10 @@
                             <a class="nav-link" href="{{ url_for('dashboard') }}">Dashboard</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="{{ url_for('hisse_fiyat_hesapla') }}" class="btn btn-hisse-fiyat btn-sm w-100" style="font-weight:700;border-radius:0.5rem;">Hisse Fiyatı Hesapla</a>
+                            <a class="nav-link" href="{{ url_for('hisse_fiyat_hesapla') }}">Hisse Fiyatı Hesapla</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('grafik_analizi') }}">Grafik Analizi</a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link" href="{{ url_for('logout') }}">Çıkış Yap</a>
@@ -261,6 +276,11 @@
                 <li>Subjektif yorumları minimize etmeyi,</li>
                 <li>Analiz süresini kısaltmayı,</li>
                 <li>Veriye dayalı karar desteği sunmayı hedefler.</li>
+                {% if current_user.is_authenticated %}
+                <div style="display:flex;justify-content:center;margin:2rem 0;">
+                    <a href="{{ url_for('grafik_analizi') }}" class="btn btn-grafik-analiz" style="font-size:1.3rem;font-weight:700;padding:0.8rem 2.5rem;border-radius:0.7rem;">Grafik Analizi</a>
+                </div>
+                {% endif %}
             </ul>
         </div>
     </section>
