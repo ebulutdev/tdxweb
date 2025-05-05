@@ -52,12 +52,17 @@ def get_cached_stock_data(symbol):
         rate_limited_request()
         stock = yf.Ticker(symbol)
         info = stock.info
+        if not info or info is None or info == {}:
+            # Render.com gibi bulut sunucularda API erişim sorunu olabilir
+            print(f"[UYARI] Yahoo Finance'dan veri alınamadı veya veri boş döndü. Sunucu: Render.com olabilir. Sembol: {symbol}")
+            raise Exception("Yahoo Finance'dan veri alınamadı veya veri boş döndü. Sunucu tarafı IP engeli, rate limit veya bulut sunucu kısıtlaması olabilir. Lütfen daha sonra tekrar deneyin veya farklı bir API kullanın.")
         return info
     except requests.exceptions.HTTPError as e:
         if e.response.status_code == 429:
             raise Exception("Çok fazla istek gönderildi. Lütfen birkaç saniye bekleyin.")
         raise e
     except Exception as e:
+        print(f"[HATA] Yahoo Finance API hatası: {e}")
         raise Exception(f"Veri alınamadı: {str(e)}")
 
 @login_manager.user_loader
