@@ -290,11 +290,20 @@ def hisse_bilgi_yf():
     kod = request.args.get('kod')
     if not kod:
         return jsonify({'error': 'Kod gerekli'}), 400
-    if not kod.endswith('.IS'):
-        kod = kod + '.IS'
-    hisse = yf.Ticker(kod)
+    
     try:
+        # Kod formatını düzelt
+        if not kod.endswith('.IS'):
+            kod = kod + '.IS'
+        
+        # Hisse senedi verilerini al
+        hisse = yf.Ticker(kod)
         info = hisse.info
+        
+        if not info:
+            return jsonify({'error': 'Hisse senedi verisi bulunamadı'}), 404
+        
+        # Verileri güvenli bir şekilde al
         fiyat = info.get('regularMarketPrice')
         piyasa_degeri = info.get('marketCap')
         fk_orani = info.get('trailingPE')
@@ -302,9 +311,18 @@ def hisse_bilgi_yf():
         odenmis_sermaye = info.get('sharesOutstanding')
         ozsermaye_hisse_basi = info.get('bookValue')
         net_kar = info.get('netIncomeToCommon')
-        # Toplam özsermaye = hisse başı defter değeri * ödenmiş sermaye
-        ozsermaye = ozsermaye_hisse_basi * odenmis_sermaye if ozsermaye_hisse_basi and odenmis_sermaye else None
-        return jsonify({
+        
+        # Özsermaye hesaplaması
+        ozsermaye = None
+        if ozsermaye_hisse_basi is not None and odenmis_sermaye is not None:
+            ozsermaye = ozsermaye_hisse_basi * odenmis_sermaye
+        
+        # Eksik verileri kontrol et
+        if fiyat is None:
+            return jsonify({'error': 'Hisse fiyatı alınamadı'}), 404
+        
+        # Yanıt verilerini hazırla
+        response_data = {
             'fiyat': fiyat,
             'net_kar': net_kar,
             'ozsermaye': ozsermaye,
@@ -313,7 +331,15 @@ def hisse_bilgi_yf():
             'pddd_orani': pddd_orani,
             'piyasa_degeri': piyasa_degeri,
             'kullanilan_kod': kod
-        })
+        }
+        
+        # None değerleri temizle
+        response_data = {k: v for k, v in response_data.items() if v is not None}
+        
+        return jsonify(response_data)
+        
+    except requests.exceptions.RequestException as e:
+        return jsonify({'error': 'Veri alınamadı: Ağ hatası', 'detail': str(e)}), 503
     except Exception as e:
         return jsonify({'error': 'Veri işlenemedi', 'detail': str(e)}), 500
 
