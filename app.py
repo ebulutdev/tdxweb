@@ -14,6 +14,9 @@ import numpy as np
 from PIL import Image
 from io import BytesIO
 import scipy.ndimage
+import time
+from functools import lru_cache
+import threading
 
 app = Flask(__name__)
 app.config.from_object(Config)
@@ -22,6 +25,40 @@ db.init_app(app)
 migrate = Migrate(app, db)
 login_manager = LoginManager(app)
 login_manager.login_view = 'login'
+
+# Rate limiting için global değişkenler
+last_request_time = 0
+request_lock = threading.Lock()
+MIN_REQUEST_INTERVAL = 2  # saniye
+
+def rate_limited_request():
+    global last_request_time
+    with request_lock:
+        current_time = time.time()
+        time_since_last_request = current_time - last_request_time
+        
+        if time_since_last_request < MIN_REQUEST_INTERVAL:
+            sleep_time = MIN_REQUEST_INTERVAL - time_since_last_request
+            time.sleep(sleep_time)
+        
+        last_request_time = time.time()
+
+@lru_cache(maxsize=100)
+def get_cached_stock_data(symbol):
+    """
+    Hisse senedi verilerini önbelleğe alır ve rate limiting uygular
+    """
+    try:
+        rate_limited_request()
+        stock = yf.Ticker(symbol)
+        info = stock.info
+        return info
+    except requests.exceptions.HTTPError as e:
+        if e.response.status_code == 429:
+            raise Exception("Çok fazla istek gönderildi. Lütfen birkaç saniye bekleyin.")
+        raise e
+    except Exception as e:
+        raise Exception(f"Veri alınamadı: {str(e)}")
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -296,9 +333,8 @@ def hisse_bilgi_yf():
         if not kod.endswith('.IS'):
             kod = kod + '.IS'
         
-        # Hisse senedi verilerini al
-        hisse = yf.Ticker(kod)
-        info = hisse.info
+        # Önbellekten veri al
+        info = get_cached_stock_data(kod)
         
         if not info:
             return jsonify({'error': 'Hisse senedi verisi bulunamadı'}), 404
@@ -338,6 +374,14 @@ def hisse_bilgi_yf():
         
         return jsonify(response_data)
         
+    except requests.exceptions.HTTPError as e:
+        if e.response.status_code == 429:
+            return jsonify({
+                'error': 'Çok fazla istek gönderildi',
+                'detail': 'Lütfen birkaç saniye bekleyip tekrar deneyin',
+                'retry_after': MIN_REQUEST_INTERVAL
+            }), 429
+        return jsonify({'error': 'Veri alınamadı: HTTP hatası', 'detail': str(e)}), e.response.status_code
     except requests.exceptions.RequestException as e:
         return jsonify({'error': 'Veri alınamadı: Ağ hatası', 'detail': str(e)}), 503
     except Exception as e:
