@@ -14,13 +14,10 @@ import requests
 from bs4 import BeautifulSoup
 from urllib.parse import quote_plus
 import random
-from pathlib import Path
 
 GEMINI_API_KEY = "AIzaSyAQXzOVG-BP5-EGZl2ts9d6kp_n-2pvM_U"
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-CACHE_DIR = Path(BASE_DIR) / "cache"
-CACHE_DURATION = 600  # 10 minutes for news cache
-STOCK_CACHE_DURATION = 3600  # 1 hour for stock data cache
+CACHE_DIR = os.path.join(BASE_DIR, "cache")
 
 USER_AGENTS = [
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
@@ -29,69 +26,39 @@ USER_AGENTS = [
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:124.0) Gecko/20100101 Firefox/124.0"
 ]
 
-class RateLimiter:
-    def __init__(self, max_requests: int = 10, time_window: int = 60):
-        self.max_requests = max_requests
-        self.time_window = time_window
-        self.requests = []
-    
-    async def acquire(self):
-        now = time.time()
-        # Remove old requests
-        self.requests = [req_time for req_time in self.requests if now - req_time < self.time_window]
-        
-        if len(self.requests) >= self.max_requests:
-            # Wait until we can make another request
-            wait_time = self.requests[0] + self.time_window - now
-            if wait_time > 0:
-                await asyncio.sleep(wait_time)
-        
-        self.requests.append(now)
-
 class StockDataFetcher:
     def __init__(self, cache_dir: str = None):
-        self.cache_dir = Path(cache_dir) if cache_dir else CACHE_DIR
-        self.cache_dir.mkdir(exist_ok=True)
-        self.rate_limiter = RateLimiter(max_requests=5, time_window=60)  # 5 requests per minute
+        # Always use backend/cache as the default
+        if cache_dir is None:
+            cache_dir = CACHE_DIR
+        self.cache_dir = cache_dir
+        os.makedirs(self.cache_dir, exist_ok=True)
         
-    def _get_cache_path(self, symbol: str) -> Path:
-        return self.cache_dir / f"{symbol}.json"
-    
-    def _is_cache_valid(self, cache_path: Path) -> bool:
-        if not cache_path.exists():
-            return False
+    async def fetch_stock_data(self, symbol: str, period: str = "1mo") -> Dict:
+        """Fetch stock data and cache it"""
+        cache_file = os.path.join(self.cache_dir, f"{symbol}.json")
         
-        try:
-            with open(cache_path, 'r', encoding='utf-8') as f:
+        # Check if we have recent cached data (24 hours)
+        if os.path.exists(cache_file):
+            with open(cache_file, 'r', encoding='utf-8') as f:
                 cached_data = json.load(f)
                 last_update = datetime.fromisoformat(cached_data['last_update'])
-                return datetime.now() - last_update < timedelta(seconds=STOCK_CACHE_DURATION)
-        except (json.JSONDecodeError, KeyError, FileNotFoundError):
-            return False
-    
-    def _save_to_cache(self, symbol: str, data: Dict):
-        cache_path = self._get_cache_path(symbol)
-        with open(cache_path, 'w', encoding='utf-8') as f:
-            json.dump({
-                'data': data,
-                'last_update': datetime.now().isoformat()
-            }, f, ensure_ascii=False, indent=2)
-    
-    async def fetch_stock_data(self, symbol: str, period: str = "1mo") -> Dict:
-        """Fetch stock data with rate limiting and caching"""
-        cache_path = self._get_cache_path(symbol)
+                if datetime.now() - last_update < timedelta(hours=24):
+                    return cached_data['data']
         
-        # Check cache first
-        if self._is_cache_valid(cache_path):
-            with open(cache_path, 'r', encoding='utf-8') as f:
-                return json.load(f)['data']
+        # Calculate dynamic delay based on symbol
+        # More frequently traded stocks get longer delays
+        if symbol in ["THYAO", "GARAN", "ASELS"]:  # High volume stocks
+            delay = 5
+        elif symbol in ["MIATK", "FROTO"]:  # Medium volume stocks
+            delay = 4
+        else:  # Other stocks
+            delay = 3
+            
+        # Add delay between requests to avoid rate limiting
+        await asyncio.sleep(delay)
         
-        # Apply rate limiting
-        await self.rate_limiter.acquire()
-        
-        # Add random delay between requests (1-3 seconds)
-        await asyncio.sleep(random.uniform(1, 3))
-        
+        # Fetch new data
         try:
             # Add .IS suffix for Borsa Istanbul stocks
             stock = yf.Ticker(f"{symbol}.IS")
@@ -107,33 +74,21 @@ class StockDataFetcher:
                 'last_update': datetime.now().isoformat()
             }
             
-            # Save to cache
-            self._save_to_cache(symbol, data)
+            # Always save the data to backend/cache
+            with open(cache_file, 'w', encoding='utf-8') as f:
+                json.dump({'data': data, 'last_update': data['last_update']}, f, ensure_ascii=False, indent=2)
             
             return data
             
         except Exception as e:
             print(f"Error fetching data for {symbol}: {str(e)}")
-            # If we have stale cache data, return it
-            if cache_path.exists():
-                try:
-                    with open(cache_path, 'r', encoding='utf-8') as f:
-                        return json.load(f)['data']
-                except:
-                    pass
             return None
 
     async def fetch_multiple_stocks(self, symbols: List[str]) -> Dict[str, Dict]:
-        """Fetch data for multiple stocks with rate limiting"""
-        results = {}
-        for symbol in symbols:
-            # Add delay between different stocks
-            if results:  # Skip delay for first stock
-                await asyncio.sleep(random.uniform(2, 4))
-            result = await self.fetch_stock_data(symbol)
-            if result:
-                results[symbol] = result
-        return results
+        """Fetch data for multiple stocks concurrently"""
+        tasks = [self.fetch_stock_data(symbol) for symbol in symbols]
+        results = await asyncio.gather(*tasks)
+        return {symbol: result for symbol, result in zip(symbols, results) if result is not None}
 
 def run_scheduler():
     """Run the scheduler in a separate thread"""
@@ -266,65 +221,66 @@ def main():
         print("\nShutting down...")
 
 def get_google_news(symbol, count=10):
-    """Fetch news with rate limiting and caching"""
-    cache_path = CACHE_DIR / f"{symbol}_news.json"
-    
-    # Check cache first
-    if cache_path.exists():
+    today = datetime.now().strftime("%Y-%m-%d")
+    cache_path = os.path.join(CACHE_DIR, f"{symbol}_news.json")
+    # 1. Cache dosyası var mı ve bugün mü?
+    if os.path.exists(cache_path):
         try:
-            with open(cache_path, 'r', encoding='utf-8') as f:
-                cached_data = json.load(f)
-                if time.time() - cached_data['timestamp'] < CACHE_DURATION:
-                    return cached_data['news']
-        except (json.JSONDecodeError, KeyError):
-            pass
-    
-    # Add random delay
-    time.sleep(random.uniform(1, 3))
-    
+            with open(cache_path, "r", encoding="utf-8") as f:
+                news = json.load(f)
+                # Her haberin içinde cache_date varsa ve bugünse, tekrar çekme
+                if news and isinstance(news, list) and all(item.get("cache_date") == today for item in news if isinstance(item, dict)):
+                    return news
+        except Exception:
+            pass  # Dosya bozuksa devam et
+    # 2. Cache yoksa veya eskiyse yeni haber çek
     query = f'"{symbol}" hisse borsa'
     query_encoded = quote_plus(query)
     url = f"https://news.google.com/rss/search?q={query_encoded}&hl=tr&gl=TR&ceid=TR:tr"
-    
     headers = {
         "User-Agent": random.choice(USER_AGENTS),
         "Accept-Language": "tr-TR,tr;q=0.9,en-US;q=0.8,en;q=0.7"
     }
-    
-    for attempt in range(3):
-        try:
-            response = requests.get(url, headers=headers, timeout=10)
-            if response.status_code == 429:  # Rate limit
-                wait_time = 60 * (attempt + 1)  # Exponential backoff
-                print(f"Rate limit hit! Waiting {wait_time} seconds...")
-                time.sleep(wait_time)
+    for deneme in range(3):
+        r = requests.get(url, headers=headers)
+        if r.status_code == 429:
+            print("Rate limit! 60 saniye bekleniyor...")
+            time.sleep(60)
+            continue
+        elif r.status_code == 200:
+            break
+        else:
+            time.sleep(5)
+    soup = BeautifulSoup(r.text, "xml")
+    news = []
+    one_month_ago = datetime.utcnow() - timedelta(days=30)
+    for item in soup.find_all("item"):
+        title = item.title.text if item.title else ""
+        link = item.link.text if item.link else ""
+        summary = item.description.text if item.description else ""
+        pub_date_str = item.pubDate.text if item.pubDate else None
+        if pub_date_str:
+            try:
+                pub_date = datetime.strptime(pub_date_str, "%a, %d %b %Y %H:%M:%S %Z")
+            except Exception:
                 continue
-            elif response.status_code == 200:
-                feed = feedparser.parse(response.text)
-                news = []
-                for entry in feed.entries[:count]:
-                    news.append({
-                        'title': entry.title,
-                        'link': entry.link,
-                        'published': entry.get('published', ''),
-                        'source': entry.get('source', {}).get('title', 'Google News'),
-                        'cache_date': datetime.now().strftime("%Y-%m-%d")
-                    })
-                
-                # Save to cache
-                with open(cache_path, 'w', encoding='utf-8') as f:
-                    json.dump({
-                        'news': news,
-                        'timestamp': time.time()
-                    }, f, ensure_ascii=False, indent=2)
-                
-                return news
-        except Exception as e:
-            print(f"Error fetching news for {symbol}: {str(e)}")
-            if attempt < 2:  # Don't wait on last attempt
-                time.sleep(5)
-    
-    return []
+            if pub_date < one_month_ago:
+                continue
+            news.append({
+                "title": title,
+                "link": link,
+                "summary": summary,
+                "published": pub_date.strftime("%Y-%m-%d %H:%M"),
+                "cache_date": today
+            })
+            if len(news) >= count:
+                break
+    # Her istekten sonra 2-5 saniye bekle
+    time.sleep(random.uniform(2, 5))
+    # Cache'e kaydet
+    with open(cache_path, "w", encoding="utf-8") as f:
+        json.dump(news, f, ensure_ascii=False, indent=2)
+    return news
 
 def save_news_to_json(symbol, news, out_dir=None):
     if out_dir is None:

@@ -1,0 +1,75 @@
+2025-05-26 19:23:37,589 - werkzeug - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on http://127.0.0.1:5000
+2025-05-26 19:23:37,589 - werkzeug - INFO - [33mPress CTRL+C to quit[0m
+2025-05-26 19:23:37,590 - werkzeug - INFO -  * Restarting with stat
+2025-05-26 19:23:50,911 - werkzeug - WARNING -  * Debugger is active!
+2025-05-26 19:23:50,913 - werkzeug - INFO -  * Debugger PIN: 113-426-835
+2025-05-26 19:23:50,922 - werkzeug - INFO - 127.0.0.1 - - [26/May/2025 19:23:50] "GET / HTTP/1.1" 200 -
+2025-05-26 19:23:51,018 - werkzeug - INFO - 127.0.0.1 - - [26/May/2025 19:23:51] "[36mGET /static/thyao.png HTTP/1.1[0m" 304 -
+2025-05-26 19:23:51,021 - werkzeug - INFO - 127.0.0.1 - - [26/May/2025 19:23:51] "[36mGET /static/asels.png HTTP/1.1[0m" 304 -
+2025-05-26 19:23:51,025 - werkzeug - INFO - 127.0.0.1 - - [26/May/2025 19:23:51] "GET /chat HTTP/1.1" 200 -
+2025-05-26 19:23:51,027 - werkzeug - INFO - 127.0.0.1 - - [26/May/2025 19:23:51] "[36mGET /static/garan.jpg HTTP/1.1[0m" 304 -
+2025-05-26 19:23:51,028 - werkzeug - INFO - 127.0.0.1 - - [26/May/2025 19:23:51] "[35m[1mGET /static/tdx.mp4 HTTP/1.1[0m" 206 -
+2025-05-26 19:23:51,030 - werkzeug - INFO - 127.0.0.1 - - [26/May/2025 19:23:51] "[35m[1mGET /static/tdx.mp4 HTTP/1.1[0m" 206 -
+2025-05-26 19:23:51,034 - werkzeug - INFO - 127.0.0.1 - - [26/May/2025 19:23:51] "[36mGET /static/mia.png HTTP/1.1[0m" 304 -
+2025-05-26 19:23:51,039 - werkzeug - INFO - 127.0.0.1 - - [26/May/2025 19:23:51] "[36mGET /static/froto.png HTTP/1.1[0m" 304 -
+2025-05-26 19:23:51,039 - werkzeug - INFO - 127.0.0.1 - - [26/May/2025 19:23:51] "[35m[1mGET /static/gg4.mp4 HTTP/1.1[0m" 206 -
+2025-05-26 19:23:57,384 - werkzeug - INFO - 127.0.0.1 - - [26/May/2025 19:23:57] "GET /analyze/ HTTP/1.1" 200 -
+2025-05-26 19:24:35,076 - werkzeug - INFO -  * Detected change in 'C:\\Users\\pc\\OneDrive\\Desktop\\bottdx\\backend\\fetcher.py', reloading
+2025-05-26 19:24:35,337 - werkzeug - INFO -  * Restarting with stat
+2025-05-26 19:24:49,171 - werkzeug - WARNING -  * Debugger is active!
+2025-05-26 19:24:49,174 - werkzeug - INFO -  * Debugger PIN: 113-426-835
+2025-05-26 19:24:49,182 - werkzeug - INFO - 127.0.0.1 - - [26/May/2025 19:24:49] "GET / HTTP/1.1" 200 -
+2025-05-26 19:24:49,201 - werkzeug - INFO - 127.0.0.1 - - [26/May/2025 19:24:49] "GET /chat HTTP/1.1" 200 -
+2025-05-26 19:24:49,258 - werkzeug - INFO - 127.0.0.1 - - [26/May/2025 19:24:49] "[36mGET /static/asels.png HTTP/1.1[0m" 304 -
+2025-05-26 19:24:49,281 - werkzeug - INFO - 127.0.0.1 - - [26/May/2025 19:24:49] "[36mGET /static/froto.png HTTP/1.1[0m" 304 -
+2025-05-26 19:24:49,283 - werkzeug - INFO - 127.0.0.1 - - [26/May/2025 19:24:49] "[36mGET /static/garan.jpg HTTP/1.1[0m" 304 -
+2025-05-26 19:24:49,287 - werkzeug - INFO - 127.0.0.1 - - [26/May/2025 19:24:49] "[36mGET /static/mia.png HTTP/1.1[0m" 304 -
+2025-05-26 19:24:49,289 - werkzeug - INFO - 127.0.0.1 - - [26/May/2025 19:24:49] "[36mGET /static/thyao.png HTTP/1.1[0m" 304 -
+2025-05-26 19:24:49,289 - werkzeug - INFO - 127.0.0.1 - - [26/May/2025 19:24:49] "[35m[1mGET /static/tdx.mp4 HTTP/1.1[0m" 206 -
+2025-05-26 19:25:01,653 - werkzeug - INFO - 127.0.0.1 - - [26/May/2025 19:25:01] "GET /analyze-asels HTTP/1.1" 200 -
+2025-05-26 19:25:12,202 - werkzeug - INFO - 127.0.0.1 - - [26/May/2025 19:25:12] "GET /news HTTP/1.1" 200 -
+2025-05-26 19:25:22,234 - werkzeug - INFO - 127.0.0.1 - - [26/May/2025 19:25:22] "GET /analyze-garan HTTP/1.1" 200 -
+2025-05-26 19:25:38,364 - werkzeug - INFO -  * Detected change in 'C:\\Users\\pc\\OneDrive\\Desktop\\bottdx\\backend\\fetcher.py', reloading
+2025-05-26 19:25:38,653 - werkzeug - INFO -  * Restarting with stat
+2025-05-26 19:25:55,912 - werkzeug - WARNING -  * Debugger is active!
+2025-05-26 19:25:55,915 - werkzeug - INFO -  * Debugger PIN: 113-426-835
+2025-05-26 19:25:58,097 - werkzeug - INFO - 127.0.0.1 - - [26/May/2025 19:25:58] "GET / HTTP/1.1" 200 -
+2025-05-26 19:25:58,120 - werkzeug - INFO - 127.0.0.1 - - [26/May/2025 19:25:58] "GET /chat HTTP/1.1" 200 -
+2025-05-26 19:25:58,193 - werkzeug - INFO - 127.0.0.1 - - [26/May/2025 19:25:58] "[36mGET /static/froto.png HTTP/1.1[0m" 304 -
+2025-05-26 19:25:58,196 - werkzeug - INFO - 127.0.0.1 - - [26/May/2025 19:25:58] "[35m[1mGET /static/tdx.mp4 HTTP/1.1[0m" 206 -
+2025-05-26 19:25:58,197 - werkzeug - INFO - 127.0.0.1 - - [26/May/2025 19:25:58] "[35m[1mGET /static/tdx.mp4 HTTP/1.1[0m" 206 -
+2025-05-26 19:25:58,204 - werkzeug - INFO - 127.0.0.1 - - [26/May/2025 19:25:58] "[36mGET /static/asels.png HTTP/1.1[0m" 304 -
+2025-05-26 19:25:58,221 - werkzeug - INFO - 127.0.0.1 - - [26/May/2025 19:25:58] "[36mGET /static/mia.png HTTP/1.1[0m" 304 -
+2025-05-26 19:25:58,223 - werkzeug - INFO - 127.0.0.1 - - [26/May/2025 19:25:58] "[36mGET /static/thyao.png HTTP/1.1[0m" 304 -
+2025-05-26 19:25:58,224 - werkzeug - INFO - 127.0.0.1 - - [26/May/2025 19:25:58] "[35m[1mGET /static/gg4.mp4 HTTP/1.1[0m" 206 -
+2025-05-26 19:25:58,224 - werkzeug - INFO - 127.0.0.1 - - [26/May/2025 19:25:58] "[36mGET /static/garan.jpg HTTP/1.1[0m" 304 -
+2025-05-26 19:25:58,226 - werkzeug - INFO - 127.0.0.1 - - [26/May/2025 19:25:58] "[35m[1mGET /static/gg4.mp4 HTTP/1.1[0m" 206 -
+2025-05-26 19:25:58,259 - werkzeug - INFO - 127.0.0.1 - - [26/May/2025 19:25:58] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+2025-05-26 19:26:00,943 - werkzeug - INFO - 127.0.0.1 - - [26/May/2025 19:26:00] "GET /analyze-garan HTTP/1.1" 200 -
+2025-05-26 19:26:05,593 - werkzeug - INFO - 127.0.0.1 - - [26/May/2025 19:26:05] "GET /analyze-asels HTTP/1.1" 200 -
+2025-05-26 19:26:20,018 - werkzeug - INFO -  * Detected change in 'C:\\Users\\pc\\OneDrive\\Desktop\\bottdx\\backend\\fetcher.py', reloading
+2025-05-26 19:26:20,330 - werkzeug - INFO -  * Restarting with stat
+2025-05-26 19:26:43,238 - werkzeug - WARNING -  * Debugger is active!
+2025-05-26 19:26:43,240 - werkzeug - INFO -  * Debugger PIN: 113-426-835
+2025-05-26 19:26:48,457 - werkzeug - INFO - 127.0.0.1 - - [26/May/2025 19:26:48] "GET / HTTP/1.1" 200 -
+2025-05-26 19:26:48,481 - werkzeug - INFO - 127.0.0.1 - - [26/May/2025 19:26:48] "GET /chat HTTP/1.1" 200 -
+2025-05-26 19:26:48,551 - werkzeug - INFO - 127.0.0.1 - - [26/May/2025 19:26:48] "[36mGET /static/asels.png HTTP/1.1[0m" 304 -
+2025-05-26 19:26:48,553 - werkzeug - INFO - 127.0.0.1 - - [26/May/2025 19:26:48] "[35m[1mGET /static/gg4.mp4 HTTP/1.1[0m" 206 -
+2025-05-26 19:26:48,562 - werkzeug - INFO - 127.0.0.1 - - [26/May/2025 19:26:48] "[36mGET /static/froto.png HTTP/1.1[0m" 304 -
+2025-05-26 19:26:48,564 - werkzeug - INFO - 127.0.0.1 - - [26/May/2025 19:26:48] "[36mGET /static/garan.jpg HTTP/1.1[0m" 304 -
+2025-05-26 19:26:48,566 - werkzeug - INFO - 127.0.0.1 - - [26/May/2025 19:26:48] "[35m[1mGET /static/tdx.mp4 HTTP/1.1[0m" 206 -
+2025-05-26 19:26:48,566 - werkzeug - INFO - 127.0.0.1 - - [26/May/2025 19:26:48] "[36mGET /static/mia.png HTTP/1.1[0m" 304 -
+2025-05-26 19:26:48,567 - werkzeug - INFO - 127.0.0.1 - - [26/May/2025 19:26:48] "[36mGET /static/thyao.png HTTP/1.1[0m" 304 -
+2025-05-26 19:26:48,678 - werkzeug - INFO - 127.0.0.1 - - [26/May/2025 19:26:48] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+2025-05-26 19:26:49,860 - werkzeug - INFO - 127.0.0.1 - - [26/May/2025 19:26:49] "GET /analyze-asels HTTP/1.1" 200 -
+2025-05-26 19:26:51,822 - werkzeug - INFO - 127.0.0.1 - - [26/May/2025 19:26:51] "GET /news HTTP/1.1" 200 -
+2025-05-26 19:26:54,608 - werkzeug - INFO - 127.0.0.1 - - [26/May/2025 19:26:54] "GET /analyze-asels HTTP/1.1" 200 -
+2025-05-26 19:26:57,395 - werkzeug - INFO - 127.0.0.1 - - [26/May/2025 19:26:57] "GET / HTTP/1.1" 200 -
+2025-05-26 19:26:57,408 - werkzeug - INFO - 127.0.0.1 - - [26/May/2025 19:26:57] "[36mGET /static/asels.png HTTP/1.1[0m" 304 -
+2025-05-26 19:26:57,411 - werkzeug - INFO - 127.0.0.1 - - [26/May/2025 19:26:57] "[36mGET /static/froto.png HTTP/1.1[0m" 304 -
+2025-05-26 19:26:57,412 - werkzeug - INFO - 127.0.0.1 - - [26/May/2025 19:26:57] "[36mGET /static/garan.jpg HTTP/1.1[0m" 304 -
+2025-05-26 19:26:57,414 - werkzeug - INFO - 127.0.0.1 - - [26/May/2025 19:26:57] "[36mGET /static/mia.png HTTP/1.1[0m" 304 -
+2025-05-26 19:26:57,415 - werkzeug - INFO - 127.0.0.1 - - [26/May/2025 19:26:57] "[36mGET /static/thyao.png HTTP/1.1[0m" 304 -
+2025-05-26 19:26:57,416 - werkzeug - INFO - 127.0.0.1 - - [26/May/2025 19:26:57] "GET /chat HTTP/1.1" 200 -
+2025-05-26 19:27:07,841 - werkzeug - INFO - 127.0.0.1 - - [26/May/2025 19:27:07] "GET /analyze-thyao HTTP/1.1" 200 -
