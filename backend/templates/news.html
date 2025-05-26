@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container py-4">
+  <h2 class="text-center mb-4" style="font-weight:700; letter-spacing:0.01em; color:#4fc3f7;">Son BIST Haberleri</h2>
+  <div class="row g-4">
+    {% for stock in stocks %}
+      {% for article in stock.articles %}
+      <div class="col-12 col-md-6 col-lg-4">
+        <div class="card h-100 shadow-sm news-card">
+          <div class="card-body d-flex flex-column">
+            <a href="{{ article.url or article.link }}" target="_blank" class="card-title fw-bold text-primary mb-2" style="text-decoration:none; font-size:1.08rem;">
+              {{ article.title[:90] }}{% if article.title|length > 90 %}...{% endif %}
+            </a>
+            <div class="mb-2 text-muted small">
+              {{ article.date or article.published | turkish_date }}
+            </div>
+            <div class="card-text mb-3" style="font-size:0.97em; color:#a0a0a0;">
+              {{ article.summary[:120]|safe }}{% if article.summary|length > 120 %}...{% endif %}
+            </div>
+            <span class="badge bg-primary align-self-start" style="background:linear-gradient(90deg,#4ea1f7,#1e5fa3);">{{ article.source or 'Kaynak' }}</span>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    {% endfor %}
+  </div>
+  <a href="/" class="btn btn-lg btn-primary mt-5" style="background:linear-gradient(90deg,#1565c0,#00bcd4); border:none; font-weight:600;">&larr; Anasayfaya Dön</a>
+</div>
+{% endblock %}
+
+{% block styles %}
+<style>
+body {
+  background: #181c23;
+  color: #e6e6e6;
+}
+.news-card {
+  background: #23272f;
+  border: none;
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+.news-card:hover {
+  transform: translateY(-4px) scale(1.03);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+}
+.card-title {
+  color: #4ea1f7 !important;
+}
+.badge.bg-primary {
+  background: linear-gradient(90deg, #4ea1f7, #1e5fa3) !important;
+}
+</style>
+{% endblock %} 
