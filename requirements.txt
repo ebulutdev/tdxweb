@@ -10,3 +10,4 @@ pydantic==2.5.2
 schedule==1.2.1 
 markdown
 gunicorn==21.2.0
+whitenoise==6.6.0
