@@ -160,8 +160,8 @@ async def fetch_and_analyze_stock(symbol):
     
     # Fetch news
     news_google = get_google_news(symbol)
-    news_mynet = get_mynet_news(symbol)
-    all_news = news_google + news_mynet
+    
+    all_news = news_google 
     save_news_to_json(symbol, all_news)
     
     # Generate analysis
