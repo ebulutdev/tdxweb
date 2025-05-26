@@ -24,7 +24,10 @@ from datetime import datetime
 import urllib.parse
 import numpy as np
 import cv2
-from chart_analysis import analyze_chart
+try:
+    from chart_analysis import analyze_chart
+except ImportError:
+    from backend.chart_analysis import analyze_chart
 from appbot import analyze_sentiment, check_reminders, calculate_from_message, extract_stock_symbol, get_stock_data, generate_response, check_faq, find_similar_faq, answer_question, FAQ_ANSWERS, GREETINGS, THANKS
 
 app = Flask(__name__)
