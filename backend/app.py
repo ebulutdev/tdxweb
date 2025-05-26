@@ -28,7 +28,10 @@ try:
     from chart_analysis import analyze_chart
 except ImportError:
     from backend.chart_analysis import analyze_chart
-from appbot import analyze_sentiment, check_reminders, calculate_from_message, extract_stock_symbol, get_stock_data, generate_response, check_faq, find_similar_faq, answer_question, FAQ_ANSWERS, GREETINGS, THANKS
+try:
+    from appbot import analyze_sentiment, check_reminders, calculate_from_message, extract_stock_symbol, get_stock_data, generate_response, check_faq, find_similar_faq, answer_question, FAQ_ANSWERS, GREETINGS, THANKS
+except ImportError:
+    from backend.appbot import analyze_sentiment, check_reminders, calculate_from_message, extract_stock_symbol, get_stock_data, generate_response, check_faq, find_similar_faq, answer_question, FAQ_ANSWERS, GREETINGS, THANKS
 
 app = Flask(__name__)
 CACHE_DIR = os.path.join(os.path.dirname(__file__), "cache")
