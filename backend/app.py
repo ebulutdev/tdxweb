@@ -24,6 +24,7 @@ from datetime import datetime
 import urllib.parse
 import numpy as np
 import cv2
+import asyncio
 try:
     from chart_analysis import analyze_chart
 except ImportError:
@@ -36,6 +37,27 @@ except ImportError:
 app = Flask(__name__)
 CACHE_DIR = os.path.join(os.path.dirname(__file__), "cache")
 os.makedirs(CACHE_DIR, exist_ok=True)
+
+# --- CACHE DOSYALARI YOKSA fetcher.py'yi OTOMATİK ÇALIŞTIR ---
+def run_fetcher_if_needed():
+    # Kontrol edilecek dosyalar
+    cache_files = [
+        os.path.join(CACHE_DIR, f"{symbol}.json")
+        for symbol in ["asels", "garan", "thyao", "miatk", "froto"]
+    ]
+    if not all(os.path.exists(f) for f in cache_files):
+        try:
+            spec = importlib.util.spec_from_file_location("fetcher", os.path.join(os.path.dirname(__file__), "fetcher.py"))
+            fetcher = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(fetcher)
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            loop.run_until_complete(fetcher.fetch_all_stocks())
+        except Exception as e:
+            print(f"fetcher.py otomatik çalıştırılamadı: {e}")
+
+run_fetcher_if_needed()
+# --- --- ---
 
 GEMINI_API_KEY = "AIzaSyAQXzOVG-BP5-EGZl2ts9d6kp_n-2pvM_U"
 
