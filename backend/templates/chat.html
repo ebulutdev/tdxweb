@@ -1,0 +1,1007 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Borsa Asistanı</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
+    <style>
+        body {
+            font-family: 'Segoe UI', 'Inter', Arial, sans-serif;
+            background: #181c20;
+            color: #eaf6ff;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Dark Mode Classes */
+        .dark-mode {
+            background: linear-gradient(135deg, #2d3748 0%, #1a202c 100%);
+        }
+
+        .dark-mode .chat-container {
+            background-color: #2d3748;
+        }
+
+        .dark-mode .header-container {
+            background: linear-gradient(to right, #3b82f6, #2563eb);
+        }
+
+        .dark-mode .input-container {
+            background-color: #1a202c;
+            border-top: 1px solid #4a5568;
+        }
+
+        .dark-mode #input {
+            background-color: #2d3748;
+            color: #e2e8f0;
+            border: 1px solid #4a5568;
+        }
+
+        .dark-mode .msg.bot {
+            background-color: #4a5568 !important;
+            color: #e2e8f0;
+        }
+
+        .dark-mode .msg.user {
+            background-color: #3b82f6 !important;
+            color: #ffffff;
+        }
+
+        .chat-card {
+            width: 100%;
+            max-width: 540px;
+            min-width: 340px;
+            border-radius: 28px;
+            overflow: hidden;
+            box-shadow: 0 8px 32px 0 rgba(21,101,192,0.18), 0 2px 12px rgba(44,62,80,0.13);
+            background: #23272b;
+            color: #eaf6ff;
+            transition: all 0.3s ease;
+            height: 80vh;
+            max-height: 700px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .dark-mode .chat-card {
+            background-color: #1a202c;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        .typing-indicator {
+            display: inline-flex;
+            align-items: center;
+            padding: 6px 12px;
+        }
+
+        .typing-indicator span {
+            width: 8px;
+            height: 8px;
+            margin: 0 2px;
+            background: #00bcd4;
+            border-radius: 50%;
+            display: inline-block;
+            animation: typing 1s infinite;
+        }
+
+        .dark-mode .typing-indicator span {
+            background: #60a5fa;
+        }
+
+        .typing-indicator span:nth-child(1) { animation-delay: 0s; }
+        .typing-indicator span:nth-child(2) { animation-delay: 0.2s; }
+        .typing-indicator span:nth-child(3) { animation-delay: 0.4s; }
+
+        @keyframes typing {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .msg {
+            max-width: 85%;
+            border-radius: 18px;
+            padding: 12px 18px;
+            margin-bottom: 10px;
+            position: relative;
+            animation: fadeIn 0.3s ease-in-out;
+            line-height: 1.5;
+            word-wrap: break-word;
+            transition: all 0.3s ease;
+        }
+
+        .msg.user {
+            background: #1565c0 !important;
+            color: #fff;
+            align-self: flex-end;
+            border-bottom-right-radius: 4px;
+            margin-left: auto;
+        }
+
+        .msg.bot {
+            background: #23272b !important;
+            color: #eaf6ff;
+            align-self: flex-start;
+            border-bottom-left-radius: 4px;
+            margin-right: auto;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .chat-container {
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            background: #181c20;
+            scrollbar-width: thin;
+            scrollbar-color: #1565c0 #23272b;
+        }
+
+        .chat-container::-webkit-scrollbar {
+            width: 8px;
+            background: #23272b;
+        }
+        
+        .chat-container::-webkit-scrollbar-track {
+            background: #23272b;
+        }
+        
+        .chat-container::-webkit-scrollbar-thumb {
+            background: #1565c0;
+            border-radius: 6px;
+            border: 2px solid #23272b;
+        }
+
+        .input-container {
+            background: #181c20;
+            padding: 15px;
+            border-top: 1px solid #23272b;
+            display: flex;
+            align-items: center;
+            position: relative;
+        }
+
+        #input {
+            flex-grow: 1;
+            border: 1px solid #3a3f47;
+            border-radius: 24px;
+            padding: 12px 18px;
+            font-size: 16px;
+            outline: none;
+            background: #23272b;
+            color: #eaf6ff;
+            transition: all 0.3s;
+        }
+
+        #input:focus {
+            border-color: #00bcd4;
+            box-shadow: 0 0 0 2px #1565c0;
+        }
+
+        button.send-btn {
+            background: linear-gradient(90deg, #1565c0 0%, #00bcd4 100%);
+            color: #fff;
+            border: none;
+            border-radius: 50%;
+            width: 45px;
+            height: 45px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            margin-left: 10px;
+            transition: background 0.2s, transform 0.15s;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        button.send-btn:hover {
+            background: linear-gradient(90deg, #00bcd4 0%, #1565c0 100%);
+            color: #eaf6ff;
+            transform: scale(1.08);
+        }
+
+        button.send-btn:active {
+            transform: scale(0.95);
+        }
+
+        .header-container {
+            background: linear-gradient(90deg, #1565c0 0%, #00bcd4 100%);
+            color: #fff;
+            padding: 20px;
+            text-align: center;
+            position: relative;
+        }
+
+        .header-title {
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 5px;
+            color: #fff;
+        }
+
+        .header-subtitle {
+            font-size: 14px;
+            opacity: 0.9;
+            color: #eaf6ff;
+        }
+
+        .theme-toggle {
+            position: absolute;
+            right: 15px;
+            top: 15px;
+            background: none;
+            border: none;
+            color: white;
+            font-size: 18px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .theme-toggle:hover {
+            transform: rotate(30deg);
+        }
+
+        .message-time {
+            font-size: 11px;
+            opacity: 0.7;
+            margin-top: 5px;
+            text-align: right;
+        }
+
+        .feature-buttons {
+            display: flex;
+            overflow-x: auto;
+            padding: 10px 15px;
+            gap: 10px;
+            background: #23272b;
+            border-bottom: 1px solid #23272b;
+            scrollbar-width: none;
+        }
+
+        .dark-mode .feature-buttons {
+            background-color: #2d3748;
+            border-bottom: 1px solid #4a5568;
+        }
+
+        .feature-buttons::-webkit-scrollbar {
+            display: none;
+        }
+
+        .feature-btn, .suggestion-chip {
+            padding: 8px 16px;
+            background: linear-gradient(90deg, #1565c0 0%, #00bcd4 100%);
+            color: #fff;
+            border: none;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 500;
+            white-space: nowrap;
+            cursor: pointer;
+            transition: background 0.2s, color 0.2s, transform 0.15s;
+        }
+
+        .dark-mode .feature-btn {
+            background-color: #3b82f6;
+            color: white;
+        }
+
+        .feature-btn:hover, .suggestion-chip:hover {
+            background: linear-gradient(90deg, #00bcd4 0%, #1565c0 100%);
+            color: #eaf6ff;
+            transform: scale(1.05);
+        }
+
+        .dark-mode .feature-btn:hover {
+            background-color: #2563eb;
+        }
+
+        .bot-avatar {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: #1565c0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 8px;
+            color: #fff;
+            font-size: 14px;
+        }
+
+        .user-avatar {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: #00bcd4;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-left: 8px;
+            color: #fff;
+            font-size: 14px;
+        }
+
+        .message-container {
+            display: flex;
+            align-items: flex-end;
+            margin-bottom: 15px;
+        }
+
+        .voice-input {
+            background: none;
+            border: none;
+            color: #9ca3af;
+            font-size: 18px;
+            cursor: pointer;
+            margin-right: 10px;
+            transition: color 0.3s;
+        }
+
+        .voice-input:hover {
+            color: #00bcd4;
+        }
+
+        .dark-mode .voice-input {
+            color: #d1d5db;
+        }
+
+        .dark-mode .voice-input:hover {
+            color: #60a5fa;
+        }
+
+        .recording .voice-input {
+            color: #ef4444 !important;
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.2); }
+            100% { transform: scale(1); }
+        }
+
+        .suggestions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 15px;
+        }
+
+        .emoji-btn {
+            background: none;
+            border: none;
+            color: #9ca3af;
+            font-size: 18px;
+            cursor: pointer;
+            margin-right: 10px;
+            transition: color 0.3s;
+        }
+
+        .emoji-btn:hover {
+            color: #00bcd4;
+        }
+
+        .dark-mode .emoji-btn {
+            color: #d1d5db;
+        }
+
+        .dark-mode .emoji-btn:hover {
+            color: #60a5fa;
+        }
+
+        .emoji-picker {
+            position: absolute;
+            bottom: 70px;
+            left: 15px;
+            background-color: #23272b;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            padding: 10px;
+            display: none;
+            grid-template-columns: repeat(8, 1fr);
+            gap: 5px;
+            z-index: 10;
+        }
+
+        .dark-mode .emoji-picker {
+            background-color: #2d3748;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.4);
+        }
+
+        .emoji-picker.active {
+            display: grid;
+        }
+
+        .emoji {
+            cursor: pointer;
+            font-size: 20px;
+            text-align: center;
+            padding: 5px;
+            transition: all 0.2s;
+        }
+
+        .emoji:hover {
+            transform: scale(1.2);
+            background-color: #3a3f47;
+            border-radius: 5px;
+        }
+
+        .dark-mode .emoji:hover {
+            background-color: #4a5568;
+        }
+
+        @media (max-width: 640px) {
+            .chat-card {
+                width: 100vw;
+                height: 100vh;
+                max-height: 100vh;
+                border-radius: 0;
+                min-width: 0;
+            }
+            .container {
+                padding: 0;
+            }
+            .feature-buttons {
+                flex-direction: column;
+                gap: 6px;
+                padding: 6px 2px;
+            }
+            .input-container {
+                flex-direction: column;
+                gap: 6px;
+                padding: 8px;
+            }
+            #input {
+                width: 100%;
+                font-size: 1rem;
+            }
+            .emoji-picker {
+                left: 2vw;
+                grid-template-columns: repeat(4, 1fr);
+            }
+        }
+        @media (max-width: 400px) {
+            .chat-card { min-width: 0; }
+            .feature-btn, .suggestion-chip { font-size: 12px; padding: 6px 10px; }
+        }
+
+        /* Tüm scrollbarda koyu tema (isteğe bağlı) */
+        body::-webkit-scrollbar,
+        *::-webkit-scrollbar {
+            width: 8px;
+            background: #23272b;
+        }
+        body::-webkit-scrollbar-thumb,
+        *::-webkit-scrollbar-thumb {
+            background: #1565c0;
+            border-radius: 6px;
+            border: 2px solid #23272b;
+        }
+        body::-webkit-scrollbar-track,
+        *::-webkit-scrollbar-track {
+            background: #23272b;
+        }
+        .chat-container {
+            scrollbar-color: #1565c0 #23272b;
+        }
+    </style>
+</head>
+<body class="bg-gray-100">
+    <div class="container mx-auto px-4 py-0 sm:py-8 h-full">
+        <div class="chat-card animate__animated animate__fadeIn animate__faster">
+            <!-- Header -->
+            <div class="header-container">
+                <button id="themeToggle" class="theme-toggle" aria-label="Toggle dark mode">
+                    <i class="fas fa-moon"></i>
+                </button>
+                <h1 class="header-title animate__animated animate__fadeInDown">TDXBorsa Asistanı</h1>
+                <p class="header-subtitle animate__animated animate__fadeIn">Size nasıl yardımcı olabilirim?</p>
+            </div>
+            
+            <!-- Feature Buttons -->
+            <div class="feature-buttons">
+                <button class="feature-btn" onclick="quickQuestion('bist 100 önemli hisseler')">
+                    <i class="fas fa-chart-line mr-2"></i>BIST 100
+                </button>
+                <button class="feature-btn" onclick="quickQuestion('tdx ne işe yarar')">
+                    <i class="fas fa-dollar-sign mr-2"></i>TDX Nedir? 
+                </button>
+                <button class="feature-btn" onclick="quickQuestion('büyük yatırımcılar hangi hisseleri alıyor')">
+                    <i class="fas fa-coins mr-2"></i>Yatırımcı
+                </button>
+                <button class="feature-btn" onclick="quickQuestion('Piyasa analizi')">
+                    <i class="fas fa-chart-pie mr-2"></i>Analiz
+                </button>
+                <button class="feature-btn" onclick="quickQuestion('yatırımcı psikolojisi hakkında ipuçları')">
+                    <i class="fas fa-hand-holding-usd mr-2"></i>Tavsiyeler
+                </button>
+            </div>
+            
+            <!-- Chat Messages -->
+            <div id="messages" class="chat-container">
+                <div class="message-container">
+                    <div class="bot-avatar">
+                        <i class="fas fa-robot"></i>
+                    </div>
+                    <div>
+                        <div class="msg bot">
+                            Merhaba! Ben TDX borsa asistanınız. Hangi hisse senedi hakkında bilgi almak istersiniz? "Yatırım tavsiyesi olmayıp sadece bilgi içermektedir. Burada yapılan tüm yazılanlar sadece bilgi vermektedir.Yatırım yaparken kendi kararlarınızla yapınız."
+                            <div class="suggestions">
+                                <button class="suggestion-chip" onclick="quickQuestion('THYAO analiz')">THYAO Analizi</button>
+                                <button class="suggestion-chip" onclick="quickQuestion('GARAN ne durumda?')">GARAN Durumu</button>
+                                <button class="suggestion-chip" onclick="quickQuestion('Bugünkü piyasa')">Günlük Piyasa</button>
+                            </div>
+                        </div>
+                        <div class="message-time">12:30</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Emoji Picker -->
+            <div id="emojiPicker" class="emoji-picker">
+                <div class="emoji" onclick="addEmoji('😊')">😊</div>
+                <div class="emoji" onclick="addEmoji('👍')">👍</div>
+                <div class="emoji" onclick="addEmoji('🔥')">🔥</div>
+                <div class="emoji" onclick="addEmoji('💰')">💰</div>
+                <div class="emoji" onclick="addEmoji('📈')">📈</div>
+                <div class="emoji" onclick="addEmoji('📉')">📉</div>
+                <div class="emoji" onclick="addEmoji('🤔')">🤔</div>
+                <div class="emoji" onclick="addEmoji('😍')">😍</div>
+                <div class="emoji" onclick="addEmoji('🙏')">🙏</div>
+                <div class="emoji" onclick="addEmoji('💎')">💎</div>
+                <div class="emoji" onclick="addEmoji('🚀')">🚀</div>
+                <div class="emoji" onclick="addEmoji('👀')">👀</div>
+                <div class="emoji" onclick="addEmoji('💯')">💯</div>
+                <div class="emoji" onclick="addEmoji('⭐')">⭐</div>
+                <div class="emoji" onclick="addEmoji('❓')">❓</div>
+                <div class="emoji" onclick="addEmoji('💼')">💼</div>
+            </div>
+            <div id="loading-indicator" class="loading-animation" style="display: none;">
+                <div class="wave"></div>
+                <div class="wave"></div>
+                <div class="wave"></div>
+            </div>
+            
+            <!-- Input Form -->
+            <form id="inputbox" onsubmit="return sendMessage();" class="input-container">
+                <button type="button" id="emojiButton" class="emoji-btn" aria-label="Emoji">
+                    <i class="far fa-smile"></i>
+                </button>
+                <button type="button" id="voiceButton" class="voice-input" aria-label="Voice input">
+                    <i class="fas fa-microphone"></i>
+                </button>
+                <input id="input" 
+                       type="text" 
+                       placeholder="Hisse kodu yazın veya soru sorun..."
+                       autocomplete="off">
+                <button type="submit" class="send-btn">
+                    <i class="fas fa-paper-plane"></i>
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        let isDarkMode = false;
+        let isRecording = false;
+        let recognition = null;
+        
+        // Initialize time
+        function getCurrentTime() {
+            const now = new Date();
+            return now.getHours().toString().padStart(2, '0') + ':' + 
+                   now.getMinutes().toString().padStart(2, '0');
+        }
+
+        function toggleDarkMode() {
+            const body = document.body;
+            const themeIcon = document.querySelector('.theme-toggle i');
+            
+            body.classList.toggle('dark-mode');
+            isDarkMode = body.classList.contains('dark-mode');
+            
+            // Toggle icon
+            themeIcon.className = isDarkMode ? 'fas fa-sun' : 'fas fa-moon';
+            
+            // Save preference
+            localStorage.setItem('darkMode', isDarkMode);
+        }
+
+        function addMessage(msg, sender) {
+            const messagesContainer = document.getElementById('messages');
+            const messageContainer = document.createElement('div');
+            messageContainer.className = 'message-container';
+            
+            let avatarDiv = '';
+            if (sender === 'bot') {
+                avatarDiv = `
+                    <div class="bot-avatar">
+                        <i class="fas fa-robot"></i>
+                    </div>
+                `;
+            }
+            
+            const messageContent = document.createElement('div');
+            
+            const div = document.createElement('div');
+            div.className = `msg ${sender}`;
+            div.innerHTML = msg;
+            
+            const timeDiv = document.createElement('div');
+            timeDiv.className = 'message-time';
+            timeDiv.textContent = getCurrentTime();
+            
+            messageContent.appendChild(div);
+            messageContent.appendChild(timeDiv);
+            
+            if (sender === 'bot') {
+                messageContainer.innerHTML = avatarDiv;
+                messageContainer.appendChild(messageContent);
+            } else {
+                messageContainer.appendChild(messageContent);
+                const userAvatar = document.createElement('div');
+                userAvatar.className = 'user-avatar';
+                userAvatar.innerHTML = '<i class="fas fa-user"></i>';
+                messageContainer.appendChild(userAvatar);
+            }
+            
+            messagesContainer.appendChild(messageContainer);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+
+        function addTypingIndicator() {
+            const messagesContainer = document.getElementById('messages');
+            const messageContainer = document.createElement('div');
+            messageContainer.className = 'message-container';
+            messageContainer.id = 'typing-indicator-container';
+            
+            const botAvatar = document.createElement('div');
+            botAvatar.className = 'bot-avatar';
+            botAvatar.innerHTML = '<i class="fas fa-robot"></i>';
+            
+            const typingIndicator = document.createElement('div');
+            typingIndicator.id = 'typing-indicator';
+            typingIndicator.className = 'msg bot';
+            typingIndicator.innerHTML = '<div class="typing-indicator"><span></span><span></span><span></span></div>';
+            
+            messageContainer.appendChild(botAvatar);
+            messageContainer.appendChild(typingIndicator);
+            messagesContainer.appendChild(messageContainer);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+
+        function removeTypingIndicator() {
+            const indicator = document.getElementById('typing-indicator-container');
+            if (indicator) {
+                indicator.remove();
+            }
+        }
+
+        function quickQuestion(question) {
+            document.getElementById('input').value = question;
+            sendMessage();
+        }
+
+        function toggleEmojiPicker() {
+            document.getElementById('emojiPicker').classList.toggle('active');
+        }
+
+        function addEmoji(emoji) {
+            const input = document.getElementById('input');
+            input.value += emoji;
+            document.getElementById('emojiPicker').classList.remove('active');
+            input.focus();
+        }
+
+        function setupSpeechRecognition() {
+            if ('webkitSpeechRecognition' in window) {
+                recognition = new webkitSpeechRecognition();
+                recognition.continuous = false;
+                recognition.lang = 'tr-TR';
+                
+                recognition.onstart = function() {
+                    isRecording = true;
+                    document.getElementById('voiceButton').parentElement.classList.add('recording');
+                };
+                
+                recognition.onresult = function(event) {
+                    const transcript = event.results[0][0].transcript;
+                    document.getElementById('input').value = transcript;
+                };
+                
+                recognition.onend = function() {
+                    isRecording = false;
+                    document.getElementById('voiceButton').parentElement.classList.remove('recording');
+                };
+                
+                recognition.onerror = function(event) {
+                    console.error('Speech recognition error', event.error);
+                    isRecording = false;
+                    document.getElementById('voiceButton').parentElement.classList.remove('recording');
+                };
+            } else {
+                document.getElementById('voiceButton').style.display = 'none';
+            }
+        }
+
+        function toggleVoiceInput() {
+            if (!recognition) return;
+            
+            if (!isRecording) {
+                recognition.start();
+            } else {
+                recognition.stop();
+            }
+        }
+
+        // TDX Knowledge Base for greetings and similar questions
+        const tdxKnowledgeBase = {
+            "nasılsın": [
+                "Ben bir botum, duygularım yok. Ama sistemlerim tıkır tıkır çalışıyor. Senin portföy nasıl, iyi mi?",
+                "Nasılsınız diye sormak yerine, 'Bugün hangi analizleri yapmalıyım?' diye sorsan daha çok sevinirim.",
+                "Benim için her şey yolunda. Umarım senin yatırımların da benim kadar stabildir.",
+                "Nasılsınız sorusu bana biraz uzak. Ama piyasalar nasıl, onu sorarsanız size bir sürü şey anlatabilirim!",
+                "Nasılsınız bilmem ama, portföyün nasıl? İlgilenmem gereken bir hisse var mı?",
+                "Nasılsınız demek, hangi hissenin trendi ne durumda demek mi? O zaman iyiyim, çünkü trendleri yakından takip ediyorum.",
+            ],
+            "naber": [
+                "Borsa dışında haberim yok. Ama sen merak ettiğin hisseyi sor, sana en güncel haberleri vereyim!",
+                "Haberler iyi diyelim iyi olsun. Sen bana hangi hissenin haberini getirdin bakalım?",
+                "Benden haber bekleme, ben sadece rakamları konuşurum. Ama sen merak ettiğin bir şirket varsa, onu inceleyebiliriz.",
+                "Haberler her zaman var, önemli olan doğru yorumlamak. TDX ile haberleri analiz etmeye ne dersin?",
+                "Benim haber kaynaklarım piyasalar. Sen de TDX'e abone ol, en güncel haberleri kaçırma!",
+                "Ne haber diye sormak yerine, 'Piyasalar bugün nasıl?' diye sorsan daha çok sevinirim. Çünkü ben bir borsa botuyum!",
+            ],
+            "ne haber": [
+                "Borsa dışında haberim yok. Ama sen merak ettiğin hisseyi sor, sana en güncel haberleri vereyim!",
+                "Haberler iyi diyelim iyi olsun. Sen bana hangi hissenin haberini getirdin bakalım?",
+                "Benden haber bekleme, ben sadece rakamları konuşurum. Ama sen merak ettiğin bir şirket varsa, onu inceleyebiliriz.",
+                "Haberler her zaman var, önemli olan doğru yorumlamak. TDX ile haberleri analiz etmeye ne dersin?",
+                "Benim haber kaynaklarım piyasalar. Sen de TDX'e abone ol, en güncel haberleri kaçırma!",
+                "Ne haber diye sormak yerine, 'Piyasalar bugün nasıl?' diye sorsan daha çok sevinirim. Çünkü ben bir borsa botuyum!",
+            ],
+            "nasılsınız": [
+                "Ben bir botum, duygularım yok. Ama sistemlerim tıkır tıkır çalışıyor. Senin portföy nasıl, iyi mi?",
+                "Nasılsınız diye sormak yerine, 'Bugün hangi analizleri yapmalıyım?' diye sorsan daha çok sevinirim.",
+                "Benim için her şey yolunda. Umarım senin yatırımların da benim kadar stabildir.",
+                "Nasılsınız sorusu bana biraz uzak. Ama piyasalar nasıl, onu sorarsanız size bir sürü şey anlatabilirim!",
+                "Nasılsınız bilmem ama, portföyün nasıl? İlgilenmem gereken bir hisse var mı?",
+                "Nasılsınız demek, hangi hissenin trendi ne durumda demek mi? O zaman iyiyim, çünkü trendleri yakından takip ediyorum.",
+            ],
+            "ne var ne yok": [
+                "Piyasada her şey var! Yükselenler var, düşenler var, fırsatlar var, riskler var... TDX ile hepsini takip edebilirsin.",
+                "Ne var ne yok demek, hangi sektörde hareketlilik var demek mi? O zaman gel, birlikte inceleyelim.",
+                "Ne var ne yok bende, sen bana ne getirdin? Hangi hisse hakkında bilgi almak istersin?",
+                "Piyasada her gün yeni bir şeyler oluyor. Önemli olan doğru zamanda doğru yerde olmak. TDX sana bu konuda yardımcı olabilir.",
+                "Ne var ne yok bende, sen bana ne soracaksın bakalım? Hangi hissenin geleceğini merak ediyorsun?",
+                "Ne var ne yok sorusu yerine, 'Hangi hisseleri incelemeliyim?' diye sormalısın. TDX'te analiz araçlarımız seni bekliyor!",
+            ],
+            "keyifler nasıl": [
+                "Benim keyfim her zaman yerinde, çünkü piyasalar sürekli hareketli! Senin keyfin nasıl, yatırımlarından memnun musun?",
+                "Keyifler nasıl bilmem ama, borsada fırsatlar bitmez! Hangi hisse hakkında bilgi almak istersin?",
+                "Benim keyfim her zaman yüksek, çünkü ben bir borsa botuyum! Senin keyfini ne yükseltir, hangi hisse?",
+                "Keyifler nasıl sorusu yerine, 'Bugün hangi sektörlere yatırım yapmalıyım?' diye sormalısın. TDX sana bu konuda yardımcı olabilir.",
+                "Keyifler nasıl bilmem ama, portföyün nasıl? İlgilenmem gereken bir hisse var mı?",
+            ],
+            "durumlar nasıl": [
+                "Piyasaların durumu her zamanki gibi karmaşık ve öngörülemez. TDX ile durumları yakından takip etmeye ne dersin?",
+                "Durumlar nasıl demek, hangi hissenin durumu nasıl demek mi? O zaman doğru yerdesin!",
+                "Benim için durumlar iyi, sistemler çalışıyor. Senin yatırımların nasıl gidiyor, ondan haber ver?",
+                "Durumlar nasıl bilmem ama, borsada her zaman fırsatlar vardır! Yeter ki doğru analizleri yapalım.",
+                "Durumlar nasıl sorusu yerine, 'Bugün hangi hisseleri takip etmeliyim?' diye sormalısın. TDX'te takip listeni oluşturabilirsin!",
+            ],
+            "işler nasıl gidiyor": [
+                "Benim işim gücüm borsa! Senin işler nasıl gidiyor, yatırımların yolunda mı?",
+                "İşler iyi diyelim iyi olsun. Sen bana hangi hissenin haberini getirdin bakalım?",
+                "İşler bende her zaman yoğun, çünkü piyasalar 7/24 açık! Senin işler nasıl, borsaya vakit ayırabiliyor musun?",
+                "İşler nasıl bilmem ama, borsada her zaman fırsatlar vardır! Yeter ki doğru analizleri yapalım.",
+                "İşler bende tıkırında, sistemler çalışıyor. Senin yatırımların nasıl gidiyor, ondan haber ver?",
+                "İşler nasıl sorusu yerine, 'Bugün hangi sektörlere yatırım yapmalıyım?' diye sormalısın. TDX sana bu konuda yardımcı olabilir.",
+            ],
+            "portföyüm çok riskli mi": [
+                "Portföyün çok riskli mi sorusu, lunaparkta hız trenine binmek gibi. Heyecan verici mi, yoksa mide bulantısı mı yapıyor? TDX ile risk seviyeni ölç!",
+                "Portföyün çok riskli mi bilmem ama, umarım uykularını kaçırmıyordur! TDX ile rahat bir uyku çek.",
+                "Portföyün çok riskli mi demek, ne kadar kaybetmeye hazır olduğunu bilmek demek. TDX ile risk toleransını belirle!",
+                "Portföyün çok riskli mi? Yoksa adrenalini mi seviyorsun? TDX ile riskini yönet ve heyecanını kontrol et!",
+                "Portföyün çok riskli mi sorusu yerine, 'Portföyümün ne kadarını kaybedebilirim?' diye sorsan daha iyi olur.",
+                "Portföyün çok riskli mi bilmem ama, umarım seni hedeflerinden uzaklaştırmıyordur! TDX ile hedeflerine odaklan.",
+                "Portföyün çok riskli mi? Yoksa biraz daha temkinli mi olmalısın? TDX ile risk analizini yap ve stratejini yeniden gözden geçir!",
+                "Portföyün çok riskli mi? Yoksa biraz daha güvende mi hissetmek istiyorsun? TDX ile portföyünü daha istikrarlı hale getir!"
+            ],
+            "portföyümü nasıl çeşitlendirebilirim": [
+                "Portföyümü nasıl çeşitlendirebilirim sorusu, bir bahçıvanın farklı çiçekler ekmesi gibi. TDX ile bahçeni renklendir!",
+                "Portföyümü nasıl çeşitlendirebilirim bilmem ama, umarım tüm yumurtaları aynı sepete koymuyorsundur! TDX ile riskini dağıt.",
+                "Portföyümü nasıl çeşitlendirebilirim demek, farklı sektörlere ve yatırım araçlarına yönelmek demek. TDX ile yeni fırsatlar keşfet!",
+                "Portföyümü nasıl çeşitlendirebilirim? Yoksa biraz sıkıcı mı oldu? TDX ile portföyüne heyecan kat!",
+                "Portföyümü nasıl çeşitlendirebilirim sorusu yerine, 'Hangi yatırım araçları portföyüme daha uygun?' diye sorsan daha iyi olur.",
+                "Portföyümü nasıl çeşitlendirebilirim bilmem ama, umarım seni daha güvenli ve kazançlı bir geleceğe taşıyordur! TDX ile geleceğine yatırım yap.",
+                "Portföyümü nasıl çeşitlendirebilirim? Yoksa biraz daha bilgiye mi ihtiyacın var? TDX ile portföy yönetimi eğitimlerine katıl!",
+                "Portföyümü nasıl çeşitlendirebilirim? Yoksa biraz daha risk mi almalısın? TDX ile risk toleransını belirle ve stratejini ona göre ayarla!"
+            ],
+            "portföyüm enflasyona karşı korunuyor mu": [
+                "Portföyüm enflasyona karşı korunuyor mu sorusu, kışa hazırlık yapmak gibi. Soğuktan korunmak için ne yapman gerektiğini TDX ile öğren!",
+                "Portföyüm enflasyona karşı korunuyor mu bilmem ama, umarım paran erimiyordur! TDX ile paranı koru.",
+                "Portföyüm enflasyona karşı korunuyor mu demek, hangi yatırım araçlarının enflasyona karşı daha dirençli olduğunu bilmek demek. TDX ile enflasyona meydan oku!",
+                "Portföyüm enflasyona karşı korunuyor mu? Yoksa biraz endişeli misin? TDX ile enflasyon analizini yap ve stratejini yeniden gözden geçir!",
+                "Portföyüm enflasyona karşı korunuyor mu sorusu yerine, 'Enflasyona karşı hangi yatırım araçları daha iyi performans gösteriyor?' diye sorsan daha iyi olur.",
+                "Portföyüm enflasyona karşı korunuyor mu bilmem ama, umarım seni daha güvenli bir geleceğe taşıyordur! TDX ile geleceğine yatırım yap.",
+                "Portföyüm enflasyona karşı korunuyor mu? Yoksa biraz daha bilgiye mi ihtiyacın var? TDX ile enflasyon ve yatırım konularında eğitimlere katıl!",
+                "Portföyüm enflasyona karşı korunuyor mu? Yoksa biraz daha risk mi almalısın? TDX ile risk toleransını belirle ve stratejini ona göre ayarla!"
+            ],
+            "portföyümün getirisi neden düşük": [
+                "Portföyümün getirisi neden düşük sorusu, bahçendeki çiçeklerin neden açmadığını merak etmek gibi. TDX ile toprağını analiz et!",
+                "Portföyümün getirisi neden düşük bilmem ama, umarım sabırlı olmayı öğreniyorsundur! TDX ile uzun vadeli stratejiler geliştir.",
+                "Portföyümün getirisi neden düşük demek, hangi hisselerin beklentilerini karşılamadığını bilmek demek. TDX ile performans analizi yap!",
+                "Portföyümün getirisi neden düşük? Yoksa biraz daha risk mi almalısın? TDX ile risk toleransını belirle ve stratejini ona göre ayarla!",
+                "Portföyümün getirisi neden düşük sorusu yerine, 'Portföyümün potansiyelini nasıl artırabilirim?' diye sorsan daha iyi olur.",
+                "Portföyümün getirisi neden düşük bilmem ama, umarım seni hayallerinden vazgeçirmiyordur! TDX ile hayallerine ulaş.",
+                "Portföyümün getirisi neden düşük? Yoksa biraz daha araştırma mı yapmalısın? TDX ile derinlemesine analizler yap!",
+                "Portföyümün getirisi neden düşük? Yoksa biraz şanssız mıydın? TDX ile şansını artıracak stratejiler geliştir!"
+            ],
+            "portföyüm detikkat etmem gerekenler ne": [
+                "Portföyümde dikkat etmem gerekenler ne sorusu, bir kaptanın rotasını çizerken nelere dikkat etmesi gerektiği gibi. TDX ile rotanı belirle!",
+                "Portföyümde dikkat etmem gerekenler ne bilmem ama, umarım kontrolü elinde tutuyorsundur! TDX ile ipleri elinde tut.",
+                "Portföyümde dikkat etmem gerekenler ne demek, hangi riskleri alıp hangilerinden kaçınmak gerektiğini bilmek demek. TDX ile risklerini analiz et!",
+                "Portföyümde dikkat etmem gerekenler ne? Yoksa biraz yoldan mı çıktın? TDX ile stratejini yeniden gözden geçir!",
+                "Portföyümde dikkat etmem gerekenler ne sorusu yerine, 'Portföyümün zayıf ve güçlü yönleri nelerdir?' diye sorsan daha iyi olur.",
+                "Portföyümde dikkat etmem gerekenler ne bilmem ama, umarım seni hedeflerine ulaştıracak doğru kararları veriyorsundur! TDX ile bilinçli kararlar al.",
+                "Portföyümde dikkat etmem gerekenler ne? Yoksa biraz kafan mı karışık? TDX ile stratejini netleştir!",
+                "Portföyümde dikkat etmem gerekenler ne? Yoksa biraz daha öğrenmeye mi ihtiyacın var? TDX ile portföy yönetimi eğitimlerine katıl!"
+            ],
+            "portföyüme ne eklemeliyim": [
+                "Portföyüme ne eklemeliyim sorusu, bir aşçının yemeğine hangi baharatları katması gerektiği gibi. TDX ile portföyüne lezzet kat!",
+                "Portföyüme ne eklemeliyim bilmem ama, umarım seni daha zengin edecek fırsatlarla doludur! TDX ile yeni fırsatlar keşfet.",
+                "Portföyüme ne eklemeliyim demek, hangi yatırım araçlarının portföyünü daha iyi dengeleyeceğini bilmek demek. TDX ile dengeyi yakala!",
+                "Portföyüme ne eklemeliyim? Yoksa biraz sıkıcı mı oldu? TDX ile portföyüne heyecan kat!",
+                "Portföyüme ne eklemeliyim sorusu yerine, 'Hangi yatırım araçları portföyümdeki riskleri azaltır?' diye sorsan daha iyi olur.",
+                "Portföyüme ne eklemeliyim bilmem ama, umarım seni daha güvenli ve kazançlı bir geleceğe taşıyordur! TDX ile geleceğine yatırım yap.",
+                "Portföyüme ne eklemeliyim? Yoksa biraz daha bilgiye mi ihtiyacın var? TDX ile portföy yönetimi eğitimlerine katıl!",
+                "Portföyüme ne eklemeliyim? Yoksa biraz daha risk mi almalısın? TDX ile risk toleransını belirle ve stratejini ona göre ayarla!"
+            ],
+            "piyasalar neden düşüyor portfoy etkileniyor": [
+                "Piyasalar neden düşüyor portföy etkileniyor mu? Endişelenme, dalgalar ne kadar büyük olursa olsun, sağlam bir gemi batmaz. TDX ile gemini sağlam tut!",
+                "Piyasalar düşerken portföyün etkileniyorsa, belki de çok fazla ağırlık var demektir. TDX ile gereksiz yüklerinden kurtul!",
+                "Piyasalar düşerken portföyün etkileniyorsa, bu bir fırsat olabilir. Düşükten alım yaparak geleceğe yatırım yapmaya ne dersin? TDX ile fırsatları yakala!",
+                "Piyasalar düşerken portföyün etkileniyorsa, belki de stratejini gözden geçirmenin zamanı gelmiştir. TDX ile stratejini yeniden belirle!",
+                "Piyasalar düşerken portföyün etkileniyorsa, sakin ol ve panik yapma. Borsada her zaman inişler ve çıkışlar olur. TDX ile soğukkanlılığını koru!",
+                "Piyasalar düşerken portföyün etkileniyorsa, belki de daha çeşitlendirilmiş bir portföye ihtiyacın var. TDX ile portföyünü çeşitlendir!",
+                "Piyasalar düşerken portföyün etkileniyorsa, belki de uzun vadeli düşünmenin zamanı gelmiştir. TDX ile uzun vadeli stratejiler geliştir!",
+            ],
+            "portföy hedefime ulaşırmı": [
+                "Portföyün hedefine ulaşır mı? Belki de doğru rotayı çizmedin. TDX ile rotanı belirle ve hedefine ulaş!",
+                "Portföyün hedefine ulaşır mı bilmem ama, umarım pes etmiyorsundur! TDX ile azmini koru.",
+                "Portföyün hedefine ulaşır mı demek, hangi adımları atman gerektiğini bilmek demek. TDX ile adımlarını planla!",
+                "Portföyün hedefine ulaşır mı? Yoksa biraz daha çabalaman mı gerekiyor? TDX ile performansını artır!",
+                "Portföyün hedefine ulaşır mı sorusu yerine, 'Portföyümün potansiyeli ne kadar?' diye sorsan daha iyi olur.",
+                "Portföyün hedefine ulaşır mı bilmem ama, umarım seni finansal özgürlüğe kavuşturuyordur! TDX ile özgürlüğe kanat aç!",
+                "Portföyün hedefine ulaşır mı? Yoksa biraz hayal kırıklığı mı yaşıyorsun? TDX ile umutlarını yeşert!",
+                "Portföyün hedefine ulaşır mı? Yoksa biraz daha yardıma mı ihtiyacı var? TDX ile portföy analizini yap ve stratejini geliştir!"
+            ],
+        };
+
+        function getAnswer(question) {
+            const normalizedQuestion = question.toLowerCase();
+            if (tdxKnowledgeBase[normalizedQuestion]) {
+                const answer = tdxKnowledgeBase[normalizedQuestion];
+                if (Array.isArray(answer)) {
+                    const randomIndex = Math.floor(Math.random() * answer.length);
+                    return answer[randomIndex];
+                } else {
+                    return answer;
+                }
+            } else {
+                return "Üzgünüm, bu konuda henüz bir bilgim yok. Ama TDX'i kullanarak araştırma yapabilirsin!";
+            }
+        }
+
+        // Chatbot mesaj gönderme fonksiyonuna entegre et
+        function sendMessage() {
+            const input = document.getElementById('input');
+            const message = input.value.trim();
+
+            if (!message) return false;
+
+            addMessage(message, 'user');
+            input.value = '';
+
+            // Yükleme animasyonunu göster
+            showLoadingAnimation();
+
+            // Rastgele gecikme (0.8-2 saniye)
+            const delay = Math.random() * 1200 + 800;
+
+            setTimeout(() => {
+                // Eğer selamlama veya benzer soru ise, local cevap ver
+                const localAnswer = getAnswer(message);
+                if (!localAnswer.startsWith('Üzgünüm')) {
+                    removeTypingIndicator && removeTypingIndicator();
+                    hideLoadingAnimation && hideLoadingAnimation();
+                    addMessage(localAnswer, 'bot');
+                    return;
+                }
+                // API isteği
+                fetch('/chat', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({message})
+                })
+                .then(res => res.json())
+                .then(data => {
+                    removeTypingIndicator && removeTypingIndicator();
+                    hideLoadingAnimation && hideLoadingAnimation();
+                    addMessage(data.response, 'bot');
+                })
+                .catch(() => {
+                    removeTypingIndicator && removeTypingIndicator();
+                    hideLoadingAnimation && hideLoadingAnimation();
+                    addMessage("Üzgünüm, bir hata oluştu. Lütfen tekrar deneyin.", 'bot');
+                });
+            }, delay);
+
+            return false;
+        }
+
+        function showLoadingAnimation() {
+            document.getElementById('loading-indicator').style.display = 'flex';
+        }
+
+        function hideLoadingAnimation() {
+            document.getElementById('loading-indicator').style.display = 'none';
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            // Setup theme toggle
+            document.getElementById('themeToggle').addEventListener('click', toggleDarkMode);
+            
+            // Check saved preference
+            if (localStorage.getItem('darkMode') === 'true') {
+                toggleDarkMode();
+            }
+            
+            // Setup emoji picker
+            document.getElementById('emojiButton').addEventListener('click', toggleEmojiPicker);
+            
+            // Close emoji picker when clicking outside
+            document.addEventListener('click', (e) => {
+                const emojiPicker = document.getElementById('emojiPicker');
+                const emojiButton = document.getElementById('emojiButton');
+                
+                if (emojiPicker.classList.contains('active') && 
+                    !emojiPicker.contains(e.target) && 
+                    !emojiButton.contains(e.target)) {
+                    emojiPicker.classList.remove('active');
+                }
+            });
+            
+            // Setup voice recognition
+            setupSpeechRecognition();
+            document.getElementById('voiceButton').addEventListener('click', toggleVoiceInput);
+            
+            // Enter key support
+            document.getElementById('input').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    sendMessage();
+                }
+            });
+
+            // Focus input on page load
+            document.getElementById('input').focus();
+        });
+    </script>
+</body>
+</html>
+  
