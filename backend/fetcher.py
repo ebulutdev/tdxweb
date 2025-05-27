@@ -14,7 +14,10 @@ import requests
 from bs4 import BeautifulSoup
 from urllib.parse import quote_plus
 import random
-from app import save_json_to_db
+try:
+    from app import save_json_to_db
+except ImportError:
+    from backend.app import save_json_to_db
 
 GEMINI_API_KEY = "AIzaSyAQXzOVG-BP5-EGZl2ts9d6kp_n-2pvM_U"
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
