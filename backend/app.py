@@ -116,6 +116,224 @@ def check_db():
         "records": result
     })
 
+@app.route('/data-dashboard')
+def data_dashboard():
+    # SQLite veritabanı içeriğini al
+    conn = sqlite3.connect(DB_PATH)
+    cur = conn.cursor()
+    cur.execute('SELECT symbol, data, last_update FROM stock_data')
+    db_rows = cur.fetchall()
+    cur.close()
+    conn.close()
+    
+    db_data = []
+    for row in db_rows:
+        try:
+            data = json.loads(row[1])
+            db_data.append({
+                "symbol": row[0],
+                "data": data,
+                "last_update": row[2]
+            })
+        except:
+            db_data.append({
+                "symbol": row[0],
+                "data": "Error parsing JSON",
+                "last_update": row[2]
+            })
+    
+    # Gemini cache içeriğini al
+    cache_files = []
+    for filename in os.listdir(GEMINI_CACHE_DIR):
+        if filename.endswith('.json'):
+            try:
+                with open(os.path.join(GEMINI_CACHE_DIR, filename), 'r', encoding='utf-8') as f:
+                    cache_data = json.load(f)
+                    cache_files.append({
+                        "hash": filename.replace('.json', ''),
+                        "data": cache_data.get("result", "No result found"),
+                        "size": os.path.getsize(os.path.join(GEMINI_CACHE_DIR, filename))
+                    })
+            except Exception as e:
+                cache_files.append({
+                    "hash": filename.replace('.json', ''),
+                    "data": f"Error reading file: {str(e)}",
+                    "size": 0
+                })
+    
+    return render_template_string('''
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <title>Veri Dashboard</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: #181c20;
+            color: #eaf6ff;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        h1, h2 {
+            color: #4fc3f7;
+            margin-bottom: 20px;
+        }
+        .section {
+            background: #23272b;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 30px;
+        }
+        .stats {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        .stat-box {
+            background: #2c3e50;
+            padding: 15px;
+            border-radius: 8px;
+            flex: 1;
+        }
+        .stat-box h3 {
+            margin: 0;
+            color: #4fc3f7;
+            font-size: 1.1em;
+        }
+        .stat-box p {
+            margin: 10px 0 0;
+            font-size: 1.5em;
+            font-weight: bold;
+        }
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        .data-table th, .data-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #3a3f47;
+        }
+        .data-table th {
+            background: #2c3e50;
+            color: #4fc3f7;
+        }
+        .data-table tr:hover {
+            background: #2c3e50;
+        }
+        .json-data {
+            background: #1e2a38;
+            padding: 10px;
+            border-radius: 5px;
+            max-height: 200px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 0.9em;
+        }
+        .back-button {
+            display: inline-block;
+            background: linear-gradient(90deg, #1565c0, #00bcd4);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 5px;
+            text-decoration: none;
+            margin-bottom: 20px;
+        }
+        .back-button:hover {
+            background: linear-gradient(90deg, #00bcd4, #1565c0);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="/" class="back-button">&larr; Anasayfaya Dön</a>
+        
+        <h1>Veri Dashboard</h1>
+        
+        <div class="section">
+            <h2>SQLite Veritabanı</h2>
+            <div class="stats">
+                <div class="stat-box">
+                    <h3>Toplam Kayıt</h3>
+                    <p>{{ db_data|length }}</p>
+                </div>
+                <div class="stat-box">
+                    <h3>Son Güncelleme</h3>
+                    <p>{{ db_data[0].last_update if db_data else 'Veri yok' }}</p>
+                </div>
+            </div>
+            
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Sembol</th>
+                        <th>Son Güncelleme</th>
+                        <th>Veri</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in db_data %}
+                    <tr>
+                        <td>{{ item.symbol }}</td>
+                        <td>{{ item.last_update }}</td>
+                        <td>
+                            <div class="json-data">
+                                {{ item.data|tojson(indent=2) }}
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        
+        <div class="section">
+            <h2>Gemini Cache</h2>
+            <div class="stats">
+                <div class="stat-box">
+                    <h3>Toplam Cache Dosyası</h3>
+                    <p>{{ cache_files|length }}</p>
+                </div>
+                <div class="stat-box">
+                    <h3>Toplam Cache Boyutu</h3>
+                    <p>{{ (cache_files|sum(attribute='size') / 1024)|round(2) }} KB</p>
+                </div>
+            </div>
+            
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Hash</th>
+                        <th>Boyut</th>
+                        <th>İçerik</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in cache_files %}
+                    <tr>
+                        <td>{{ item.hash }}</td>
+                        <td>{{ (item.size / 1024)|round(2) }} KB</td>
+                        <td>
+                            <div class="json-data">
+                                {{ item.data|tojson(indent=2) }}
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</body>
+</html>
+    ''', db_data=db_data, cache_files=cache_files)
+
 # --- CACHE DOSYALARI YOKSA fetcher.py'yi OTOMATİK ÇALIŞTIR ---
 def run_fetcher_if_needed():
     # Kontrol edilecek dosyalar
@@ -497,13 +715,29 @@ def parse_stock_json(path):
             stock_data = data
         prices = stock_data.get("prices", [])
         dates = stock_data.get("dates", [])
+        
+        # Calculate support and resistance levels using a more robust method
         support_levels = []
         resistance_levels = []
-        for i in range(1, len(prices)-1):
-            if prices[i] < prices[i-1] and prices[i] < prices[i+1]:
-                support_levels.append(prices[i])
-            elif prices[i] > prices[i-1] and prices[i] > prices[i+1]:
-                resistance_levels.append(prices[i])
+        
+        # Use a window of 3 points to identify local minima and maxima
+        window_size = 3
+        for i in range(window_size, len(prices) - window_size):
+            window = prices[i-window_size:i+window_size+1]
+            current_price = prices[i]
+            
+            # Check if current price is a local minimum (support)
+            if current_price == min(window):
+                support_levels.append(current_price)
+            
+            # Check if current price is a local maximum (resistance)
+            if current_price == max(window):
+                resistance_levels.append(current_price)
+        
+        # Remove duplicates and sort
+        support_levels = sorted(list(set(support_levels)))
+        resistance_levels = sorted(list(set(resistance_levels)))
+        
         return {
             "symbol": stock_data.get("symbol", os.path.basename(path).replace(".json", "")),
             "dates": dates,
