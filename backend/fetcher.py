@@ -14,6 +14,7 @@ import requests
 from bs4 import BeautifulSoup
 from urllib.parse import quote_plus
 import random
+from app import save_json_to_db
 
 GEMINI_API_KEY = "AIzaSyAQXzOVG-BP5-EGZl2ts9d6kp_n-2pvM_U"
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -77,7 +78,8 @@ class StockDataFetcher:
             # Always save the data to backend/cache
             with open(cache_file, 'w', encoding='utf-8') as f:
                 json.dump({'data': data, 'last_update': data['last_update']}, f, ensure_ascii=False, indent=2)
-            
+            # --- YENİ: Veritabanına da kaydet ---
+            save_json_to_db(symbol.lower(), data)
             return data
             
         except Exception as e:
