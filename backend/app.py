@@ -595,6 +595,7 @@ def get_yahoo_news(symbol, count=5):
 def save_news_to_json(symbol, news, out_dir=CACHE_DIR):
     """Save news data to a JSON file"""
     try:
+        symbol = symbol.lower()
         news_file = os.path.join(out_dir, f"{symbol}_news.json")
         with open(news_file, 'w', encoding='utf-8') as f:
             json.dump({
@@ -722,6 +723,7 @@ def plot_scenarios_interactive(dates, prices, support_levels, resistance_levels,
 
 @app.route("/analyze/<symbol>")
 def analyze(symbol):
+    symbol = symbol.lower()
     file_path = os.path.join(CACHE_DIR, f"{symbol}.json")
     news_path = os.path.join(CACHE_DIR, f"{symbol}_news.json")
     if not os.path.exists(file_path):
@@ -1070,6 +1072,7 @@ def news_page():
 
 def load_cached_news(symbol):
     try:
+        symbol = symbol.lower()
         with open(f'backend/cache/{symbol}_news.json', 'r', encoding='utf-8') as f:
             news = json.load(f)
             if isinstance(news, dict):  # Eski/boş dosya
