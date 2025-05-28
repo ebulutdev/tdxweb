@@ -14,14 +14,13 @@ import requests
 from bs4 import BeautifulSoup
 from urllib.parse import quote_plus
 import random
-try:
-    from app import save_json_to_db
-except ImportError:
-    from backend.app import save_json_to_db
+import sqlite3
+
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+DB_PATH = os.path.join(BASE_DIR, 'stock_data.db')
+CACHE_DIR = os.path.join(BASE_DIR, "cache")
 
 GEMINI_API_KEY = "AIzaSyAQXzOVG-BP5-EGZl2ts9d6kp_n-2pvM_U"
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-CACHE_DIR = os.path.join(BASE_DIR, "cache")
 
 USER_AGENTS = [
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
@@ -39,19 +38,22 @@ class StockDataFetcher:
         os.makedirs(self.cache_dir, exist_ok=True)
         
     async def fetch_stock_data(self, symbol: str, period: str = "1mo") -> Dict:
-        """Fetch stock data and cache it"""
-        cache_file = os.path.join(self.cache_dir, f"{symbol}.json")
-        
-        # Check if we have recent cached data (24 hours)
-        if os.path.exists(cache_file):
-            with open(cache_file, 'r', encoding='utf-8') as f:
-                cached_data = json.load(f)
-                last_update = datetime.fromisoformat(cached_data['last_update'])
-                if datetime.now() - last_update < timedelta(hours=24):
-                    return cached_data['data']
+        """Fetch stock data from database or fetch new if needed"""
+        # First try to get data from database
+        conn = sqlite3.connect(DB_PATH)
+        cur = conn.cursor()
+        cur.execute('SELECT data, last_update FROM stock_data WHERE symbol=?', (symbol.lower(),))
+        row = cur.fetchone()
+        cur.close()
+        conn.close()
+
+        # If we have recent data in database (24 hours)
+        if row:
+            last_update = datetime.fromisoformat(row[1])
+            if datetime.now() - last_update < timedelta(hours=24):
+                return json.loads(row[0])
         
         # Calculate dynamic delay based on symbol
-        # More frequently traded stocks get longer delays
         if symbol in ["THYAO", "GARAN", "ASELS"]:  # High volume stocks
             delay = 5
         elif symbol in ["MIATK", "FROTO"]:  # Medium volume stocks
@@ -78,12 +80,8 @@ class StockDataFetcher:
                 'last_update': datetime.now().isoformat()
             }
             
-            # First save to database
+            # Save to database
             save_json_to_db(symbol.lower(), data)
-            
-            # Then save to cache file
-            with open(cache_file, 'w', encoding='utf-8') as f:
-                json.dump({'data': data, 'last_update': data['last_update']}, f, ensure_ascii=False, indent=2)
             
             return data
             
