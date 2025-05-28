@@ -1081,7 +1081,56 @@ def analyze(symbol):
 
 @app.route("/analyze-asels")
 def analyze_asels():
-    return analyze('asels')
+    symbols = ["asels", "froto", "garan", "thyao", "miatk"]
+    results = []
+    for symbol in symbols:
+        # Veritabanından oku
+        conn = sqlite3.connect(DB_PATH)
+        cur = conn.cursor()
+        cur.execute('SELECT data FROM stock_data WHERE symbol=?', (symbol,))
+        row = cur.fetchone()
+        cur.close()
+        conn.close()
+        if not row:
+            continue
+        stock_data = json.loads(row[0])
+        # Destek/direnç hesapla
+        prices = stock_data.get("prices", [])
+        dates = stock_data.get("dates", [])
+        # Destek/direnç seviyeleri hesapla (parse_stock_json fonksiyonundaki gibi)
+        support_levels = []
+        resistance_levels = []
+        window_size = 3
+        for i in range(window_size, len(prices) - window_size):
+            window = prices[i-window_size:i+window_size+1]
+            current_price = prices[i]
+            if current_price == min(window):
+                support_levels.append(current_price)
+            if current_price == max(window):
+                resistance_levels.append(current_price)
+        support_levels = sorted(list(set(support_levels)))
+        resistance_levels = sorted(list(set(resistance_levels)))
+        # Haberleri oku
+        news = []
+        news_path = os.path.join(CACHE_DIR, f"{symbol}_news.json")
+        if os.path.exists(news_path):
+            with open(news_path, "r", encoding="utf-8") as f:
+                news = json.load(f)
+        # LLM prompt ve analiz
+        prompt = make_llm_prompt(symbol.upper(), prices, support_levels, resistance_levels, news=news)
+        analysis = gemini_cached(prompt, GEMINI_API_KEY)
+        scenario_lists = extract_scenarios_from_gemini_response(analysis)
+        plotly_div = plot_scenarios_interactive(
+            dates, prices, support_levels, resistance_levels, symbol.upper(), scenario_lists=scenario_lists, news=news
+        )
+        analysis_html = markdown.markdown(analysis)
+        results.append({
+            "symbol": symbol.upper(),
+            "analysis": analysis_html,
+            "plotly_div": plotly_div,
+            "news": news
+        })
+    return render_template("analyze_all.html", results=results)
 
 @app.route("/analyze-froto")
 def analyze_froto():
