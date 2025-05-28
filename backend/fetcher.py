@@ -78,11 +78,13 @@ class StockDataFetcher:
                 'last_update': datetime.now().isoformat()
             }
             
-            # Always save the data to backend/cache
+            # First save to database
+            save_json_to_db(symbol.lower(), data)
+            
+            # Then save to cache file
             with open(cache_file, 'w', encoding='utf-8') as f:
                 json.dump({'data': data, 'last_update': data['last_update']}, f, ensure_ascii=False, indent=2)
-            # --- YENİ: Veritabanına da kaydet ---
-            save_json_to_db(symbol.lower(), data)
+            
             return data
             
         except Exception as e:
