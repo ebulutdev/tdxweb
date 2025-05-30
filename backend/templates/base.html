@@ -216,104 +216,6 @@
             animation: shake 6s;
             animation-iteration-count: infinite;
         }
-        @media (max-width: 900px) {
-            .card-list {
-                position: static !important;
-                left: 0 !important;
-                top: 0 !important;
-                transform: none !important;
-                flex-direction: column !important;
-                flex-wrap: nowrap !important;
-                gap: 18px !important;
-                margin-bottom: 16px !important;
-                width: 100% !important;
-                align-items: center !important;
-                justify-content: flex-start !important;
-                z-index: 2 !important;
-            }
-            .stock-card {
-                position: static !important;
-                left: 0 !important;
-                top: 0 !important;
-                transform: none !important;
-                min-width: 0 !important;
-                max-width: 95vw !important;
-                width: 95vw !important;
-                margin: 0 auto !important;
-                box-sizing: border-box !important;
-                display: flex !important;
-                flex-direction: row !important;
-                align-items: center !important;
-                justify-content: flex-start !important;
-                background: rgba(30, 32, 34, 0.97) !important;
-                border-radius: 14px !important;
-                box-shadow: 0 2px 8px rgba(44,62,80,0.13) !important;
-                padding: 12px 18px !important;
-                font-size: 1rem !important;
-                font-weight: 600 !important;
-            }
-            .stock-img {
-                width: 36px !important;
-                height: 36px !important;
-                border-radius: 8px !important;
-                padding: 2px !important;
-                margin-right: 12px !important;
-                background: #fff !important;
-            }
-            .stock-name {
-                font-size: 1.08rem !important;
-                font-weight: 700 !important;
-                color: #eaf6ff !important;
-                letter-spacing: 0.01em !important;
-            }
-            .button-row {
-                flex-direction: column !important;
-                gap: 7px !important;
-                margin-top: 6px !important;
-                margin-bottom: 10px !important;
-                width: 100% !important;
-                align-items: center !important;
-                justify-content: flex-start !important;
-            }
-            .bist-button {
-                width: 95vw !important;
-                font-size: 0.9rem !important;
-                margin: 0 auto !important;
-                padding: 7px 0 !important;
-                height: 32px !important;
-                border-radius: 7px !important;
-                box-shadow: 0 2px 8px rgba(44,62,80,0.10) !important;
-            }
-            .container {
-                padding: 0 4px !important;
-                min-height: 60vh !important;
-                width: 100vw !important;
-                box-sizing: border-box !important;
-            }
-            #open-chatbot-btn {
-                padding: 10px 16px 10px 14px !important;
-                font-size: 1rem !important;
-                border-radius: 10px !important;
-                right: 16px !important;
-                bottom: 8px !important;
-                min-width: 0 !important;
-                width: auto !important;
-                height: 44px !important;
-                box-shadow: 0 2px 8px rgba(44,62,80,0.13) !important;
-            }
-            #open-chatbot-btn i {
-                font-size: 1.3rem !important;
-            }
-            #open-chatbot-btn span {
-                font-size: 0.95rem !important;
-            }
-        }
-        @media (max-width: 600px) {
-            .navbar-title { font-size: 1.2rem; }
-            .bist-button { font-size: 0.95rem; }
-            .stock-card { min-width: 90px; max-width: 120px; }
-            .video-box-bottomright { height: 80px; }
-        }
     </style>
     <!-- FontAwesome CDN for robot icon -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -347,28 +249,58 @@
                         <div class="stock-name">ASELS</div>
                     </div>
                 </a>
-                <a href="/analyze-froto" class="stock-card" style="transform: rotate(-40deg) translateX(180px) rotate(40deg);">
+                <a href="/analyze-froto" class="stock-card" style="transform: rotate(-45deg) translateX(218px) translateY(-60px) rotate(45deg);">
                     <img src="/static/froto.png" alt="froto" class="stock-img">
                     <div class="stock-info">
                         <div class="stock-name">FROTO</div>
                     </div>
                 </a>
-                <a href="/analyze-garan" class="stock-card" style="transform: rotate(0deg) translateX(180px) rotate(0deg);">
-                    <img src="/static/garan.jpg" alt="garan" class="stock-img">
+                <a href="/analyze-garan" class="stock-card" style="transform: rotate(-15deg) translateX(218px) translateY(-60px) rotate(15deg);">
+                    <img src="/static/garan.png" alt="garan" class="stock-img">
                     <div class="stock-info">
                         <div class="stock-name">GARAN</div>
                     </div>
                 </a>
-                <a href="/analyze-mia" class="stock-card" style="transform: rotate(40deg) translateX(180px) rotate(-40deg);">
-                    <img src="/static/mia.png" alt="mia" class="stock-img">
-                    <div class="stock-info">
-                        <div class="stock-name">MIA</div>
-                    </div>
-                </a>
-                <a href="/analyze-thyao" class="stock-card" style="transform: rotate(75deg) translateX(230px) translateY(40px) rotate(-75deg);">
+                <a href="/analyze-thyao" class="stock-card" style="transform: rotate(15deg) translateX(218px) translateY(-60px) rotate(-15deg);">
                     <img src="/static/thyao.png" alt="thyao" class="stock-img">
                     <div class="stock-info">
                         <div class="stock-name">THYAO</div>
+                    </div>
+                </a>
+                <a href="/analyze-akbnk" class="stock-card" style="transform: rotate(45deg) translateX(218px) translateY(-60px) rotate(-45deg);">
+                    <img src="/static/akbnk.png" alt="akbnk" class="stock-img">
+                    <div class="stock-info">
+                        <div class="stock-name">AKBNK</div>
+                    </div>
+                </a>
+                <a href="/analyze-ykbnk" class="stock-card" style="transform: rotate(75deg) translateX(218px) translateY(-60px) rotate(-75deg);">
+                    <img src="/static/ykbnk.png" alt="ykbnk" class="stock-img">
+                    <div class="stock-info">
+                        <div class="stock-name">YKBNK</div>
+                    </div>
+                </a>
+                <a href="/analyze-eregl" class="stock-card" style="transform: rotate(105deg) translateX(218px) translateY(-60px) rotate(-105deg);">
+                    <img src="/static/eregl.png" alt="eregl" class="stock-img">
+                    <div class="stock-info">
+                        <div class="stock-name">EREGL</div>
+                    </div>
+                </a>
+                <a href="/analyze-kchol" class="stock-card" style="transform: rotate(135deg) translateX(218px) translateY(-60px) rotate(-135deg);">
+                    <img src="/static/kchol.png" alt="kchol" class="stock-img">
+                    <div class="stock-info">
+                        <div class="stock-name">KCHOL</div>
+                    </div>
+                </a>
+                <a href="/analyze-sahol" class="stock-card" style="transform: rotate(165deg) translateX(218px) translateY(-60px) rotate(-165deg);">
+                    <img src="/static/sahol.png" alt="sahol" class="stock-img">
+                    <div class="stock-info">
+                        <div class="stock-name">SAHOL</div>
+                    </div>
+                </a>
+                <a href="/analyze-tuprs" class="stock-card" style="transform: rotate(195deg) translateX(218px) translateY(-60px) rotate(-195deg);">
+                    <img src="/static/tuprs.png" alt="tuprs" class="stock-img">
+                    <div class="stock-info">
+                        <div class="stock-name">TUPRS</div>
                     </div>
                 </a>
             </div>

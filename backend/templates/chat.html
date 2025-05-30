@@ -444,37 +444,19 @@
 
         @media (max-width: 640px) {
             .chat-card {
-                width: 100vw;
+                width: 100%;
                 height: 100vh;
                 max-height: 100vh;
                 border-radius: 0;
-                min-width: 0;
+            }
+            body {
+                padding: 0;
+                margin: 0;
+                display: block;
             }
             .container {
                 padding: 0;
             }
-            .feature-buttons {
-                flex-direction: column;
-                gap: 6px;
-                padding: 6px 2px;
-            }
-            .input-container {
-                flex-direction: column;
-                gap: 6px;
-                padding: 8px;
-            }
-            #input {
-                width: 100%;
-                font-size: 1rem;
-            }
-            .emoji-picker {
-                left: 2vw;
-                grid-template-columns: repeat(4, 1fr);
-            }
-        }
-        @media (max-width: 400px) {
-            .chat-card { min-width: 0; }
-            .feature-btn, .suggestion-chip { font-size: 12px; padding: 6px 10px; }
         }
 
         /* Tüm scrollbarda koyu tema (isteğe bağlı) */

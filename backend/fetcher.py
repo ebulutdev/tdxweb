@@ -14,13 +14,11 @@ import requests
 from bs4 import BeautifulSoup
 from urllib.parse import quote_plus
 import random
-import sqlite3
-
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-DB_PATH = os.path.join(BASE_DIR, 'stock_data.db')
-CACHE_DIR = os.path.join(BASE_DIR, "cache")
+from app import app, db, Stock, save_stock_data, save_news_to_db
 
 GEMINI_API_KEY = "AIzaSyAQXzOVG-BP5-EGZl2ts9d6kp_n-2pvM_U"
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+CACHE_DIR = os.path.join(BASE_DIR, "cache")
 
 USER_AGENTS = [
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
@@ -38,22 +36,19 @@ class StockDataFetcher:
         os.makedirs(self.cache_dir, exist_ok=True)
         
     async def fetch_stock_data(self, symbol: str, period: str = "1mo") -> Dict:
-        """Fetch stock data from database or fetch new if needed"""
-        # First try to get data from database
-        conn = sqlite3.connect(DB_PATH)
-        cur = conn.cursor()
-        cur.execute('SELECT data, last_update FROM stock_data WHERE symbol=?', (symbol.lower(),))
-        row = cur.fetchone()
-        cur.close()
-        conn.close()
-
-        # If we have recent data in database (24 hours)
-        if row:
-            last_update = datetime.fromisoformat(row[1])
-            if datetime.now() - last_update < timedelta(hours=24):
-                return json.loads(row[0])
+        """Fetch stock data and cache it"""
+        cache_file = os.path.join(self.cache_dir, f"{symbol}.json")
+        
+        # Check if we have recent cached data (24 hours)
+        if os.path.exists(cache_file):
+            with open(cache_file, 'r', encoding='utf-8') as f:
+                cached_data = json.load(f)
+                last_update = datetime.fromisoformat(cached_data['last_update'])
+                if datetime.now() - last_update < timedelta(hours=24):
+                    return cached_data['data']
         
         # Calculate dynamic delay based on symbol
+        # More frequently traded stocks get longer delays
         if symbol in ["THYAO", "GARAN", "ASELS"]:  # High volume stocks
             delay = 5
         elif symbol in ["MIATK", "FROTO"]:  # Medium volume stocks
@@ -80,8 +75,9 @@ class StockDataFetcher:
                 'last_update': datetime.now().isoformat()
             }
             
-            # Save to database
-            save_json_to_db(symbol.lower(), data)
+            # Always save the data to backend/cache
+            with open(cache_file, 'w', encoding='utf-8') as f:
+                json.dump({'data': data, 'last_update': data['last_update']}, f, ensure_ascii=False, indent=2)
             
             return data
             
@@ -165,8 +161,8 @@ async def fetch_and_analyze_stock(symbol):
     
     # Fetch news
     news_google = get_google_news(symbol)
-    
-    all_news = news_google 
+    news_mynet = get_mynet_news(symbol)
+    all_news = news_google + news_mynet
     save_news_to_json(symbol, all_news)
     
     # Generate analysis
@@ -205,14 +201,14 @@ async def fetch_all_stocks():
     print(f"[{datetime.now()}] Completed all data fetching and analysis")
 
 def main():
-
-    schedule.every().day.at("10:00").do(lambda: asyncio.run(fetch_all_stocks()))
+    # Schedule the job to run every day at 06:00 TR time
+    schedule.every().day.at("06:00").do(lambda: asyncio.run(fetch_all_stocks()))
     
     # Start the scheduler in a separate thread
     scheduler_thread = Thread(target=run_scheduler, daemon=True)
     scheduler_thread.start()
     
-    print("Stock data fetcher started. Will fetch data every day at 10:00 TR time.")
+    print("Stock data fetcher started. Will fetch data every day at 06:00 TR time.")
     print("Press Ctrl+C to exit.")
     
     try:
@@ -304,40 +300,49 @@ def fetch_all_news():
         print(f"{symbol} için {len(news_google)} haber kaydedildi.")
     print("Seçili BIST şirketleri için Google News haberleri güncellendi.")
 
-if __name__ == "__main__":
-    symbols = ["GARAN", "ASELS", "THYAO", "MIATK", "FROTO"]
+def fetch_stock_data(symbol):
+    """Fetch stock data and save to database"""
+    try:
+        # Yahoo Finance'dan veri çek
+        stock = yf.Ticker(symbol)
+        hist = stock.history(period="1y")
+        
+        if hist.empty:
+            print(f"Veri bulunamadı: {symbol}")
+            return
+            
+        # Destek ve direnç seviyelerini hesapla
+        prices = hist['Close'].tolist()
+        dates = hist.index.strftime('%Y-%m-%d').tolist()
+        support_levels = []
+        resistance_levels = []
+        
+        for i in range(1, len(prices)-1):
+            if prices[i] < prices[i-1] and prices[i] < prices[i+1]:
+                support_levels.append(prices[i])
+            elif prices[i] > prices[i-1] and prices[i] > prices[i+1]:
+                resistance_levels.append(prices[i])
+        
+        # Veritabanına kaydet
+        save_stock_data(symbol, dates, prices, support_levels, resistance_levels)
+        print(f"Veri kaydedildi: {symbol}")
+        
+    except Exception as e:
+        print(f"Hata: {symbol} için veri çekilemedi: {e}")
 
-    # Eğer hiç parametre verilmezse hem fiyat hem haber çek
-    if len(sys.argv) == 1:
-        # Fiyat verilerini çek
-        fetcher = StockDataFetcher()
-        loop = asyncio.get_event_loop()
-        loop.run_until_complete(fetcher.fetch_multiple_stocks(symbols))
-        # Haber verilerini çek (sadece 3 hisse)
-        fetch_all_news()
-        print("Tüm fiyat ve haber verileri güncellendi.")
-    elif len(sys.argv) >= 2:
-        mode = sys.argv[1]
-        if mode == "haber":
-            if len(sys.argv) == 3 and sys.argv[2].lower() == "toplu":
-                fetch_all_news()
-            elif len(sys.argv) == 3:
-                symbol = sys.argv[2]
-                news = get_google_news(symbol)
-                save_news_to_json(symbol, news)
-            else:
-                print("Kullanım: python fetcher.py haber [SYMBOL] veya python fetcher.py haber toplu")
-        elif mode == "fiyat":
-            if len(sys.argv) == 3 and sys.argv[2].lower() == "toplu":
-                fetcher = StockDataFetcher()
-                loop = asyncio.get_event_loop()
-                loop.run_until_complete(fetcher.fetch_multiple_stocks(symbols))
-            elif len(sys.argv) == 3:
-                symbol = sys.argv[2]
-                fetcher = StockDataFetcher()
-                loop = asyncio.get_event_loop()
-                loop.run_until_complete(fetcher.fetch_stock_data(symbol))
-            else:
-                print("Kullanım: python fetcher.py fiyat [SYMBOL] veya python fetcher.py fiyat toplu")
-        else:
-            print("Bilinmeyen mod:", mode) 
+def fetch_and_save_news(symbol):
+    news = get_google_news(symbol)
+    save_news_to_db(symbol, news)
+
+def main():
+    symbols = [
+        "THYAO.IS", "GARAN.IS", "AKBNK.IS", "YKBNK.IS", "EREGL.IS",
+        "ASELS.IS", "KCHOL.IS", "SAHOL.IS", "TUPRS.IS", "FROTO.IS"
+    ]
+    with app.app_context():
+        for symbol in symbols:
+            fetch_stock_data(symbol)  # Fiyatları kaydet
+            fetch_and_save_news(symbol)  # Haberleri kaydet
+
+if __name__ == "__main__":
+    main() 

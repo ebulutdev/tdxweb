@@ -24,336 +24,23 @@ from datetime import datetime
 import urllib.parse
 import numpy as np
 import cv2
-import asyncio
-import sqlite3
-try:
-    from chart_analysis import analyze_chart
-except ImportError:
-    from backend.chart_analysis import analyze_chart
-try:
-    from appbot import analyze_sentiment, check_reminders, calculate_from_message, extract_stock_symbol, get_stock_data, generate_response, check_faq, find_similar_faq, answer_question, FAQ_ANSWERS, GREETINGS, THANKS
-except ImportError:
-    from backend.appbot import analyze_sentiment, check_reminders, calculate_from_message, extract_stock_symbol, get_stock_data, generate_response, check_faq, find_similar_faq, answer_question, FAQ_ANSWERS, GREETINGS, THANKS
+from chart_analysis import analyze_chart
+from appbot import analyze_sentiment, check_reminders, calculate_from_message, extract_stock_symbol, get_stock_data, generate_response, check_faq, find_similar_faq, answer_question, FAQ_ANSWERS, GREETINGS, THANKS
+from models import db, Stock, StockNews, StockAnalysis
 
 app = Flask(__name__)
+
+# SQLite veritabanı yapılandırması
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///stocks.db'
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+db.init_app(app)
+
+# Veritabanı tablolarını oluştur
+with app.app_context():
+    db.create_all()
+
 CACHE_DIR = os.path.join(os.path.dirname(__file__), "cache")
 os.makedirs(CACHE_DIR, exist_ok=True)
-
-# SQLite bağlantısı ve tablo oluşturma
-DB_PATH = os.path.join(os.path.dirname(__file__), 'stock_data.db')
-def init_db():
-    conn = sqlite3.connect(DB_PATH)
-    cur = conn.cursor()
-    cur.execute('''
-        CREATE TABLE IF NOT EXISTS stock_data (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            symbol TEXT UNIQUE,
-            data TEXT,
-            last_update TEXT
-        )
-    ''')
-    conn.commit()
-    cur.close()
-    conn.close()
-init_db()
-
-def save_json_to_db(symbol, data):
-    conn = sqlite3.connect(DB_PATH)
-    cur = conn.cursor()
-    last_update = datetime.now().isoformat()
-    cur.execute('''
-        INSERT INTO stock_data (symbol, data, last_update)
-        VALUES (?, ?, ?)
-        ON CONFLICT(symbol) DO UPDATE SET data=excluded.data, last_update=excluded.last_update
-    ''', (symbol, json.dumps(data), last_update))
-    conn.commit()
-    cur.close()
-    conn.close()
-
-@app.route('/api/stock/<symbol>')
-def get_stock(symbol):
-    conn = sqlite3.connect(DB_PATH)
-    cur = conn.cursor()
-    cur.execute('SELECT data, last_update FROM stock_data WHERE symbol=?', (symbol.upper(),))
-    row = cur.fetchone()
-    cur.close()
-    conn.close()
-    if row:
-        return jsonify({
-            "symbol": symbol.upper(),
-            "data": json.loads(row[0]),
-            "last_update": row[1]
-        })
-    return jsonify({"error": "not found"}), 404
-
-@app.route('/api/db-check')
-def check_db():
-    conn = sqlite3.connect(DB_PATH)
-    cur = conn.cursor()
-    cur.execute('SELECT symbol, data, last_update FROM stock_data')
-    rows = cur.fetchall()
-    cur.close()
-    conn.close()
-    
-    result = []
-    for row in rows:
-        try:
-            data = json.loads(row[1])
-            result.append({
-                "symbol": row[0],
-                "data": data,
-                "last_update": row[2]
-            })
-        except:
-            result.append({
-                "symbol": row[0],
-                "data": "Error parsing JSON",
-                "last_update": row[2]
-            })
-    
-    return jsonify({
-        "total_records": len(result),
-        "records": result
-    })
-
-@app.route('/data-dashboard')
-def data_dashboard():
-    # SQLite veritabanı içeriğini al
-    conn = sqlite3.connect(DB_PATH)
-    cur = conn.cursor()
-    cur.execute('SELECT symbol, data, last_update FROM stock_data')
-    db_rows = cur.fetchall()
-    cur.close()
-    conn.close()
-    
-    db_data = []
-    for row in db_rows:
-        try:
-            data = json.loads(row[1])
-            db_data.append({
-                "symbol": row[0],
-                "data": data,
-                "last_update": row[2]
-            })
-        except:
-            db_data.append({
-                "symbol": row[0],
-                "data": "Error parsing JSON",
-                "last_update": row[2]
-            })
-    
-    # Gemini cache içeriğini al
-    cache_files = []
-    for filename in os.listdir(GEMINI_CACHE_DIR):
-        if filename.endswith('.json'):
-            try:
-                with open(os.path.join(GEMINI_CACHE_DIR, filename), 'r', encoding='utf-8') as f:
-                    cache_data = json.load(f)
-                    cache_files.append({
-                        "hash": filename.replace('.json', ''),
-                        "data": cache_data.get("result", "No result found"),
-                        "size": os.path.getsize(os.path.join(GEMINI_CACHE_DIR, filename))
-                    })
-            except Exception as e:
-                cache_files.append({
-                    "hash": filename.replace('.json', ''),
-                    "data": f"Error reading file: {str(e)}",
-                    "size": 0
-                })
-    
-    return render_template_string('''
-<!DOCTYPE html>
-<html lang="tr">
-<head>
-    <meta charset="UTF-8">
-    <title>Veri Dashboard</title>
-    <style>
-        body {
-            font-family: 'Segoe UI', Arial, sans-serif;
-            background: #181c20;
-            color: #eaf6ff;
-            margin: 0;
-            padding: 20px;
-        }
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-        h1, h2 {
-            color: #4fc3f7;
-            margin-bottom: 20px;
-        }
-        .section {
-            background: #23272b;
-            border-radius: 10px;
-            padding: 20px;
-            margin-bottom: 30px;
-        }
-        .stats {
-            display: flex;
-            gap: 20px;
-            margin-bottom: 20px;
-        }
-        .stat-box {
-            background: #2c3e50;
-            padding: 15px;
-            border-radius: 8px;
-            flex: 1;
-        }
-        .stat-box h3 {
-            margin: 0;
-            color: #4fc3f7;
-            font-size: 1.1em;
-        }
-        .stat-box p {
-            margin: 10px 0 0;
-            font-size: 1.5em;
-            font-weight: bold;
-        }
-        .data-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 20px;
-        }
-        .data-table th, .data-table td {
-            padding: 12px;
-            text-align: left;
-            border-bottom: 1px solid #3a3f47;
-        }
-        .data-table th {
-            background: #2c3e50;
-            color: #4fc3f7;
-        }
-        .data-table tr:hover {
-            background: #2c3e50;
-        }
-        .json-data {
-            background: #1e2a38;
-            padding: 10px;
-            border-radius: 5px;
-            max-height: 200px;
-            overflow-y: auto;
-            font-family: monospace;
-            font-size: 0.9em;
-        }
-        .back-button {
-            display: inline-block;
-            background: linear-gradient(90deg, #1565c0, #00bcd4);
-            color: white;
-            padding: 10px 20px;
-            border-radius: 5px;
-            text-decoration: none;
-            margin-bottom: 20px;
-        }
-        .back-button:hover {
-            background: linear-gradient(90deg, #00bcd4, #1565c0);
-        }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <a href="/" class="back-button">&larr; Anasayfaya Dön</a>
-        
-        <h1>Veri Dashboard</h1>
-        
-        <div class="section">
-            <h2>SQLite Veritabanı</h2>
-            <div class="stats">
-                <div class="stat-box">
-                    <h3>Toplam Kayıt</h3>
-                    <p>{{ db_data|length }}</p>
-                </div>
-                <div class="stat-box">
-                    <h3>Son Güncelleme</h3>
-                    <p>{{ db_data[0].last_update if db_data else 'Veri yok' }}</p>
-                </div>
-            </div>
-            
-            <table class="data-table">
-                <thead>
-                    <tr>
-                        <th>Sembol</th>
-                        <th>Son Güncelleme</th>
-                        <th>Veri</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for item in db_data %}
-                    <tr>
-                        <td>{{ item.symbol }}</td>
-                        <td>{{ item.last_update }}</td>
-                        <td>
-                            <div class="json-data">
-                                {{ item.data|tojson(indent=2) }}
-                            </div>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-        
-        <div class="section">
-            <h2>Gemini Cache</h2>
-            <div class="stats">
-                <div class="stat-box">
-                    <h3>Toplam Cache Dosyası</h3>
-                    <p>{{ cache_files|length }}</p>
-                </div>
-                <div class="stat-box">
-                    <h3>Toplam Cache Boyutu</h3>
-                    <p>{{ (cache_files|sum(attribute='size') / 1024)|round(2) }} KB</p>
-                </div>
-            </div>
-            
-            <table class="data-table">
-                <thead>
-                    <tr>
-                        <th>Hash</th>
-                        <th>Boyut</th>
-                        <th>İçerik</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for item in cache_files %}
-                    <tr>
-                        <td>{{ item.hash }}</td>
-                        <td>{{ (item.size / 1024)|round(2) }} KB</td>
-                        <td>
-                            <div class="json-data">
-                                {{ item.data|tojson(indent=2) }}
-                            </div>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-    </div>
-</body>
-</html>
-    ''', db_data=db_data, cache_files=cache_files)
-
-# --- CACHE DOSYALARI YOKSA fetcher.py'yi OTOMATİK ÇALIŞTIR ---
-def run_fetcher_if_needed():
-    # Kontrol edilecek dosyalar
-    cache_files = [
-        os.path.join(CACHE_DIR, f"{symbol}.json")
-        for symbol in ["asels", "garan", "thyao", "miatk", "froto"]
-    ]
-    if not all(os.path.exists(f) for f in cache_files):
-        try:
-            spec = importlib.util.spec_from_file_location("fetcher", os.path.join(os.path.dirname(__file__), "fetcher.py"))
-            fetcher = importlib.util.module_from_spec(spec)
-            spec.loader.exec_module(fetcher)
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
-            loop.run_until_complete(fetcher.fetch_all_stocks())
-        except Exception as e:
-            print(f"fetcher.py otomatik çalıştırılamadı: {e}")
-
-run_fetcher_if_needed()
-# --- --- ---
 
 GEMINI_API_KEY = "AIzaSyAQXzOVG-BP5-EGZl2ts9d6kp_n-2pvM_U"
 
@@ -706,45 +393,34 @@ Lütfen teknik analiz bakış açısıyla:
 Cevabını sade ve anlaşılır bir şekilde, teknik analiz terimleriyle ver. Her bir bölümü **kalın ve büyük başlıklarla**, alt alta ve madde madde, açık ve net şekilde yaz. Her başlık ve altındaki açıklama arasında boşluk bırak. Senaryoları ve sonuç kısmını numaralı veya noktalı madde olarak belirt.
 """
 
-def parse_stock_json(path):
-    with open(path, "r", encoding="utf-8") as f:
-        data = json.load(f)
-        if "data" in data:
-            stock_data = data["data"]
-        else:
-            stock_data = data
-        prices = stock_data.get("prices", [])
-        dates = stock_data.get("dates", [])
+def parse_stock_json(symbol):
+    """Get stock data from database instead of JSON file"""
+    stock = Stock.query.filter_by(symbol=symbol).first()
+    if not stock:
+        return None
         
-        # Calculate support and resistance levels using a more robust method
-        support_levels = []
-        resistance_levels = []
-        
-        # Use a window of 3 points to identify local minima and maxima
-        window_size = 3
-        for i in range(window_size, len(prices) - window_size):
-            window = prices[i-window_size:i+window_size+1]
-            current_price = prices[i]
-            
-            # Check if current price is a local minimum (support)
-            if current_price == min(window):
-                support_levels.append(current_price)
-            
-            # Check if current price is a local maximum (resistance)
-            if current_price == max(window):
-                resistance_levels.append(current_price)
-        
-        # Remove duplicates and sort
-        support_levels = sorted(list(set(support_levels)))
-        resistance_levels = sorted(list(set(resistance_levels)))
-        
-        return {
-            "symbol": stock_data.get("symbol", os.path.basename(path).replace(".json", "")),
-            "dates": dates,
-            "prices": prices,
-            "support_levels": support_levels,
-            "resistance_levels": resistance_levels
-        }
+    return {
+        "symbol": stock.symbol,
+        "dates": stock.dates,
+        "prices": stock.prices,
+        "support_levels": stock.support_levels,
+        "resistance_levels": stock.resistance_levels
+    }
+
+def save_stock_data(symbol, dates, prices, support_levels, resistance_levels):
+    """Save stock data to database"""
+    stock = Stock.query.filter_by(symbol=symbol).first()
+    if not stock:
+        stock = Stock(symbol=symbol)
+    
+    stock.dates = dates
+    stock.prices = prices
+    stock.support_levels = support_levels
+    stock.resistance_levels = resistance_levels
+    stock.last_updated = datetime.utcnow()
+    
+    db.session.add(stock)
+    db.session.commit()
 
 def plot_to_base64(dates, prices, support_levels, resistance_levels, symbol, scenario_lists=None):
     import matplotlib.dates as mdates
@@ -870,8 +546,6 @@ def parse_turkish_time(time_str):
         # If format is unknown, return as is
         return time_str
 
-
-
 def scrape_bist_news(symbol=None, count=10):
     import feedparser
     import urllib.parse
@@ -926,18 +600,55 @@ def get_yahoo_news(symbol, count=5):
         print(f"Error getting news for {symbol}: {e}")
         return []
 
-def save_news_to_json(symbol, news, out_dir=CACHE_DIR):
-    """Save news data to a JSON file"""
-    try:
-        symbol = symbol.lower()
-        news_file = os.path.join(out_dir, f"{symbol}_news.json")
-        with open(news_file, 'w', encoding='utf-8') as f:
-            json.dump({
-                "last_updated": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                "news": news
-            }, f, ensure_ascii=False, indent=2)
-    except Exception as e:
-        print(f"Error saving news for {symbol}: {e}")
+def save_news_to_db(symbol, news_items):
+    """Save news data to database"""
+    # Önce eski haberleri temizle
+    StockNews.query.filter_by(stock_symbol=symbol).delete()
+    
+    # Yeni haberleri ekle
+    for item in news_items:
+        news = StockNews(
+            stock_symbol=symbol,
+            title=item.get('title', ''),
+            link=item.get('link', ''),
+            summary=item.get('summary', ''),
+            published=datetime.strptime(item.get('published', ''), '%Y-%m-%d %H:%M') if item.get('published') else None,
+            source=item.get('source', '')
+        )
+        db.session.add(news)
+    
+    db.session.commit()
+
+def get_stock_news(symbol):
+    """Get news for a specific stock from database"""
+    news = StockNews.query.filter_by(stock_symbol=symbol).order_by(StockNews.published.desc()).all()
+    return [{
+        'title': item.title,
+        'link': item.link,
+        'summary': item.summary,
+        'published': item.published.strftime('%Y-%m-%d %H:%M') if item.published else '',
+        'source': item.source
+    } for item in news]
+
+def save_analysis_to_db(symbol, analysis_text, scenario_lists):
+    """Save analysis data to database"""
+    analysis = StockAnalysis(
+        stock_symbol=symbol,
+        analysis_text=analysis_text,
+        scenario_lists=scenario_lists
+    )
+    db.session.add(analysis)
+    db.session.commit()
+
+def get_latest_analysis(symbol):
+    """Get latest analysis for a specific stock from database"""
+    analysis = StockAnalysis.query.filter_by(stock_symbol=symbol).order_by(StockAnalysis.created_at.desc()).first()
+    if analysis:
+        return {
+            'analysis_text': analysis.analysis_text,
+            'scenario_lists': analysis.scenario_lists
+        }
+    return None
 
 # fetcher.py'den get_google_news ve save_news_to_json fonksiyonlarını dinamik olarak yükle
 fetcher_path = os.path.join(os.path.dirname(__file__), 'fetcher.py')
@@ -952,31 +663,47 @@ def index():
 
 @app.route("/analyze-bist")
 def analyze_bist():
+    """Tüm hisselerin analizini göster"""
     stocks = []
-    for filename in os.listdir(CACHE_DIR):
-        if filename.endswith(".json") and not filename.endswith("_news.json"):
-            file_path = os.path.join(CACHE_DIR, filename)
+    with app.app_context():
+        all_stocks = Stock.query.all()
+        for stock in all_stocks:
             try:
-                stock = parse_stock_json(file_path)
-                stock["img_data"] = plot_to_base64(
-                    stock["dates"], stock["prices"], stock["support_levels"], stock["resistance_levels"], stock["symbol"]
+                stock_data = {
+                    "symbol": stock.symbol,
+                    "dates": stock.dates,
+                    "prices": stock.prices,
+                    "support_levels": stock.support_levels,
+                    "resistance_levels": stock.resistance_levels
+                }
+                stock_data["img_data"] = plot_to_base64(
+                    stock_data["dates"], 
+                    stock_data["prices"], 
+                    stock_data["support_levels"], 
+                    stock_data["resistance_levels"], 
+                    stock_data["symbol"]
                 )
-                stock["llm_prompt"] = make_llm_prompt(
-                    stock["symbol"], stock["prices"], stock["support_levels"], stock["resistance_levels"]
-                )
-                # Her yüklemede güncel haberleri çek ve kaydet
-                news = get_yahoo_news(stock["symbol"])
-                save_news_to_json(stock["symbol"], news)
-                stock["news"] = news
+                
+                # Haberleri veritabanından al
+                news = get_stock_news(stock.symbol)
+                stock_data["news"] = news
+                
                 # Gemini API çağrısı ve gecikme
                 prompt = make_llm_prompt(
-                    stock["symbol"], stock["prices"], stock["support_levels"], stock["resistance_levels"], news=news
+                    stock_data["symbol"], 
+                    stock_data["prices"], 
+                    stock_data["support_levels"], 
+                    stock_data["resistance_levels"], 
+                    news=news
                 )
-                stock["gemini_analysis"] = gemini_cached(prompt, GEMINI_API_KEY)
+                stock_data["gemini_analysis"] = gemini_cached(prompt, GEMINI_API_KEY)
                 time.sleep(1.5)  # Her istekten sonra 1.5 saniye bekle
-                stocks.append(stock)
+                
+                stocks.append(stock_data)
             except Exception as e:
-                print(f"Hata: {filename} dosyası okunamadı: {e}")
+                print(f"Hata: {stock.symbol} için veri işlenemedi: {e}")
+                continue
+                
     return render_template_string(TEMPLATE, stocks=stocks)
 
 def plot_scenarios_interactive(dates, prices, support_levels, resistance_levels, symbol, scenario_lists=None, news=None):
@@ -1057,96 +784,72 @@ def plot_scenarios_interactive(dates, prices, support_levels, resistance_levels,
 
 @app.route("/analyze/<symbol>")
 def analyze(symbol):
-    symbol = symbol.lower()
-    file_path = os.path.join(CACHE_DIR, f"{symbol}.json")
-    news_path = os.path.join(CACHE_DIR, f"{symbol}_news.json")
-    if not os.path.exists(file_path):
+    stock = parse_stock_json(symbol)
+    if not stock:
         return "Veri bulunamadı.", 404
-    stock = parse_stock_json(file_path)
-    # Haberleri oku
-    news = []
-    if os.path.exists(news_path):
-        with open(news_path, "r", encoding="utf-8") as f:
-            news = json.load(f)
-    prompt = make_llm_prompt(
-        stock["symbol"], stock["prices"], stock["support_levels"], stock["resistance_levels"], news=news
-    )
-    analysis = gemini_cached(prompt, GEMINI_API_KEY)
-    scenario_lists = extract_scenarios_from_gemini_response(analysis)
+        
+    # Haberleri veritabanından al
+    news = get_stock_news(symbol)
+    
+    # Analizi veritabanından al veya yeni analiz yap
+    analysis_data = get_latest_analysis(symbol)
+    if not analysis_data:
+        prompt = make_llm_prompt(
+            stock["symbol"], stock["prices"], stock["support_levels"], stock["resistance_levels"], news=news
+        )
+        analysis = gemini_cached(prompt, GEMINI_API_KEY)
+        scenario_lists = extract_scenarios_from_gemini_response(analysis)
+        save_analysis_to_db(symbol, analysis, scenario_lists)
+    else:
+        analysis = analysis_data['analysis_text']
+        scenario_lists = analysis_data['scenario_lists']
+    
     plotly_div = plot_scenarios_interactive(
-        stock["dates"], stock["prices"], stock["support_levels"], stock["resistance_levels"], stock["symbol"], scenario_lists=scenario_lists, news=news
+        stock["dates"], stock["prices"], stock["support_levels"], stock["resistance_levels"], 
+        stock["symbol"], scenario_lists=scenario_lists, news=news
     )
     analysis_html = markdown.markdown(analysis)
-    return render_template_string(ANALYZE_TEMPLATE, symbol=symbol, prompt=prompt, analysis=analysis_html, plotly_div=plotly_div, news=news)
+    return render_template_string(ANALYZE_TEMPLATE, symbol=symbol, analysis=analysis_html, plotly_div=plotly_div, news=news)
 
 @app.route("/analyze-asels")
 def analyze_asels():
-    symbols = ["asels", "froto", "garan", "thyao", "miatk"]
-    results = []
-    for symbol in symbols:
-        # Veritabanından oku
-        conn = sqlite3.connect(DB_PATH)
-        cur = conn.cursor()
-        cur.execute('SELECT data FROM stock_data WHERE symbol=?', (symbol,))
-        row = cur.fetchone()
-        cur.close()
-        conn.close()
-        if not row:
-            continue
-        stock_data = json.loads(row[0])
-        # Destek/direnç hesapla
-        prices = stock_data.get("prices", [])
-        dates = stock_data.get("dates", [])
-        # Destek/direnç seviyeleri hesapla (parse_stock_json fonksiyonundaki gibi)
-        support_levels = []
-        resistance_levels = []
-        window_size = 3
-        for i in range(window_size, len(prices) - window_size):
-            window = prices[i-window_size:i+window_size+1]
-            current_price = prices[i]
-            if current_price == min(window):
-                support_levels.append(current_price)
-            if current_price == max(window):
-                resistance_levels.append(current_price)
-        support_levels = sorted(list(set(support_levels)))
-        resistance_levels = sorted(list(set(resistance_levels)))
-        # Haberleri oku
-        news = []
-        news_path = os.path.join(CACHE_DIR, f"{symbol}_news.json")
-        if os.path.exists(news_path):
-            with open(news_path, "r", encoding="utf-8") as f:
-                news = json.load(f)
-        # LLM prompt ve analiz
-        prompt = make_llm_prompt(symbol.upper(), prices, support_levels, resistance_levels, news=news)
-        analysis = gemini_cached(prompt, GEMINI_API_KEY)
-        scenario_lists = extract_scenarios_from_gemini_response(analysis)
-        plotly_div = plot_scenarios_interactive(
-            dates, prices, support_levels, resistance_levels, symbol.upper(), scenario_lists=scenario_lists, news=news
-        )
-        analysis_html = markdown.markdown(analysis)
-        results.append({
-            "symbol": symbol.upper(),
-            "analysis": analysis_html,
-            "plotly_div": plotly_div,
-            "news": news
-        })
-    return render_template("analyze_all.html", results=results)
+    return analyze('ASELS.IS')
 
 @app.route("/analyze-froto")
 def analyze_froto():
-    return analyze('froto')
+    return analyze('FROTO.IS')
 
 @app.route("/analyze-garan")
 def analyze_garan():
-    return analyze('garan')
-
-@app.route("/analyze-mia")
-def analyze_mia():
-    return analyze('miatk')
+    return analyze('GARAN.IS')
 
 @app.route("/analyze-thyao")
 def analyze_thyao():
-    return analyze('thyao')
+    return analyze('THYAO.IS')
+
+@app.route("/analyze-akbnk")
+def analyze_akbnk():
+    return analyze('AKBNK.IS')
+
+@app.route("/analyze-ykbnk")
+def analyze_ykbnk():
+    return analyze('YKBNK.IS')
+
+@app.route("/analyze-eregl")
+def analyze_eregl():
+    return analyze('EREGL.IS')
+
+@app.route("/analyze-kchol")
+def analyze_kchol():
+    return analyze('KCHOL.IS')
+
+@app.route("/analyze-sahol")
+def analyze_sahol():
+    return analyze('SAHOL.IS')
+
+@app.route("/analyze-tuprs")
+def analyze_tuprs():
+    return analyze('TUPRS.IS')
 
 @app.route('/videos-bg')
 def videos_bg():
@@ -1453,23 +1156,12 @@ def news_page():
 </html>
 ''', news=news)
 
-def load_cached_news(symbol):
-    try:
-        symbol = symbol.lower()
-        with open(f'backend/cache/{symbol}_news.json', 'r', encoding='utf-8') as f:
-            news = json.load(f)
-            if isinstance(news, dict):  # Eski/boş dosya
-                return []
-            return news
-    except Exception:
-        return []
-
 @app.route('/api/news')
 def api_news():
     symbol = request.args.get('symbol')
     if not symbol:
         return jsonify({"news": []})
-    news = load_cached_news(symbol)
+    news = get_stock_news(symbol)
     return jsonify({"news": news})
 
 @app.route('/tavsiye/')
