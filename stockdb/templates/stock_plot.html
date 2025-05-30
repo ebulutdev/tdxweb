@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <title>MIATK.IS Son 1 Aylık Kapanış Fiyatları</title>
+    <style>
+        body { background: #181818; color: #fff; text-align: center; }
+        .container { margin: 40px auto; width: 800px; background: #222; padding: 30px; border-radius: 16px; }
+        button { padding: 10px 30px; font-size: 18px; border-radius: 8px; border: none; background: #4caf50; color: #fff; cursor: pointer; margin-top: 20px; }
+        #analysis { margin-top: 30px; background: #333; padding: 20px; border-radius: 10px; min-height: 60px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>MIATK.IS Son 1 Aylık Kapanış Fiyatları</h2>
+        <img src="data:image/png;base64,{{ img_base64 }}" alt="Kapanış Grafiği" style="max-width:100%; background:#fff; border-radius:8px;"/>
+        <br>
+        <button id="analyzeBtn" onclick="getAnalysis()">Analiz Al (Gemini 1.5 Flash)</button>
+        <div id="analysis">Analiz için butona tıklayın.</div>
+    </div>
+    <script>
+        var closes = JSON.parse('{{ closes|escapejs }}');
+        var dates = JSON.parse('{{ dates|escapejs }}');
+        function getAnalysis() {
+            var btn = document.getElementById('analyzeBtn');
+            btn.disabled = true;
+            document.getElementById('analysis').innerText = 'Analiz getiriliyor...';
+            fetch('/get-analysis/', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    closes: closes,
+                    dates: dates
+                })
+            })
+            .then(r => r.json())
+            .then(data => {
+                document.getElementById('analysis').innerText = data.analysis || data.error;
+                btn.disabled = false;
+            })
+            .catch(() => {
+                document.getElementById('analysis').innerText = 'Bir hata oluştu.';
+                btn.disabled = false;
+            });
+        }
+    </script>
+</body>
+</html> 

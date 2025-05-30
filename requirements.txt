@@ -1,11 +1,5 @@
-fastapi==0.104.1
-uvicorn==0.24.0
-yfinance==0.2.31
-pandas==2.1.3
-numpy==1.26.2
-python-dotenv==1.0.0
-sqlalchemy==2.0.23
-aiohttp==3.9.1
-pydantic==2.5.2
-schedule==1.2.1 
-markdown
+Django>=4.2.0
+yfinance>=0.2.36
+matplotlib>=3.7.1
+numpy>=1.24.3
+gunicorn 
