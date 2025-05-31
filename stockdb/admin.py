@@ -16,14 +16,14 @@ class RecommendedStockAdmin(admin.ModelAdmin):
     readonly_fields = ('created_at',)
     fieldsets = (
         ('Hisse Bilgileri', {
-            'fields': ('symbol', 'company', 'price', 'change')
+            'fields': ('symbol', 'company', 'price')
         }),
         ('Tavsiye Detayları', {
             'fields': ('target_price', 'risk_level', 'recommendation_text')
         }),
         ('Durum', {
             'fields': ('is_active', 'created_at')
-        }),
+        })
     )
 
 @admin.register(QuestionAnswer)
