@@ -617,9 +617,80 @@
         .chatbot-messages::-webkit-scrollbar-thumb:hover {
             background: rgba(255, 255, 255, 0.3);
         }
+
+        /* Navbar Styles */
+        .navbar {
+            background: var(--bg-secondary);
+            padding: 1.2rem 2rem;
+            border-bottom: 1px solid var(--card-border);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            backdrop-filter: blur(10px);
+        }
+
+        .nav-container {
+            max-width: 1600px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .nav-brand {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+        }
+
+        .nav-brand i {
+            color: var(--accent-primary);
+        }
+
+        .nav-button {
+            background: var(--gradient-dark);
+            color: var(--text-primary);
+            border: 1px solid var(--card-border);
+            padding: 0.8rem 1.5rem;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .nav-button:hover {
+            transform: translateY(-2px);
+            border-color: var(--accent-primary);
+            box-shadow: 0 4px 20px rgba(59, 130, 246, 0.15);
+        }
+
+        .nav-button i {
+            font-size: 1.1rem;
+        }
     </style>
 </head>
 <body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="/" class="nav-brand">
+                <i class="fas fa-chart-line"></i>
+                BIST Analiz
+            </a>
+            <a href="/tavsiye-hisse" class="nav-button">
+                <i class="fas fa-lightbulb"></i>
+                Tavsiye Hisse
+            </a>
+        </div>
+    </nav>
     <div class="container">
         <header class="dashboard-header">
             <h1>Borsa İstanbul Analiz Paneli</h1>

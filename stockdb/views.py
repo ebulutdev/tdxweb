@@ -9,7 +9,7 @@ import datetime
 import base64
 import requests
 import json
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.core.cache import cache
 from bs4 import BeautifulSoup
 import logging
@@ -25,6 +25,8 @@ import pandas as pd
 import time
 from google.generativeai import GenerativeModel
 import random
+from .models import Stock, RecommendedStock, QuestionAnswer
+from django.urls import reverse
 
 CACHE_DIR = "cache"
 CACHE_TIMEOUTS = {
@@ -552,60 +554,19 @@ def get_cached_batch_stock_data(symbols):
     return result
 
 def home(request):
-    stocks = [
-        {'symbol': 'THYAO.IS', 'company': 'Türk Hava Yolları'},
-        {'symbol': 'GARAN.IS', 'company': 'Garanti Bankası'},
-        {'symbol': 'AKBNK.IS', 'company': 'Akbank'},
-        {'symbol': 'SISE.IS', 'company': 'Şişecam'},
-        {'symbol': 'YKBNK.IS', 'company': 'Yapı Kredi'},
-        {'symbol': 'KCHOL.IS', 'company': 'Koç Holding'},
-        {'symbol': 'EREGL.IS', 'company': 'Ereğli Demir Çelik'},
-        {'symbol': 'SASA.IS', 'company': 'Sasa Polyester'},
-        {'symbol': 'TUPRS.IS', 'company': 'Tüpraş'},
-        {'symbol': 'ISCTR.IS', 'company': 'İş Bankası'},
-        {'symbol': 'MIATK.IS', 'company': 'Mia Teknoloji'},
-        {'symbol': 'FROTO.IS', 'company': 'Ford Otosan'},
-    ]
-    symbols = [stock['symbol'] for stock in stocks]
-    user_ip = request.META.get('REMOTE_ADDR', 'unknown')
-    if not STOCK_LIMITER.is_allowed(user_ip):
-        return render(request, 'home.html', {'stocks': [], 'error': 'Çok fazla istek! Lütfen bekleyin.'})
-    batch_data = get_cached_batch_stock_data(symbols)
-    stock_data = []
-    for stock in stocks:
-        symbol = stock['symbol']
-        data = batch_data.get(symbol)
-        price = 0
-        change = 0
-        volume_str = "-"
-        time_str = "-"
-        try:
-            if data is not None and not data.empty:
-                latest_data = data.iloc[-1]
-                price = float(latest_data['Close'])
-                if len(data) > 1:
-                    prev_close = float(data.iloc[-2]['Close'])
-                    if prev_close != 0:
-                        change = round((price - prev_close) / prev_close * 100, 2)
-                volume = latest_data['Volume']
-                if volume >= 1_000_000:
-                    volume_str = f"{volume/1_000_000:.1f}M"
-                elif volume >= 1_000:
-                    volume_str = f"{volume/1_000:.1f}K"
-                else:
-                    volume_str = str(volume)
-                time_str = latest_data.name.strftime("%d.%m")
-        except Exception as e:
-            logging.error(f"Stock parse error for {symbol}: {str(e)}")
-        stock_data.append({
-            'symbol': symbol,
-            'company': stock['company'],
-            'price': price,
-            'change': change,
-            'volume': volume_str,
-            'time': time_str,
-        })
-    return render(request, 'home.html', {'stocks': stock_data})
+    stocks = Stock.objects.all()
+    return render(request, 'home.html', {'stocks': stocks})
+
+def tavsiye_hisse(request):
+    recommended_stocks = RecommendedStock.objects.filter(is_active=True)
+    if request.method == 'POST':
+        stock_id = request.POST.get('stock_id')
+        question = request.POST.get('question')
+        if stock_id and question:
+            stock = get_object_or_404(RecommendedStock, id=stock_id)
+            QuestionAnswer.objects.create(stock=stock, question=question)
+            return redirect(reverse('tavsiye_hisse'))
+    return render(request, 'tavsiye_hisse.html', {'recommended_stocks': recommended_stocks})
 
 @csrf_exempt
 def chatbot(request):
