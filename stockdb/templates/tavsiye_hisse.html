@@ -35,7 +35,7 @@
 
         body {
             font-family: 'Inter', sans-serif;
-            background: var(--primary-color);
+            background: linear-gradient(135deg, #18181c 0%, #3a185c 100%);
             color: var(--text-primary);
             line-height: 1.6;
             overflow-x: hidden;
@@ -51,6 +51,9 @@
             text-align: center;
             margin-bottom: 3rem;
             position: relative;
+            background: linear-gradient(135deg, #1a1026 0%, #2d0d3a 100%);
+            border-radius: 22px;
+            box-shadow: 0 4px 32px 0 rgba(40, 10, 60, 0.25), 0 1.5px 18px 0 rgba(24, 24, 28, 0.22);
         }
 
         .dashboard-header::before {
@@ -69,7 +72,7 @@
         .dashboard-header h1 {
             font-size: 3rem;
             font-weight: 700;
-            background: var(--gradient-primary);
+            background: linear-gradient(90deg, #a259f7 0%, #6c2eb7 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
@@ -132,14 +135,14 @@
         }
 
         .stock-card {
-            background: var(--card-bg);
-            border: 1px solid var(--card-border);
+            background: linear-gradient(135deg, #18181c 0%, #3a185c 100%);
+            border: 1px solid #3a185c;
             border-radius: 20px;
             padding: 2rem;
             position: relative;
             transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
             overflow: hidden;
-            animation: fadeInUp 0.6s ease-out both;
+            animation: card-morph 6s ease-in-out infinite alternate, fadeInUp 0.6s ease-out both;
         }
 
         .stock-card::before {
@@ -431,25 +434,102 @@
 
         @media (max-width: 768px) {
             .container {
+                padding: 0.5rem;
+            }
+            .dashboard-header {
                 padding: 1rem;
+                margin-bottom: 1.5rem;
             }
-
             .dashboard-header h1 {
-                font-size: 2rem;
+                font-size: 1.3rem;
             }
-
-            .stock-grid {
-                grid-template-columns: 1fr;
-                gap: 1.5rem;
+            .dashboard-header p {
+                font-size: 0.95rem;
             }
-
-            .stock-card {
-                padding: 1.5rem;
-            }
-
-            .stats-container {
+            .market-stats {
                 grid-template-columns: 1fr;
                 gap: 1rem;
+                margin-bottom: 1.5rem;
+            }
+            .market-stat-card {
+                padding: 1rem;
+                font-size: 0.95rem;
+            }
+            .stock-grid {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+                margin-top: 1rem;
+            }
+            .stock-card {
+                padding: 1rem;
+                border-radius: 12px;
+            }
+            .stock-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 0.5rem;
+            }
+            .stock-symbol {
+                font-size: 1.1rem;
+            }
+            .stock-change {
+                font-size: 0.95rem;
+                padding: 0.4rem 0.8rem;
+            }
+            .stock-company {
+                font-size: 0.95rem;
+                margin-bottom: 1rem;
+            }
+            .stock-price-container {
+                padding: 0.7rem;
+                border-radius: 10px;
+                margin-bottom: 1rem;
+            }
+            .stock-price {
+                font-size: 1.3rem;
+            }
+            .stats-container {
+                grid-template-columns: 1fr;
+                gap: 0.5rem;
+                margin-bottom: 1rem;
+            }
+            .stat-item {
+                padding: 0.6rem;
+                font-size: 0.95rem;
+            }
+            .recommendation-details {
+                padding: 0.7rem;
+                margin-bottom: 1rem;
+            }
+            .recommendation-details h3 {
+                font-size: 1rem;
+            }
+            .recommendation-details p {
+                font-size: 0.9rem;
+            }
+            form[method="post"] textarea {
+                font-size: 0.95rem;
+                padding: 0.4rem;
+            }
+            form[method="post"] button {
+                padding: 0.5rem 1rem;
+                font-size: 0.95rem;
+            }
+            .no-recommendations {
+                padding: 2rem 0.5rem;
+                font-size: 1rem;
+            }
+        }
+
+        @keyframes card-morph {
+            0% {
+                background: linear-gradient(135deg, #18181c 0%, #3a185c 100%);
+            }
+            50% {
+                background: linear-gradient(135deg, #2d193a 0%, #6c2eb7 100%);
+            }
+            100% {
+                background: linear-gradient(135deg, #18181c 0%, #3a185c 100%);
             }
         }
     </style>
