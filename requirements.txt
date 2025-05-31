@@ -6,3 +6,4 @@ gunicorn
 beautifulsoup4
 feedparser
 plotly 
+google-generativeai
