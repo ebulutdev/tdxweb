@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}BIST Hisse Analiz ve Haberler{% endblock %}</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            background: #181818;
+            color: #fff;
+            font-family: 'Inter', 'Roboto', 'Segoe UI', Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+        }
+        .container {
+            width: 95vw;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 3vw 0 2vw 0;
+        }
+        .news-section {
+            margin: 4vw 0 0 0;
+        }
+        .news-title-main {
+            font-size: 2.1rem;
+            font-weight: 700;
+            color: #fff;
+            margin-bottom: 2vw;
+        }
+        .news-cards {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 2vw;
+            justify-content: flex-start;
+        }
+        .news-card {
+            background: #fff;
+            color: #181818;
+            border-radius: 1.2vw;
+            box-shadow: 0 2px 18px rgba(30,34,90,0.10);
+            width: 340px;
+            max-width: 95vw;
+            display: flex;
+            flex-direction: column;
+            margin-bottom: 2vw;
+            transition: box-shadow 0.2s, transform 0.15s;
+        }
+        .news-card:hover {
+            box-shadow: 0 6px 32px 0 rgba(30,34,90,0.16), 0 3px 12px 0 rgba(30,34,90,0.10);
+            transform: translateY(-2px) scale(1.012);
+        }
+        .news-img {
+            width: 100%;
+            height: 160px;
+            object-fit: cover;
+            border-radius: 1.2vw 1.2vw 0 0;
+            background: #e0e0e0;
+        }
+        .news-content {
+            padding: 1.2vw 1.2vw 1vw 1.2vw;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+        .news-source {
+            color: #1976d2;
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 0.3vw;
+        }
+        .news-headline {
+            font-size: 1.15rem;
+            font-weight: 700;
+            margin-bottom: 0.5vw;
+            color: #181818;
+        }
+        .news-summary {
+            font-size: 1.01rem;
+            color: #333;
+            margin-bottom: 1vw;
+            flex: 1;
+        }
+        .news-meta {
+            font-size: 0.97rem;
+            color: #888;
+            margin-bottom: 0.5vw;
+        }
+        .news-link {
+            color: #1976d2;
+            font-size: 1rem;
+            font-weight: 600;
+            text-decoration: underline;
+            margin-top: 0.5vw;
+            align-self: flex-end;
+        }
+        @media (max-width: 900px) {
+            .news-cards {
+                gap: 3vw;
+            }
+            .news-card {
+                width: 98vw;
+                max-width: 99vw;
+            }
+        }
+        @media (max-width: 600px) {
+            .container {
+                padding: 2vw 0 2vw 0;
+            }
+            .news-title-main {
+                font-size: 1.2rem;
+            }
+            .news-card {
+                width: 99vw;
+                max-width: 99vw;
+                border-radius: 3vw;
+            }
+            .news-img {
+                height: 120px;
+                border-radius: 3vw 3vw 0 0;
+            }
+        }
+        footer {
+            width: 100vw;
+            max-width: 100vw;
+            margin: 4vw 0 0 0;
+            padding: 2vw 0 2vw 0;
+            background: #181818;
+            color: #aaa;
+            text-align: center;
+            font-size: 0.98rem;
+            letter-spacing: 0.1px;
+            font-family: 'Inter','Roboto','Segoe UI',Arial,sans-serif;
+        }
+        footer a {
+            color: #00bcd4;
+            text-decoration: underline;
+            font-weight: 500;
+        }
+    </style>
+    {% block extra_head %}{% endblock %}
+</head>
+<body>
+    <div class="container">
+        {% block content %}{% endblock %}
+        {% block news_section %}
+        <div class="news-section">
+            <div class="news-title-main">İlgili Haberler</div>
+            <div class="news-cards">
+                {% for news in all_news %}
+                <div class="news-card">
+                    <img class="news-img" src="{{ news.image|default:'https://i.ibb.co/6bQQ7rM/image-not-found.png' }}" alt="Haber görseli">
+                    <div class="news-content">
+                        <div class="news-source">{{ news.source }}</div>
+                        <div class="news-headline">{{ news.title }}</div>
+                        <div class="news-summary">{{ news.summary|truncatechars:120 }}</div>
+                        <div class="news-meta">🗓 {{ news.published|date:'d M Y' }}</div>
+                        <a class="news-link" href="{{ news.link }}" target="_blank">Devamını Oku</a>
+                    </div>
+                </div>
+                {% empty %}
+                <div style="color:#aaa;">Hiç haber bulunamadı.</div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endblock %}
+    </div>
+    <footer>
+        © 2025 TDX. Tüm hakları saklıdır. Bu sitedeki veriler yatırım tavsiyesi niteliği taşımaz.<br>
+        <a href="mailto:bulutemir@gmail.com">bulutemir@gmail.com</a>
+    </footer>
+</body>
+</html> 
