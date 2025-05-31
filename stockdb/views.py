@@ -22,8 +22,33 @@ import os
 from datetime import datetime, timedelta, timezone
 from dateutil import parser as dateparser
 import pandas as pd
+import time
 
 CACHE_DIR = "cache"
+CACHE_TIMEOUTS = {
+    'stock_data': 5 * 60,  # 5 dakika
+    'analysis': 60 * 60,   # 1 saat
+    'news': 30 * 60,      # 30 dakika
+}
+
+class RateLimiter:
+    def __init__(self, key_prefix, limit, period):
+        self.key_prefix = key_prefix
+        self.limit = limit
+        self.period = period
+
+    def is_allowed(self, identifier):
+        cache_key = f"{self.key_prefix}_{identifier}"
+        current = cache.get(cache_key)
+        if current is None:
+            cache.set(cache_key, 1, self.period)
+            return True
+        if current >= self.limit:
+            return False
+        cache.incr(cache_key)
+        return True
+
+STOCK_LIMITER = RateLimiter('stock', 60, 60)  # 60 istek/dakika
 
 def get_latest_news(symbol="MIATK", count=10):
     symbol = symbol.upper()
@@ -452,9 +477,80 @@ Notlar:
         'code': 'INVALID_METHOD'
     }, status=405)
 
+def get_cached_batch_stock_data(symbols):
+    result = {}
+    symbols_to_fetch = []
+    for symbol in symbols:
+        cache_key = f"stock_data_{symbol}"
+        data = cache.get(cache_key)
+        if data is not None:
+            result[symbol] = data
+        else:
+            symbols_to_fetch.append(symbol)
+    if symbols_to_fetch:
+        try:
+            batch_data = yf.download(symbols_to_fetch, period="5d", interval="1d", progress=False, group_by='ticker')
+            for symbol in symbols_to_fetch:
+                data = batch_data[symbol] if symbol in batch_data else None
+                if data is not None:
+                    cache.set(f"stock_data_{symbol}", data, CACHE_TIMEOUTS['stock_data'])
+                    result[symbol] = data
+        except Exception as e:
+            logging.error(f"YFinance batch error: {str(e)}")
+    return result
+
 def home(request):
-    top10 = [
-        'THYAO.IS', 'GARAN.IS', 'AKBNK.IS', 'SISE.IS', 'YKBNK.IS',
-        'KCHOL.IS', 'EREGL.IS', 'SASA.IS', 'TUPRS.IS', 'ISCTR.IS'
+    stocks = [
+        {'symbol': 'THYAO.IS', 'company': 'Türk Hava Yolları'},
+        {'symbol': 'GARAN.IS', 'company': 'Garanti Bankası'},
+        {'symbol': 'AKBNK.IS', 'company': 'Akbank'},
+        {'symbol': 'SISE.IS', 'company': 'Şişecam'},
+        {'symbol': 'YKBNK.IS', 'company': 'Yapı Kredi'},
+        {'symbol': 'KCHOL.IS', 'company': 'Koç Holding'},
+        {'symbol': 'EREGL.IS', 'company': 'Ereğli Demir Çelik'},
+        {'symbol': 'SASA.IS', 'company': 'Sasa Polyester'},
+        {'symbol': 'TUPRS.IS', 'company': 'Tüpraş'},
+        {'symbol': 'ISCTR.IS', 'company': 'İş Bankası'},
+        {'symbol': 'MIATK.IS', 'company': 'Mia Teknoloji'},
+        {'symbol': 'FROTO.IS', 'company': 'Ford Otosan'},
     ]
-    return render(request, 'home.html', {'top10': top10}) 
+    symbols = [stock['symbol'] for stock in stocks]
+    user_ip = request.META.get('REMOTE_ADDR', 'unknown')
+    if not STOCK_LIMITER.is_allowed(user_ip):
+        return render(request, 'home.html', {'stocks': [], 'error': 'Çok fazla istek! Lütfen bekleyin.'})
+    batch_data = get_cached_batch_stock_data(symbols)
+    stock_data = []
+    for stock in stocks:
+        symbol = stock['symbol']
+        data = batch_data.get(symbol)
+        price = 0
+        change = 0
+        volume_str = "-"
+        time_str = "-"
+        try:
+            if data is not None and not data.empty:
+                latest_data = data.iloc[-1]
+                price = float(latest_data['Close'])
+                if len(data) > 1:
+                    prev_close = float(data.iloc[-2]['Close'])
+                    if prev_close != 0:
+                        change = round((price - prev_close) / prev_close * 100, 2)
+                volume = latest_data['Volume']
+                if volume >= 1_000_000:
+                    volume_str = f"{volume/1_000_000:.1f}M"
+                elif volume >= 1_000:
+                    volume_str = f"{volume/1_000:.1f}K"
+                else:
+                    volume_str = str(volume)
+                time_str = latest_data.name.strftime("%d.%m")
+        except Exception as e:
+            logging.error(f"Stock parse error for {symbol}: {str(e)}")
+        stock_data.append({
+            'symbol': symbol,
+            'company': stock['company'],
+            'price': price,
+            'change': change,
+            'volume': volume_str,
+            'time': time_str,
+        })
+    return render(request, 'home.html', {'stocks': stock_data}) 

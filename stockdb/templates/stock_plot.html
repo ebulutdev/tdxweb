@@ -3,364 +3,408 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>MIATK.IS Son 1 Aylık Kapanış Fiyatları</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+    <title>{{ symbol }} Son 1 Aylık Kapanış Fiyatları</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
-        body {
-            background: #181818;
-            color: #fff;
-            text-align: center;
-            font-family: 'Inter', 'Roboto', 'Segoe UI', Arial, sans-serif;
+        :root {
+            --bg-primary: #0a0a0a;
+            --bg-secondary: #111111;
+            --bg-card: #161616;
+            --text-primary: #ffffff;
+            --text-secondary: #a0aec0;
+            --accent-primary: #3b82f6;
+            --accent-secondary: #1d4ed8;
+            --success-color: #10b981;
+            --danger-color: #ef4444;
+            --card-border: #232323;
+            --card-hover: #1c1c1c;
+        }
+
+        * {
             margin: 0;
             padding: 0;
+            box-sizing: border-box;
         }
+
+        body {
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
         .container {
-            width: 95vw;
-            max-width: 1100px;
-            min-width: 0;
-            margin: 4vw auto;
-            padding: 4vw 2vw 3vw 2vw;
-            border-radius: 2vw;
-            box-shadow: 0 0.5vw 3vw #111;
-            background: #222;
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 2rem;
         }
-        .analysis-section, .market-overview, .analysis-container {
-            border-radius: 2vw;
-            box-shadow: 0 0.3vw 2vw 0 rgba(30,34,90,0.07);
-            background: #f7f8fa;
-            margin: 3vw 0;
-            padding: 3vw 2vw;
-            font-size: 1.1rem;
-            line-height: 1.7;
+
+        .chart-container {
+            background: var(--bg-card);
+            border-radius: 24px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            border: 1px solid var(--card-border);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
         }
-        button, .btn {
-            padding: 3vw 0;
-            font-size: 1.1rem;
-            border-radius: 1.5vw;
-            border: none;
-            background: #4caf50;
-            color: #fff;
-            cursor: pointer;
-            margin-top: 4vw;
-            transition: background 0.2s, box-shadow 0.2s;
-            font-weight: 600;
-            letter-spacing: 0.5px;
-            box-shadow: 0 0.5vw 2vw rgba(44,62,80,0.08);
-            width: 100%;
-            max-width: 350px;
-            display: block;
-            margin-left: auto;
-            margin-right: auto;
-        }
-        button:hover, .btn:hover {
-            background: #388e3c;
-            box-shadow: 0 1vw 3vw rgba(44,62,80,0.12);
-        }
+
         h2, h3 {
-            font-size: 5vw;
-            margin-bottom: 3vw;
-            color: #fff;
-            letter-spacing: 1.5px;
+            font-size: 2rem;
+            font-weight: 800;
+            margin-bottom: 1.5rem;
+            background: linear-gradient(to right, #60a5fa, #3b82f6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: -0.5px;
         }
-        ul, li {
+
+        .analyze-btn {
+            background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+            color: var(--text-primary);
+            border: none;
+            border-radius: 12px;
+            padding: 1rem 2rem;
             font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            max-width: 400px;
+            margin: 1.5rem auto;
+            display: block;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
         }
-        .graph-wrapper, .plotly-graph-div, .plotly-graph {
-            width: 100vw !important;
-            max-width: 100vw;
-            min-width: 0;
-            overflow-x: auto;
+
+        .analyze-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(59, 130, 246, 0.3);
         }
-        /* Responsive media queries */
-        @media (min-width: 600px) {
-            h2, h3 { font-size: 2.2rem; }
+
+        .analyze-btn:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
         }
-        @media (max-width: 600px) {
-            .container {
-                padding: 4vw 2vw 4vw 2vw;
-                border-radius: 3vw;
-            }
-            .analysis-section, .market-overview, .analysis-container {
-                padding: 3vw 2vw;
-                font-size: 1rem;
-                border-radius: 2vw;
-            }
-            button, .btn {
-                font-size: 1rem;
-                padding: 3vw 0;
-                border-radius: 2vw;
-                max-width: 100%;
-            }
-            h2, h3 {
-                font-size: 6vw !important;
-                margin-bottom: 3vw;
-            }
-            ul, li {
-                font-size: 1rem;
-            }
-            .graph-wrapper, .plotly-graph-div, .plotly-graph {
-                min-width: 0;
-                width: 100vw !important;
-                max-width: 100vw;
-            }
-        }
-        /* Force analysis text to be dark for readability */
-        .analysis-section,
-        .market-overview,
-        .analysis-content {
-            color: #222 !important;
-        }
-        .analysis-section *,
-        .market-overview *,
-        .analysis-content * {
-            color: #222 !important;
-        }
-        .analysis-section {
-            margin: 28px 0;
-            padding: 32px 32px 28px 32px;
-            background: #f7f8fa;
+
+        .analysis-container {
+            background: linear-gradient(135deg, #181f2a 0%, #232a3a 100%);
             border-radius: 22px;
-            box-shadow: 0 6px 32px 0 rgba(30,34,90,0.10), 0 1.5px 6px 0 rgba(30,34,90,0.08);
-            transition: box-shadow 0.25s, transform 0.18s;
+            padding: 2.2rem 2rem 2rem 2rem;
+            margin: 2rem 0;
+            border: 1.5px solid #2a3344;
+            color: #e0e6ef;
             font-size: 1.13rem;
             line-height: 1.7;
+            box-shadow: 0 8px 32px 0 rgba(30,34,90,0.13), 0 2px 8px 0 rgba(30,34,90,0.08);
+            position: relative;
+            transition: box-shadow 0.22s, transform 0.18s;
+            overflow-x: auto;
+            overflow-y: visible;
+            max-height: none;
+            height: auto;
+            word-break: break-word;
+            border-left: 6px solid #3b82f6;
         }
-        .analysis-section:hover {
-            box-shadow: 0 12px 36px 0 rgba(30,34,90,0.16), 0 3px 12px 0 rgba(30,34,90,0.10);
-            transform: translateY(-2px) scale(1.012);
+        .analysis-container h2, .analysis-container h3 {
+            color: #60a5fa;
+            font-size: 1.35rem;
+            font-weight: 800;
+            margin-bottom: 1.1rem;
+            margin-top: 1.7rem;
+            background: none;
+            -webkit-text-fill-color: unset;
         }
-        .analysis-section h2, .analysis-section h3 {
-            color: #1a237e !important;
-            font-size: 1.45rem;
-            font-weight: 700;
-            margin-bottom: 18px;
-            letter-spacing: 1.2px;
+        .analysis-container ul {
+            margin-left: 1.5rem;
+            margin-bottom: 1.2rem;
         }
-        .analysis-section ul {
-            list-style-type: disc;
-            padding-left: 28px;
-            margin-bottom: 0;
-        }
-        .analysis-section li {
-            margin: 12px 0;
+        .analysis-container li {
+            margin-bottom: 0.5rem;
             font-size: 1.08rem;
             line-height: 1.6;
             font-weight: 500;
             letter-spacing: 0.1px;
         }
-        .market-overview {
-            background: #f0f2f7;
-            padding: 24px 32px;
-            margin: 28px 0 18px 0;
-            border-left: 5px solid #1a237e;
-            border-radius: 18px;
-            box-shadow: 0 2px 12px 0 rgba(30,34,90,0.07);
-        }
-        .market-overview table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-        .market-overview td {
-            padding: 10px 8px;
-            font-size: 1.08rem;
-            font-weight: 500;
-        }
-        .positive {
-            color: #4caf50 !important;
+        .analysis-container strong {
+            color: #fff;
             font-weight: 700;
         }
-        .negative {
-            color: #f44336 !important;
-            font-weight: 700;
+        .analysis-container em {
+            color: #ffd600;
+            font-style: normal;
+            font-weight: 600;
         }
-        .loading {
-            text-align: center;
-            padding: 20px;
-            color: #666;
-            font-size: 1.15rem;
-            font-family: 'Inter', 'Roboto', 'Segoe UI', Arial, sans-serif;
+        .news-section {
+            margin-top: 3rem;
         }
-        .error {
-            color: #f44336;
-            padding: 20px;
-            text-align: center;
-            background: #ffebee;
-            border-radius: 8px;
-            font-size: 1.12rem;
-        }
-        .warning-box {
-            background: white;
-            padding: 15px;
-            border-left: 4px solid #ff9800;
-            margin-top: 15px;
-            border-radius: 8px;
-        }
+
         .news-list {
-            background: #23272e;
-            padding: 3vw 2vw;
-            border-radius: 1.5vw;
-            box-shadow: 0 0.3vw 2vw 0 rgba(30,34,90,0.10);
-            margin: 3vw 0;
+            background: var(--bg-card);
+            border-radius: 20px;
+            padding: 1.5rem;
+            border: 1px solid var(--card-border);
         }
-        .news-list li {
-            margin-bottom: 2vw;
-            padding-bottom: 1vw;
-            border-bottom: 1px solid #333;
-            list-style: none;
+
+        .news-item {
+            padding: 1.5rem;
+            border-bottom: 1px solid var(--card-border);
+            transition: all 0.3s ease;
         }
-        .news-list li:last-child {
+
+        .news-item:last-child {
             border-bottom: none;
         }
-        .news-list a {
-            color: #4cafef;
-            font-weight: 700;
-            font-size: 1.13rem;
-            text-decoration: none;
-            transition: color 0.2s;
-            word-break: break-word;
+
+        .news-item:hover {
+            background: rgba(59, 130, 246, 0.1);
+            border-radius: 12px;
         }
-        .news-list a:hover {
-            color: #1976d2;
-            text-decoration: underline;
-        }
-        .news-list .news-meta {
-            color: #aaa;
-            font-size: 0.98rem;
-            margin-top: 0.2vw;
-            display: block;
-            font-weight: 500;
-        }
-        .news-list .news-summary {
-            color: #ccc;
-            font-size: 1.01rem;
-            margin-top: 0.3vw;
-            font-weight: 400;
-            line-height: 1.5;
-        }
-        @media (max-width: 600px) {
-            .news-list {
-                padding: 4vw 2vw;
-                border-radius: 3vw;
-            }
-            .news-list li {
-                margin-bottom: 4vw;
-                padding-bottom: 2vw;
-            }
-            .news-list a {
-                font-size: 1.05rem;
-            }
-            .news-list .news-meta, .news-list .news-summary {
-                font-size: 0.97rem;
-            }
-        }
+
         .news-title {
-            color: #4cafef;
-            font-weight: 700;
-            font-size: 1.13rem;
-            text-decoration: none;
+            color: var(--accent-primary);
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
             cursor: pointer;
             display: block;
-            transition: color 0.2s;
-            word-break: break-word;
+            text-decoration: none;
         }
+
         .news-title:hover {
-            color: #1976d2;
-            text-decoration: underline;
+            color: var(--accent-secondary);
         }
+
+        .news-meta {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-bottom: 0.5rem;
+            display: block;
+        }
+
         .news-summary {
-            color: #ccc;
-            font-size: 1.01rem;
-            margin-top: 0.3vw;
-            font-weight: 400;
-            line-height: 1.5;
-            background: #23272e;
-            border-radius: 0.5vw;
-            padding: 1vw 1vw 1vw 1vw;
-            margin-bottom: 0.5vw;
-            transition: all 0.2s;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 12px;
+            padding: 1rem;
+            margin-top: 1rem;
+            color: var(--text-secondary);
+            font-size: 1rem;
+            display: none;
         }
+
         .news-link {
-            color: #ffd600;
-            font-size: 0.98rem;
-            text-decoration: underline;
-            margin-top: 0.5vw;
+            color: var(--accent-primary);
+            text-decoration: none;
+            font-size: 0.9rem;
+            margin-top: 0.5rem;
             display: inline-block;
+            transition: color 0.2s ease;
+        }
+
+        .news-link:hover {
+            color: var(--accent-secondary);
+            text-decoration: underline;
+        }
+
+        .error-message {
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--danger-color);
+            padding: 1rem;
+            border-radius: 12px;
+            margin-bottom: 1rem;
+            font-weight: 500;
+        }
+
+        /* Modern Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--bg-secondary);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--card-border);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--accent-primary);
+        }
+
+        @media (max-width: 900px) {
+            .container {
+                max-width: 100vw;
+                padding: 1rem;
+            }
+            .chart-container {
+                padding: 1rem;
+                border-radius: 16px;
+            }
+            .analysis-container {
+                padding: 1.2rem 0.7rem 1.2rem 0.7rem;
+                border-radius: 14px;
+                font-size: 1.01rem;
+            }
+            .analysis-container h2, .analysis-container h3 {
+                font-size: 1.08rem;
+            }
+            .news-section {
+                margin-top: 2rem;
+            }
+            .news-list {
+                padding: 1rem;
+                border-radius: 14px;
+            }
+            .news-item {
+                padding: 1rem;
+            }
+            .analyze-btn {
+                font-size: 1rem;
+                padding: 0.8rem 1.2rem;
+                max-width: 100%;
+            }
+            h2, h3 {
+                font-size: 1.3rem;
+            }
+        }
+        @media (max-width: 600px) {
+            .container {
+                max-width: 100vw;
+                padding: 0.5rem;
+            }
+            .chart-container {
+                padding: 0.5rem;
+                border-radius: 10px;
+            }
+            .analysis-container {
+                padding: 0.7rem 0.3rem 0.7rem 0.7rem;
+                border-radius: 10px;
+                font-size: 0.97rem;
+            }
+            .analysis-container h2, .analysis-container h3 {
+                font-size: 0.98rem;
+            }
+            .news-section {
+                margin-top: 1.2rem;
+            }
+            .news-list {
+                padding: 0.5rem;
+                border-radius: 10px;
+            }
+            .news-item {
+                padding: 0.5rem;
+            }
+            .analyze-btn {
+                font-size: 0.97rem;
+                padding: 0.7rem 0.7rem;
+                max-width: 100%;
+            }
+            h2, h3 {
+                font-size: 1.05rem;
+            }
+            .graph-wrapper {
+                overflow-x: auto;
+                width: 100vw !important;
+                max-width: 100vw;
+            }
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h2>{{ symbol }} Son 1 Aylık Kapanış Fiyatları</h2>
-        {% if error %}
-            <div style="background:#c62828; color:#fff; padding:20px; border-radius:10px; margin-bottom:32px; font-size:1.15rem;">{{ error }}</div>
-        {% endif %}
-        <div style="margin-bottom: 32px;">
+        <div class="chart-container">
+            <h2>{{ symbol }} Son 1 Aylık Kapanış Fiyatları</h2>
+            {% if error %}
+                <div class="error-message">{{ error }}</div>
+            {% endif %}
             <div class="graph-wrapper">
                 {{ plotly_html|safe }}
             </div>
         </div>
-        <button id="analyzeBtn" onclick="getAnalysis()" style="margin-bottom:32px; font-size:1.2rem; padding:12px 36px; border-radius:10px; border:none; background:#4caf50; color:#fff; cursor:pointer;">Analiz Al (Gemini 1.5 Flash)</button>
-        <div id="analysis" style="background:#333; color:#fff; padding:32px 24px; border-radius:12px; margin-bottom:32px; font-size:1.15rem; min-height:120px;">
+
+        <button id="analyzeBtn" class="analyze-btn" onclick="getAnalysis()">
+            <i class="fas fa-chart-line"></i> Analiz Al (Gemini 1.5 Flash)
+        </button>
+
+        <div id="analysis" class="analysis-container">
             Analiz için butona tıklayın.
         </div>
-        <div style="margin-top:40px; text-align:left;">
-            <h3 style="color:#fff;">{{ symbol }} Son 1 Haftadaki Haberler</h3>
-            <ul class="news-list">
+
+        <div class="news-section">
+            <h3>{{ symbol }} Son 1 Haftadaki Haberler</h3>
+            <div class="news-list">
                 {% for item in news %}
-                    <li class="news-item">
-                        <a href="javascript:void(0);" class="news-title" onclick="toggleNewsSummary(this)">{{ item.title }}</a>
-                        <span class="news-meta">{{ item.published }}{% if item.source %} | {{ item.source }}{% endif %}</span>
-                        <div class="news-summary" style="display:none;">
-                            {{ item.summary|safe }}<br>
-                            <a href="{{ item.link }}" target="_blank" class="news-link">Haberi Kaynağında Oku</a>
+                    <div class="news-item">
+                        <a href="javascript:void(0);" class="news-title" onclick="toggleNewsSummary(this)">
+                            <i class="fas fa-newspaper"></i> {{ item.title }}
+                        </a>
+                        <span class="news-meta">
+                            <i class="far fa-clock"></i> {{ item.published }}
+                            {% if item.source %} | <i class="fas fa-globe"></i> {{ item.source }}{% endif %}
+                        </span>
+                        <div class="news-summary">
+                            {{ item.summary|safe }}
+                            <a href="{{ item.link }}" target="_blank" class="news-link">
+                                <i class="fas fa-external-link-alt"></i> Haberi Kaynağında Oku
+                            </a>
                         </div>
-                    </li>
+                    </div>
                 {% empty %}
-                    <li style="color:#aaa;">Hiç haber bulunamadı.</li>
+                    <div class="news-item">
+                        <span class="text-secondary">Hiç haber bulunamadı.</span>
+                    </div>
                 {% endfor %}
-            </ul>
+            </div>
         </div>
-        <script>
-            var closes = JSON.parse('{{ closes|escapejs }}');
-            var dates = JSON.parse('{{ dates|escapejs }}');
-            function getAnalysis() {
-                var btn = document.getElementById('analyzeBtn');
-                btn.disabled = true;
-                document.getElementById('analysis').innerText = 'Analiz getiriliyor...';
-                fetch('/get-analysis/?symbol={{ symbol }}', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        closes: closes,
-                        dates: dates
-                    })
-                })
-                .then(r => r.json())
-                .then(data => {
-                    var analysisBox = document.getElementById('analysis');
-                    if (data.status === 'success' && data.data && data.data.analysis) {
-                        analysisBox.innerHTML = data.data.analysis;
-                    } else if (data.error) {
-                        analysisBox.innerText = data.error;
-                    } else {
-                        analysisBox.innerText = 'Analiz alınamadı.';
-                    }
-                    btn.disabled = false;
-                })
-                .catch(() => {
-                    document.getElementById('analysis').innerText = 'Bir hata oluştu.';
-                    btn.disabled = false;
-                });
-            }
-            function toggleNewsSummary(el) {
-                var summary = el.parentElement.querySelector('.news-summary');
-                if (summary.style.display === 'none' || summary.style.display === '') {
-                    summary.style.display = 'block';
-                } else {
-                    summary.style.display = 'none';
-                }
-            }
-        </script>
     </div>
+
+    <script>
+        var closes = JSON.parse('{{ closes|escapejs }}');
+        var dates = JSON.parse('{{ dates|escapejs }}');
+
+        function getAnalysis() {
+            var btn = document.getElementById('analyzeBtn');
+            var analysisContainer = document.getElementById('analysis');
+            
+            btn.disabled = true;
+            analysisContainer.innerHTML = '<div style="text-align: center;"><i class="fas fa-spinner fa-spin"></i> Analiz getiriliyor...</div>';
+
+            fetch('/get-analysis/?symbol={{ symbol }}', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    closes: closes,
+                    dates: dates
+                })
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.status === 'success' && data.data && data.data.analysis) {
+                    analysisContainer.innerHTML = data.data.analysis;
+                } else if (data.error) {
+                    analysisContainer.innerHTML = `<div class="error-message">${data.error}</div>`;
+                } else {
+                    analysisContainer.innerHTML = '<div class="error-message">Analiz alınamadı.</div>';
+                }
+                btn.disabled = false;
+            })
+            .catch(() => {
+                analysisContainer.innerHTML = '<div class="error-message">Bir hata oluştu.</div>';
+                btn.disabled = false;
+            });
+        }
+
+        function toggleNewsSummary(el) {
+            var summary = el.parentElement.querySelector('.news-summary');
+            if (summary.style.display === 'none' || summary.style.display === '') {
+                summary.style.display = 'block';
+            } else {
+                summary.style.display = 'none';
+            }
+        }
+    </script>
 </body>
-</html> 
+</html>
