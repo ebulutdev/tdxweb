@@ -23,13 +23,47 @@ from datetime import datetime, timedelta, timezone
 from dateutil import parser as dateparser
 import pandas as pd
 import time
+from google.generativeai import GenerativeModel
+import random
 
 CACHE_DIR = "cache"
 CACHE_TIMEOUTS = {
-    'stock_data': 5 * 60,  # 5 dakika
-    'analysis': 60 * 60,   # 1 saat
-    'news': 30 * 60,      # 30 dakika
+    'stock_data': 5 * 60,  # 5 minutes
+    'analysis': 60 * 60,   # 1 hour
+    'news': 30 * 60,      # 30 minutes
+    'chat_history': 30 * 60,  # 30 minutes
 }
+
+# Logging setup
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+# Samimi karşılama mesajları
+GREETING_MESSAGES = [
+    "Merhaba! Ben TDX AI Bot. Borsa konusunda size yardımcı olmak için buradayım! 📈",
+    "Selam! TDX AI Bot olarak hizmetinizdeyim. Birlikte piyasaları analiz edelim! 💹",
+    "Hoş geldiniz! Ben TDX AI Bot, finansal piyasalardaki asistanınız. Size nasıl yardımcı olabilirim? 🤝",
+    "Merhaba! Borsada yolunuzu bulmak için buradayım. Hangi konuda yardıma ihtiyacınız var? 🎯"
+]
+
+# Hisse analizi için prompt template
+STOCK_ANALYSIS_TEMPLATE = """
+Merhaba! Ben TDX AI Bot. {symbol} hissesi için detaylı bir analiz hazırladım:
+
+Teknik Veriler:
+{technical_data}
+
+Son 1 Aylık Performans:
+{performance_summary}
+
+Önemli Göstergeler:
+{key_indicators}
+
+Benim Yorumum:
+{analysis}
+
+Size nasıl yardımcı olabilirim? Başka bir hisse için analiz yapmamı ister misiniz? 📊
+"""
 
 class RateLimiter:
     def __init__(self, key_prefix, limit, period):
@@ -48,7 +82,25 @@ class RateLimiter:
         cache.incr(cache_key)
         return True
 
-STOCK_LIMITER = RateLimiter('stock', 60, 60)  # 60 istek/dakika
+STOCK_LIMITER = RateLimiter('stock', 60, 60)  # 60 requests/minute
+
+class TDXBotRateLimiter:
+    def __init__(self, max_requests=60, time_window=60):
+        self.max_requests = max_requests
+        self.time_window = time_window
+        self.cache_prefix = "tdx_bot_ratelimit"
+
+    def is_allowed(self, user_id):
+        cache_key = f"{self.cache_prefix}_{user_id}"
+        current_usage = cache.get(cache_key, 0)
+        
+        if current_usage >= self.max_requests:
+            return False
+        
+        cache.set(cache_key, current_usage + 1, self.time_window)
+        return True
+
+rate_limiter = TDXBotRateLimiter()
 
 def get_latest_news(symbol="MIATK", count=10):
     symbol = symbol.upper()
@@ -409,7 +461,7 @@ Notlar:
 - Her başlık için, elindeki tüm verileri ve genel piyasa bilgisini kullanarak açıklama ve analiz üret.
 """
             # Make API call to Gemini
-            api_key = 'AIzaSyBSJJob1ovfUYHgyV4pbKGF0uBuL5v7VxQ'
+            api_key = 'AIzaSyCpdN84xuqoi5wKKYBq9GRyhxIIq6RFtyc'
             url = f'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={api_key}'
             headers = {
                 'Content-Type': 'application/json',
@@ -445,7 +497,7 @@ Notlar:
                 'news_count': len(news)
             }
             # Cache the formatted result
-            cache.set(cache_key, formatted_analysis, timeout=60*60)  # 1 saat cache
+            cache.set(cache_key, formatted_analysis, timeout=60*60)  # 1 hour cache
             return JsonResponse({
                 'status': 'success',
                 'data': formatted_analysis,
@@ -553,4 +605,251 @@ def home(request):
             'volume': volume_str,
             'time': time_str,
         })
-    return render(request, 'home.html', {'stocks': stock_data}) 
+    return render(request, 'home.html', {'stocks': stock_data})
+
+@csrf_exempt
+def chatbot(request):
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            user_message = data.get('message', '').strip()
+            user_id = request.META.get('REMOTE_ADDR', 'unknown')
+
+            # Cache check
+            cache_key = f"chat_response_{user_message}_{user_id}"
+            cached_response = cache.get(cache_key)
+            if cached_response:
+                return JsonResponse({'response': cached_response})
+
+            # Process the message
+            response = process_user_message(user_message, user_id)
+            
+            # Cache the response
+            cache.set(cache_key, response, CACHE_TIMEOUTS['chat_history'])
+            
+            return JsonResponse({'response': response})
+
+        except Exception as e:
+            logger.error(f"Chatbot error: {str(e)}")
+            return JsonResponse({
+                'response': "Üzgünüm, bir hata oluştu. Lütfen tekrar dener misiniz? 🙏"
+            })
+
+    return JsonResponse({'error': 'Geçersiz istek metodu'}, status=400)
+
+def process_user_message(message, user_id=None):
+    """Process user message and generate appropriate response"""
+    try:
+        stock_data = get_stock_info(message)
+        if stock_data:
+            return generate_stock_analysis(message, stock_data)
+        # Only apply rate limit for Gemini API/general conversation
+        if user_id and not rate_limiter.is_allowed(user_id):
+            return "Üzgünüm, çok fazla istek aldım. Lütfen biraz bekleyip tekrar deneyin! 😅"
+        return generate_conversation_response(message)
+    except Exception as e:
+        logger.error(f"Message processing error: {str(e)}")
+        return random.choice(GREETING_MESSAGES)
+
+def get_stock_info(symbol):
+    """Get comprehensive stock information"""
+    try:
+        stock = yf.Ticker(symbol)
+        info = {
+            'history': stock.history(period='1mo'),
+            'info': stock.info,
+            'recommendations': stock.recommendations,
+            'major_holders': stock.major_holders,
+            'institutional_holders': stock.institutional_holders,
+            'news': stock.news
+        }
+        return info if not info['history'].empty else None
+    except Exception as e:
+        logger.error(f"Stock info error: {str(e)}")
+        return None
+
+def generate_stock_analysis(symbol, stock_data):
+    """Generate detailed stock analysis"""
+    try:
+        history = stock_data['history']
+        info = stock_data['info']
+        
+        # Calculate key metrics
+        current_price = history['Close'][-1]
+        price_change = current_price - history['Close'][0]
+        price_change_pct = (price_change / history['Close'][0]) * 100
+        
+        technical_data = f"""
+        🎯 Güncel Fiyat: {current_price:.2f} TL
+        📊 Aylık Değişim: {price_change_pct:.2f}%
+        📈 En Yüksek: {history['High'].max():.2f} TL
+        📉 En Düşük: {history['Low'].min():.2f} TL
+        """
+        
+        # Generate analysis prompt
+        prompt = STOCK_ANALYSIS_TEMPLATE.format(
+            symbol=symbol,
+            technical_data=technical_data,
+            performance_summary=generate_performance_summary(history),
+            key_indicators=generate_key_indicators(info),
+            analysis=generate_ai_analysis(symbol, stock_data)
+        )
+        
+        return prompt
+    
+    except Exception as e:
+        logger.error(f"Analysis generation error: {str(e)}")
+        return "Üzgünüm, analiz oluştururken bir hata oluştu. Lütfen tekrar deneyin! 🔄"
+
+def generate_ai_analysis(symbol, stock_data):
+    """Generate AI-powered analysis using Gemini"""
+    try:
+        api_key = 'AIzaSyCpdN84xuqoi5wKKYBq9GRyhxIIq6RFtyc'
+        url = f'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={api_key}'
+        history = stock_data['history']
+        info = stock_data['info']
+        current_price = history['Close'][-1]
+        price_change = current_price - history['Close'][0]
+        price_change_pct = (price_change / history['Close'][0]) * 100
+        avg_volume = history['Volume'].mean()
+        high = history['High'].max()
+        low = history['Low'].min()
+        target_price = info.get('targetMeanPrice', 'N/A')
+        market_cap = info.get('marketCap', 'N/A')
+        pe_ratio = info.get('trailingPE', 'N/A')
+        prompt = f"""
+Sen TDX AI Bot'sun. {symbol} hissesi için aşağıdaki YFINANCE verilerine dayanarak güncel, kısa ve maddeler halinde bilgi ver:
+
+- Son fiyat: {current_price:.2f} TL
+- Aylık değişim: {price_change_pct:.2f}%
+- En yüksek: {high:.2f} TL
+- En düşük: {low:.2f} TL
+- Ortalama hacim: {avg_volume:,.0f}
+- Hedef fiyat: {target_price}
+- Piyasa değeri: {market_cap}
+- F/K oranı: {pe_ratio}
+
+Kullanıcıya kısa, samimi ve maddeler halinde bilgi ver. Yatırım tavsiyesi verme, sadece veri ve özet sun.
+"""
+        response = requests.post(
+            url,
+            headers={'Content-Type': 'application/json'},
+            json={
+                "contents": [{"parts": [{"text": prompt}]}],
+                "generationConfig": {
+                    "temperature": 0.7,
+                    "maxOutputTokens": 1024
+                }
+            }
+        )
+        result = response.json()
+        return result['candidates'][0]['content']['parts'][0]['text']
+    except Exception as e:
+        logger.error(f"AI analysis error: {str(e)}")
+        return "Analiz oluşturulurken bir hata oluştu, ama elimdeki verilere göre dikkatli olmanızı öneririm! 🤔"
+
+def generate_performance_summary(history):
+    """Generate performance summary"""
+    try:
+        monthly_return = ((history['Close'][-1] / history['Close'][0]) - 1) * 100
+        avg_volume = history['Volume'].mean()
+        
+        return f"""
+        📊 Aylık Getiri: {monthly_return:.2f}%
+        📈 Ortalama İşlem Hacmi: {avg_volume:,.0f}
+        """
+    except Exception as e:
+        logger.error(f"Performance summary error: {str(e)}")
+        return "Performans özeti hesaplanamadı"
+
+def generate_key_indicators(info):
+    """Generate key financial indicators"""
+    try:
+        return f"""
+        🎯 Hedef Fiyat: {info.get('targetMeanPrice', 'N/A')} TL
+        📊 Piyasa Değeri: {info.get('marketCap', 'N/A'):,} TL
+        📈 F/K Oranı: {info.get('trailingPE', 'N/A')}
+        """
+    except Exception as e:
+        logger.error(f"Key indicators error: {str(e)}")
+        return "Göstergeler hesaplanamadı"
+
+def generate_conversation_response(message):
+    """Generate conversational response using Gemini"""
+    try:
+        api_key = 'AIzaSyBSJJob1ovfUYHgyV4pbKGF0uBuL5v7VxQ'
+        url = f'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={api_key}'
+        
+        prompt = f"""
+        Sen TDX AI Bot'sun. Borsa ve finans konularında uzman, samimi ve yardımsever bir asistansın.
+        Kullanıcı mesajı: {message}
+        
+        Lütfen:
+        1. Samimi ve arkadaşça bir tonda yanıt ver
+        2. Emoji kullan
+        3. Borsa ve finans konularında yardımcı ol
+        4. Gerektiğinde ek sorular sor
+        """
+        
+        response = requests.post(
+            url,
+            headers={'Content-Type': 'application/json'},
+            json={
+                "contents": [{"parts": [{"text": prompt}]}],
+                "generationConfig": {
+                    "temperature": 0.7,
+                    "maxOutputTokens": 1024
+                }
+            }
+        )
+        
+        result = response.json()
+        return result['candidates'][0]['content']['parts'][0]['text']
+    
+    except Exception as e:
+        logger.error(f"Conversation response error: {str(e)}")
+        return random.choice(GREETING_MESSAGES)
+
+@csrf_exempt
+def get_stock_data(request):
+    """Enhanced stock data endpoint"""
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            symbol = data.get('symbol', '')
+            
+            # Check cache
+            cache_key = f"stock_data_{symbol}"
+            cached_data = cache.get(cache_key)
+            if cached_data:
+                return JsonResponse(cached_data)
+            
+            # Get fresh data
+            stock_info = get_stock_info(symbol)
+            if not stock_info:
+                return JsonResponse({
+                    'error': 'Üzgünüm, bu hisse için veri bulamadım. Doğru yazdığınızdan emin misiniz? 🤔'
+                }, status=404)
+            
+            # Prepare response
+            response_data = {
+                'data': stock_info['history'].to_dict(orient='records'),
+                'info': stock_info['info'],
+                'analysis': generate_stock_analysis(symbol, stock_info),
+                'recommendations': stock_info['recommendations'].to_dict(orient='records') if stock_info['recommendations'] is not None else [],
+                'major_holders': stock_info['major_holders'].to_dict(orient='records') if stock_info['major_holders'] is not None else [],
+                'news': stock_info['news']
+            }
+            
+            # Cache the response
+            cache.set(cache_key, response_data, CACHE_TIMEOUTS['stock_data'])
+            
+            return JsonResponse(response_data)
+            
+        except Exception as e:
+            logger.error(f"Stock data error: {str(e)}")
+            return JsonResponse({
+                'error': 'Veri çekilirken bir hata oluştu. Lütfen tekrar deneyin! 🔄'
+            }, status=500)
+            
+    return JsonResponse({'error': 'Geçersiz istek metodu'}, status=400) 
