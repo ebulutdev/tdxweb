@@ -858,4 +858,10 @@ def get_stock_data(request):
                 'error': 'Veri çekilirken bir hata oluştu. Lütfen tekrar deneyin! 🔄'
             }, status=500)
             
-    return JsonResponse({'error': 'Geçersiz istek metodu'}, status=400) 
+    return JsonResponse({'error': 'Geçersiz istek metodu'}, status=400)
+
+def demo_view(request):
+    return render(request, 'demo.html')
+
+def kayit_view(request):
+    return render(request, 'kayıt.html') 

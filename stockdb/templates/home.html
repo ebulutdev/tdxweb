@@ -8,6 +8,221 @@
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Clash+Display:wght@700;800&display=swap');
+        .ai-hero-pro {
+            text-align: center;
+            margin: 4.5rem auto 3.5rem auto;
+            max-width: 1200px;
+            padding: 0 2rem;
+            position: relative;
+            z-index: 2;
+            background: linear-gradient(180deg, rgba(14,17,22,0.95) 0%, rgba(17,24,39,0.98) 100%);
+            border-radius: 24px;
+            padding: 3.5rem 2rem;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+        }
+        .ai-hero-badge-pro {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.8em;
+            background: linear-gradient(90deg, rgba(59,130,246,0.15) 0%, rgba(29,78,216,0.15) 100%);
+            color: #e2e8f0;
+            padding: 14px 64px;
+            min-width: 480px;
+            border-radius: 16px;
+            font-size: 1.08rem;
+            font-family: 'Inter', sans-serif;
+            margin-bottom: 35px;
+            box-shadow: 0 4px 32px 8px rgba(0,0,0,0.32), 0 2px 14px rgba(59,130,246,0.12);
+            letter-spacing: -0.01em;
+            font-weight: 500;
+            border: 1px solid rgba(59,130,246,0.2);
+            justify-content: center;
+        }
+        .ai-hero-badge-pro i {
+            color: #3b82f6;
+            font-size: 1.2em;
+        }
+        .ai-hero-title-pro {
+            font-size: 4rem;
+            font-weight: 800;
+            margin: 0 0 15px 0;
+            line-height: 1.1;
+            background: linear-gradient(90deg, #ffffff 60%, #3b82f6 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            font-family: 'Clash Display', 'Inter', sans-serif;
+            letter-spacing: -0.02em;
+        }
+        .ai-hero-title-pro .ai-hero-sub-pro {
+            display: block;
+            font-family: 'Inter', sans-serif;
+            font-weight: 600;
+            font-size: 1.6rem;
+            background: linear-gradient(90deg, #3b82f6 0%, #60a5fa 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-top: 0.4em;
+            letter-spacing: -0.01em;
+        }
+        .ai-hero-desc-pro {
+            font-size: 1.25rem;
+            color: #cbd5e1;
+            margin-bottom: 40px;
+            font-weight: 400;
+            line-height: 1.8;
+            font-family: 'Inter', sans-serif;
+            max-width: 720px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        .cta-container {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            align-items: center;
+        }
+        .ai-hero-btn-pro {
+            background: linear-gradient(90deg, #3b82f6 0%, #1d4ed8 100%);
+            color: #fff;
+            font-size: 1.15rem;
+            padding: 16px 42px;
+            border-radius: 14px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 20px rgba(59,130,246,0.3);
+            display: inline-flex;
+            align-items: center;
+            gap: 0.8em;
+            border: none;
+            cursor: pointer;
+            font-family: 'Inter', sans-serif;
+            letter-spacing: -0.01em;
+        }
+        .ai-hero-btn-secondary {
+            background: rgba(59,130,246,0.1);
+            color: #3b82f6;
+            font-size: 1.15rem;
+            padding: 16px 42px;
+            border-radius: 14px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            border: 1px solid rgba(59,130,246,0.2);
+            font-family: 'Inter', sans-serif;
+        }
+        .ai-hero-btn-pro:hover {
+            background: linear-gradient(90deg, #2563eb 0%, #1d4ed8 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 24px rgba(59,130,246,0.4);
+        }
+        .ai-hero-btn-secondary:hover {
+            background: rgba(59,130,246,0.15);
+            border-color: rgba(59,130,246,0.3);
+            transform: translateY(-2px);
+        }
+        @media (max-width: 900px) {
+            .ai-hero-pro {
+                margin: 2rem auto;
+                padding: 2rem 1rem;
+            }
+            .ai-hero-title-pro {
+                font-size: 2.5rem;
+            }
+            .ai-hero-title-pro .ai-hero-sub-pro {
+                font-size: 1.3rem;
+            }
+            .ai-hero-desc-pro {
+                font-size: 1.1rem;
+                padding: 0 1rem;
+            }
+            .cta-container {
+                flex-direction: column;
+                gap: 1rem;
+            }
+            .ai-hero-btn-pro,
+            .ai-hero-btn-secondary {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+        @media (max-width: 700px) {
+            .ai-hero-badge-pro {
+                min-width: 0;
+                padding: 12px 18px;
+                font-size: 0.98rem;
+            }
+        }
+        @media (max-width: 600px) {
+            .ai-hero-pro {
+                margin: 1rem auto;
+                padding: 1.2rem 0.5rem;
+            }
+            .ai-hero-title-pro {
+                font-size: 1.6rem;
+                line-height: 1.15;
+            }
+            .ai-hero-title-pro .ai-hero-sub-pro {
+                font-size: 1.05rem;
+            }
+            .ai-hero-badge-pro {
+                min-width: 0;
+                padding: 10px 10px;
+                font-size: 0.92rem;
+                margin-bottom: 18px;
+            }
+            .ai-hero-desc-pro {
+                font-size: 0.98rem;
+                padding: 0 0.2rem;
+                margin-bottom: 24px;
+            }
+            .cta-container {
+                flex-direction: column;
+                gap: 0.7rem;
+            }
+            .ai-hero-btn-pro,
+            .ai-hero-btn-secondary {
+                width: 100%;
+                font-size: 1rem;
+                padding: 13px 0;
+                justify-content: center;
+            }
+            .dashboard-header {
+                padding: 1rem;
+            }
+            .dashboard-header h1 {
+                font-size: 1.2rem;
+            }
+            .stock-grid {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+                padding: 0.2rem;
+            }
+            .stock-card {
+                padding: 1rem;
+            }
+            .stat-item {
+                padding: 0.7rem;
+            }
+        }
+        @media (max-width: 400px) {
+            .ai-hero-title-pro {
+                font-size: 1.1rem;
+            }
+            .ai-hero-badge-pro {
+                font-size: 0.8rem;
+                padding: 7px 5px;
+            }
+            .ai-hero-btn-pro,
+            .ai-hero-btn-secondary {
+                font-size: 0.95rem;
+                padding: 10px 0;
+            }
+        }
         :root {
             --bg-primary: #0a0a0a;
             --bg-secondary: #111111;
@@ -745,6 +960,129 @@
         .nav-button i {
             font-size: 1.1rem;
         }
+
+        @keyframes glow {
+            0% { box-shadow: 0 0 5px #3b82f6, 0 0 10px #3b82f6, 0 0 15px #3b82f6; }
+            50% { box-shadow: 0 0 20px #3b82f6, 0 0 35px #3b82f6, 0 0 40px #3b82f6; }
+            100% { box-shadow: 0 0 5px #3b82f6, 0 0 10px #3b82f6, 0 0 15px #3b82f6; }
+        }
+        @keyframes floating {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-20px); }
+            100% { transform: translateY(0px); }
+        }
+        @keyframes slideDown {
+            from { transform: translateY(-30px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(20px);}
+            to { opacity: 1; transform: translateY(0);}
+        }
+        @keyframes pulse {
+            0% { transform: scale(1);}
+            50% { transform: scale(1.05);}
+            100% { transform: scale(1);}
+        }
+        @keyframes glowingText {
+            0% { text-shadow: 0 0 5px #3b82f6; }
+            50% { text-shadow: 0 0 20px #3b82f6, 0 0 30px #3b82f6; }
+            100% { text-shadow: 0 0 5px #3b82f6; }
+        }
+        @keyframes shine {
+            0% { transform: translateX(-100%) rotate(45deg);}
+            100% { transform: translateX(100%) rotate(45deg);}
+        }
+        @keyframes gradientMove {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        @keyframes textGradient {
+            0% { background-position: 0% center; }
+            100% { background-position: 200% center; }
+        }
+        .glow-effect {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at center, rgba(59,130,246,0.1) 0%, transparent 70%);
+            pointer-events: none;
+            animation: glow 3s infinite;
+            z-index: -1;
+        }
+        .ai-hero-pro {
+            overflow: hidden;
+            position: relative;
+        }
+        .animate-slide-down {
+            animation: slideDown 0.8s ease-out forwards;
+        }
+        .animate-fade-in {
+            animation: fadeIn 1s ease-out forwards;
+        }
+        .animate-fade-in-up {
+            animation: fadeInUp 1s ease-out forwards;
+        }
+        .ai-hero-title-pro {
+            position: relative;
+            animation: floating 6s ease-in-out infinite;
+        }
+        .glowing-text {
+            animation: glowingText 2s infinite;
+        }
+        .ai-hero-btn-pro {
+            position: relative;
+            overflow: hidden;
+        }
+        .ai-hero-btn-pro::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(45deg, transparent, rgba(255,255,255,0.1), transparent);
+            transform: rotate(45deg);
+            animation: shine 3s infinite;
+        }
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+        .ai-hero-btn-pro:hover {
+            background: linear-gradient(90deg, #2563eb 0%, #1d4ed8 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 24px rgba(59,130,246,0.4), 0 0 30px rgba(59,130,246,0.3);
+            transition: all 0.3s ease;
+        }
+        ::selection {
+            background: rgba(59,130,246,0.3);
+            color: #fff;
+        }
+        .ai-hero-pro::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: linear-gradient(45deg, rgba(59,130,246,0.1), rgba(29,78,216,0.1));
+            z-index: -1;
+            animation: gradientMove 15s ease infinite;
+        }
+        .ai-hero-title-pro .ai-hero-sub-pro {
+            background-size: 200% auto;
+            animation: textGradient 5s linear infinite;
+        }
+        @media (max-width: 900px) {
+            .glow-effect { display: none; }
+            .ai-hero-title-pro { animation: none; }
+            .animate-fade-in-up { animation-delay: 0.3s; }
+        }
     </style>
 </head>
 <body>
@@ -754,19 +1092,41 @@
                 <i class="fas fa-chart-line"></i>
                 BIST Analiz
             </a>
+           
             <a href="/tavsiye-hisse" class="nav-button">
                 <i class="fas fa-lightbulb"></i>
                 Tavsiye Hisse
             </a>
         </div>
     </nav>
+    <div class="ai-hero-pro">
+        <div class="glow-effect"></div>
+        <div class="ai-hero-badge-pro animate-slide-down">
+            <i class="fas fa-chart-line"></i>
+            Türkiye'nin En Gelişmiş Borsa İstanbul Analiz Platformu
+        </div>
+        <h1 class="ai-hero-title-pro animate-fade-in">
+            TDX Analytics 
+            <span class="ai-hero-sub-pro glowing-text">Profesyonel Borsa Asistanı</span>
+        </h1>
+        <p class="ai-hero-desc-pro animate-fade-in-up">
+            Yapay zeka destekli gelişmiş analitik araçlar, gerçek zamanlı BIST verileri ve<br>
+            profesyonel yatırım öngörüleriyle finansal kararlarınızı güçlendirin.
+        </p>
+        <div class="cta-container animate-fade-in-up">
+            <a href="/kayıt" class="ai-hero-btn-pro">
+                Platformu Keşfet <i class="fas fa-arrow-right"></i>
+            </a>
+            <a href="/demo" class="ai-hero-btn-secondary">Demo İncele</a>
+        </div>
+    </div>
     <div class="container">
         <header class="dashboard-header">
-            <h1>Borsa İstanbul Analiz Paneli</h1>
+           
             <p>BIST'in en çok işlem gören hisselerinin canlı market verileri ve detaylı analizleri</p>
         </header>
 
-        <div class="stock-grid">
+        <div class="stock-grid" id="stock-grid">
             {% for stock in stocks %}
             <div class="stock-card">
                 <div class="stock-header">
@@ -944,6 +1304,12 @@
         document.addEventListener('DOMContentLoaded', () => {
             addMessage('Merhaba! Ben TDX AI Premium Bot. Size nasıl yardımcı olabilirim? Hisse Analizi için hisse sonuna .ıs ekleyin. örnek: MIATK.IS (Buradaki bilgiler yatırım tavsiyesi niteliği taşımaz.) 😊');
         });
+
+        function scrollToStocks(event) {
+            event.preventDefault();
+            const stockGrid = document.getElementById('stock-grid');
+            stockGrid.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
     </script>
 </body>
 </html>

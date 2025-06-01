@@ -10,4 +10,6 @@ urlpatterns = [
     path('get-analysis/', views.get_analysis, name='get_analysis'),
     path('chatbot/', views.chatbot, name='chatbot'),
     path('get-stock-data/', views.get_stock_data, name='get_stock_data'),
+    path('demo/', views.demo_view, name='demo'),
+    path('kayıt/', views.kayit_view, name='kayit'),
 ] 

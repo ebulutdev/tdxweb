@@ -1,0 +1,951 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tavsiye Edilen Hisseler - TDX</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #1a1a2e;
+            --secondary-color: #16213e;
+            --accent-color: #0f3460;
+            --success-color: #00d4aa;
+            --danger-color: #ff6b6b;
+            --warning-color: #ffa726;
+            --text-primary: #ffffff;
+            --text-secondary: #b0b3b8;
+            --text-muted: #8a8d93;
+            --card-bg: #252540;
+            --card-border: #3a3a5c;
+            --gradient-primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --gradient-success: linear-gradient(135deg, #00d4aa 0%, #00b894 100%);
+            --gradient-danger: linear-gradient(135deg, #ff6b6b 0%, #e55656 100%);
+            --shadow-light: 0 4px 20px rgba(0, 0, 0, 0.1);
+            --shadow-medium: 0 8px 30px rgba(0, 0, 0, 0.15);
+            --shadow-heavy: 0 15px 50px rgba(0, 0, 0, 0.2);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--primary-color);
+            color: var(--text-primary);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .dashboard-header {
+            text-align: center;
+            margin-bottom: 3rem;
+            position: relative;
+        }
+
+        .dashboard-header::before {
+            content: '';
+            position: absolute;
+            top: -50px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100px;
+            height: 4px;
+            background: var(--gradient-primary);
+            border-radius: 2px;
+            animation: slideDown 0.8s ease-out;
+        }
+
+        .dashboard-header h1 {
+            font-size: 3rem;
+            font-weight: 700;
+            background: var(--gradient-primary);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 1rem;
+            animation: fadeInUp 0.8s ease-out 0.2s both;
+        }
+
+        .dashboard-header p {
+            font-size: 1.2rem;
+            color: var(--text-secondary);
+            max-width: 600px;
+            margin: 0 auto;
+            animation: fadeInUp 0.8s ease-out 0.4s both;
+        }
+
+        .market-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 3rem;
+        }
+
+        .market-stat-card {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 16px;
+            padding: 1.5rem;
+            text-align: center;
+            transition: all 0.3s ease;
+            animation: fadeInUp 0.6s ease-out both;
+        }
+
+        .market-stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--shadow-medium);
+        }
+
+        .market-stat-card .icon {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+            color: var(--success-color);
+        }
+
+        .market-stat-card .value {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+        }
+
+        .market-stat-card .label {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        .stock-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+
+        .stock-card {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 20px;
+            padding: 2rem;
+            position: relative;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            overflow: hidden;
+            animation: fadeInUp 0.6s ease-out both;
+        }
+
+        .stock-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: var(--gradient-primary);
+            transform: scaleX(0);
+            transition: transform 0.3s ease;
+        }
+
+        .stock-card:hover {
+            transform: translateY(-10px) scale(1.02);
+            box-shadow: var(--shadow-heavy);
+            border-color: var(--accent-color);
+        }
+
+        .stock-card:hover::before {
+            transform: scaleX(1);
+        }
+
+        .stock-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .stock-symbol {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .stock-symbol i {
+            color: var(--success-color);
+            animation: pulse 2s infinite;
+        }
+
+        .stock-change {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+        }
+
+        .stock-change.positive {
+            background: rgba(0, 212, 170, 0.1);
+            color: var(--success-color);
+            border: 1px solid rgba(0, 212, 170, 0.2);
+        }
+
+        .stock-change.negative {
+            background: rgba(255, 107, 107, 0.1);
+            color: var(--danger-color);
+            border: 1px solid rgba(255, 107, 107, 0.2);
+        }
+
+        .stock-company {
+            font-size: 1.1rem;
+            color: var(--text-secondary);
+            margin-bottom: 1.5rem;
+            font-weight: 500;
+        }
+
+        .stock-price-container {
+            margin-bottom: 2rem;
+        }
+
+        .stock-price {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+        }
+
+        .stats-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-item {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--card-border);
+            border-radius: 12px;
+            padding: 1rem;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .stat-item:hover {
+            background: rgba(255, 255, 255, 0.05);
+            transform: translateY(-2px);
+        }
+
+        .stat-label {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin-bottom: 0.5rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .stat-value {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .recommendation-details {
+            background: rgba(102, 126, 234, 0.05);
+            border: 1px solid rgba(102, 126, 234, 0.1);
+            border-radius: 16px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .recommendation-details::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+            background: var(--gradient-primary);
+        }
+
+        .recommendation-details h3 {
+            color: var(--success-color);
+            font-size: 1.1rem;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .recommendation-details p {
+            color: var(--text-secondary);
+            line-height: 1.7;
+            font-size: 0.95rem;
+        }
+
+        .analyze-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.75rem;
+            width: 100%;
+            padding: 1rem 1.5rem;
+            background: var(--gradient-primary);
+            color: var(--text-primary);
+            text-decoration: none;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .analyze-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+            transition: left 0.5s ease;
+        }
+
+        .analyze-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-medium);
+        }
+
+        .analyze-btn:hover::before {
+            left: 100%;
+        }
+
+        .risk-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .risk-low {
+            background: rgba(0, 212, 170, 0.1);
+            color: var(--success-color);
+            border: 1px solid rgba(0, 212, 170, 0.2);
+        }
+
+        .risk-medium {
+            background: rgba(255, 167, 38, 0.1);
+            color: var(--warning-color);
+            border: 1px solid rgba(255, 167, 38, 0.2);
+        }
+
+        .risk-high {
+            background: rgba(255, 107, 107, 0.1);
+            color: var(--danger-color);
+            border: 1px solid rgba(255, 107, 107, 0.2);
+        }
+
+        .no-recommendations {
+            grid-column: 1 / -1;
+            text-align: center;
+            padding: 4rem 2rem;
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 20px;
+            animation: fadeInUp 0.6s ease-out;
+        }
+
+        .no-recommendations i {
+            font-size: 3rem;
+            color: var(--success-color);
+            margin-bottom: 1.5rem;
+            animation: bounce 2s infinite;
+        }
+
+        .no-recommendations p {
+            color: var(--text-secondary);
+            font-size: 1.2rem;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateX(-50%) translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(-50%) translateY(0);
+            }
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.1);
+            }
+        }
+
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% {
+                transform: translateY(0);
+            }
+            40% {
+                transform: translateY(-10px);
+            }
+            60% {
+                transform: translateY(-5px);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+
+            .dashboard-header h1 {
+                font-size: 2rem;
+            }
+
+            .stock-grid {
+                grid-template-columns: 1fr;
+                gap: 1.5rem;
+            }
+
+            .stock-card {
+                padding: 1.5rem;
+            }
+
+            .stats-container {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="dashboard-header">
+            <h1>Tavsiye Edilen Hisseler DEMO SÜRÜM</h1>
+            <p>Uzman analistlerimiz tarafından önerilen hisseler ve detaylı analizler</p>
+            <p>Bu sayfa örnek bir sayfa olup, gerçek verilerle doldurulacaktır.Demo için bu sayfayı kullanıyorsunuz.Bu sayfadaki fiyatlar ve analizler dinamik olmayıp yatırım tavsiyeleri yapılmamaktadır.</p>
+        </header>
+
+        <div class="market-stats">
+            <div class="market-stat-card" style="animation-delay: 0.1s;">
+                <div class="icon">
+                    <i class="fas fa-chart-line"></i>
+                </div>
+                <div class="value">+2.45%</div>
+                <div class="label">BIST 100</div>
+            </div>
+            <div class="market-stat-card" style="animation-delay: 0.2s;">
+                <div class="icon">
+                    <i class="fas fa-dollar-sign"></i>
+                </div>
+                <div class="value">₺28.45</div>
+                <div class="label">USD/TRY</div>
+            </div>
+            <div class="market-stat-card" style="animation-delay: 0.3s;">
+                <div class="icon">
+                    <i class="fas fa-fire"></i>
+                </div>
+                <div class="value">156</div>
+                <div class="label">Aktif Tavsiye</div>
+            </div>
+            <div class="market-stat-card" style="animation-delay: 0.4s;">
+                <div class="icon">
+                    <i class="fas fa-trophy"></i>
+                </div>
+                <div class="value">89%</div>
+                <div class="label">Başarı Oranı</div>
+            </div>
+        </div>
+
+        <div class="stock-grid">
+            <!-- THYAO Stock Card -->
+            <div class="stock-card" style="animation-delay: 0.1s;">
+                <div class="stock-header">
+                    <div class="stock-symbol">
+                        <i class="fas fa-plane"></i>
+                        THYAO
+                    </div>
+                    <div class="stock-change positive">
+                        <i class="fas fa-arrow-up"></i>
+                        +3.45%
+                    </div>
+                </div>
+
+                <div class="stock-company">Türk Hava Yolları A.O.</div>
+
+                <div class="stock-price-container">
+                    <div class="stock-price">₺245.50</div>
+                </div>
+
+                <div class="stats-container">
+                    <div class="stat-item">
+                        <div class="stat-label">Hedef Fiyat</div>
+                        <div class="stat-value">₺285.00</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label">Risk Seviyesi</div>
+                        <div class="stat-value">
+                            <span class="risk-indicator risk-low">
+                                <i class="fas fa-shield-alt"></i>
+                                Düşük
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="recommendation-details">
+                    <h3>
+                        <i class="fas fa-lightbulb"></i>
+                        Analist Tavsiyesi
+                    </h3>
+                    <p>Turizm sektöründeki toparlanma ve güçlü operasyonel performans ile THYAO için pozitif görünüm devam ediyor. Yaz sezonunda beklenen yüksek doluluk oranları ve uluslararası seyahat talebindeki artış hisseyi destekliyor.</p>
+                </div>
+
+                <a href="#" class="analyze-btn">
+                    <i class="fas fa-chart-bar"></i>
+                    DEMO SÜRÜM
+                </a>
+            </div>
+
+            <!-- AKBNK Stock Card -->
+            <div class="stock-card" style="animation-delay: 0.2s;">
+                <div class="stock-header">
+                    <div class="stock-symbol">
+                        <i class="fas fa-university"></i>
+                        AKBNK
+                    </div>
+                    <div class="stock-change positive">
+                        <i class="fas fa-arrow-up"></i>
+                        +1.85%
+                    </div>
+                </div>
+
+                <div class="stock-company">Akbank T.A.Ş.</div>
+
+                <div class="stock-price-container">
+                    <div class="stock-price">₺52.75</div>
+                </div>
+
+                <div class="stats-container">
+                    <div class="stat-item">
+                        <div class="stat-label">Hedef Fiyat</div>
+                        <div class="stat-value">₺62.00</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label">Risk Seviyesi</div>
+                        <div class="stat-value">
+                            <span class="risk-indicator risk-medium">
+                                <i class="fas fa-exclamation-triangle"></i>
+                                Orta
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="recommendation-details">
+                    <h3>
+                        <i class="fas fa-lightbulb"></i>
+                        Analist Tavsiyesi
+                    </h3>
+                    <p>Güçlü bilanço yapısı ve dijital bankacılıktaki liderliği ile AKBNK, sektörün öne çıkan isimlerinden. Net faiz marjındaki iyileşme ve kredi büyümesi hisseyi destekleyen faktörler.</p>
+                </div>
+
+                <a href="#" class="analyze-btn">
+                    <i class="fas fa-chart-bar"></i>
+                    DEMO SÜRÜM
+                </a>
+            </div>
+
+            <!-- BIMAS Stock Card -->
+            <div class="stock-card" style="animation-delay: 0.3s;">
+                <div class="stock-header">
+                    <div class="stock-symbol">
+                        <i class="fas fa-shopping-cart"></i>
+                        BIMAS
+                    </div>
+                    <div class="stock-change negative">
+                        <i class="fas fa-arrow-down"></i>
+                        -0.75%
+                    </div>
+                </div>
+
+                <div class="stock-company">BİM Birleşik Mağazalar A.Ş.</div>
+
+                <div class="stock-price-container">
+                    <div class="stock-price">₺385.20</div>
+                </div>
+
+                <div class="stats-container">
+                    <div class="stat-item">
+                        <div class="stat-label">Hedef Fiyat</div>
+                        <div class="stat-value">₺420.00</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label">Risk Seviyesi</div>
+                        <div class="stat-value">
+                            <span class="risk-indicator risk-low">
+                                <i class="fas fa-shield-alt"></i>
+                                Düşük
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="recommendation-details">
+                    <h3>
+                        <i class="fas fa-lightbulb"></i>
+                        Analist Tavsiyesi
+                    </h3>
+                    <p>Perakende sektöründe güçlü pazar payı ve istikrarlı büyüme trendi ile BİM, savunma karakterli bir yatırım fırsatı sunuyor. Mağaza sayısındaki artış ve operasyonel verimlilik pozitif faktörler.</p>
+                </div>
+
+                <a href="#" class="analyze-btn">
+                    <i class="fas fa-chart-bar"></i>
+                    DEMO SÜRÜM
+                </a>
+            </div>
+
+            <!-- ASELS Stock Card -->
+            <div class="stock-card" style="animation-delay: 0.4s;">
+                <div class="stock-header">
+                    <div class="stock-symbol">
+                        <i class="fas fa-satellite"></i>
+                        ASELS
+                    </div>
+                    <div class="stock-change positive">
+                        <i class="fas fa-arrow-up"></i>
+                        +5.20%
+                    </div>
+                </div>
+
+                <div class="stock-company">Aselsan Elektronik San. ve Tic. A.Ş.</div>
+
+                <div class="stock-price-container">
+                    <div class="stock-price">₺128.40</div>
+                </div>
+
+                <div class="stats-container">
+                    <div class="stat-item">
+                        <div class="stat-label">Hedef Fiyat</div>
+                        <div class="stat-value">₺155.00</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label">Risk Seviyesi</div>
+                        <div class="stat-value">
+                            <span class="risk-indicator risk-medium">
+                                <i class="fas fa-exclamation-triangle"></i>
+                                Orta
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="recommendation-details">
+                    <h3>
+                        <i class="fas fa-lightbulb"></i>
+                        Analist Tavsiyesi
+                    </h3>
+                    <p>Savunma sanayiindeki güçlü konumu ve artan ihracat potansiyeli ile ASELSAN, uzun vadeli büyüme fırsatı sunuyor. Yeni projeler ve teknolojik yatırımlar hisseyi destekliyor.</p>
+                </div>
+
+                <a href="#" class="analyze-btn">
+                    <i class="fas fa-chart-bar"></i>
+                    DEMO SÜRÜM
+                </a>
+            </div>
+
+            <!-- KCHOL Stock Card -->
+            <div class="stock-card" style="animation-delay: 0.5s;">
+                <div class="stock-header">
+                    <div class="stock-symbol">
+                        <i class="fas fa-building"></i>
+                        KCHOL
+                    </div>
+                    <div class="stock-change positive">
+                        <i class="fas fa-arrow-up"></i>
+                        +2.15%
+                    </div>
+                </div>
+
+                <div class="stock-company">Koç Holding A.Ş.</div>
+
+                <div class="stock-price-container">
+                    <div class="stock-price">₺165.80</div>
+                </div>
+
+                <div class="stats-container">
+                    <div class="stat-item">
+                        <div class="stat-label">Hedef Fiyat</div>
+                        <div class="stat-value">₺190.00</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label">Risk Seviyesi</div>
+                        <div class="stat-value">
+                            <span class="risk-indicator risk-low">
+                                <i class="fas fa-shield-alt"></i>
+                                Düşük
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="recommendation-details">
+                    <h3>
+                        <i class="fas fa-lightbulb"></i>
+                        Analist Tavsiyesi
+                    </h3>
+                    <p>Çeşitlendirilmiş portföyü ve güçlü finansal yapısı ile Koç Holding, istikrarlı getiri arayan yatırımcılar için uygun. Otomotiv ve enerji sektörlerindeki pozisyonu öne çıkıyor.</p>
+                </div>
+
+                <a href="#" class="analyze-btn">
+                    <i class="fas fa-chart-bar"></i>
+                    DEMO SÜRÜM
+                </a>
+            </div>
+
+            <!-- TUPRS Stock Card -->
+            <div class="stock-card" style="animation-delay: 0.6s;">
+                <div class="stock-header">
+                    <div class="stock-symbol">
+                        <i class="fas fa-oil-can"></i>
+                        TUPRS
+                    </div>
+                    <div class="stock-change negative">
+                        <i class="fas fa-arrow-down"></i>
+                        -1.25%
+                    </div>
+                </div>
+
+                <div class="stock-company">Tüpraş-Türkiye Petrol Rafinerileri A.Ş.</div>
+
+                <div class="stock-price-container">
+                    <div class="stock-price">₺485.60</div>
+                </div>
+
+                <div class="stats-container">
+                    <div class="stat-item">
+                        <div class="stat-label">Hedef Fiyat</div>
+                        <div class="stat-value">₺520.00</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label">Risk Seviyesi</div>
+                        <div class="stat-value">
+                            <span class="risk-indicator risk-high">
+                                <i class="fas fa-exclamation-circle"></i>
+                                Yüksek
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="recommendation-details">
+                    <h3>
+                        <i class="fas fa-lightbulb"></i>
+                        Analist Tavsiyesi
+                    </h3>
+                    <p>Petrol fiyatlarındaki volatiliteye rağmen, güçlü rafinaj marjları ve bölgesel konumu ile TÜPRAŞ, enerji sektöründe önemli bir oyuncu. Kısa vadeli dalgalanmalar bekleniyor.</p>
+                </div>
+
+                <a href="#" class="analyze-btn">
+                    <i class="fas fa-chart-bar"></i>
+                    DEMO SÜRÜM
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Smooth animations on scroll
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: '0px 0px -50px 0px'
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.style.opacity = '1';
+                    entry.target.style.transform = 'translateY(0)';
+                }
+            });
+        }, observerOptions);
+
+        // Observe all stock cards
+        document.querySelectorAll('.stock-card').forEach(card => {
+            observer.observe(card);
+        });
+
+        // Add hover effects for better interactivity
+        document.querySelectorAll('.stock-card').forEach(card => {
+            card.addEventListener('mouseenter', () => {
+                card.style.transform = 'translateY(-10px) scale(1.02)';
+            });
+
+            card.addEventListener('mouseleave', () => {
+                card.style.transform = 'translateY(0) scale(1)';
+            });
+        });
+
+        // Real-time price updates simulation
+        function updatePrices() {
+            const priceElements = document.querySelectorAll('.stock-price');
+            const changeElements = document.querySelectorAll('.stock-change');
+
+            priceElements.forEach((element, index) => {
+                const currentPrice = parseFloat(element.textContent.replace('₺', ''));
+                const change = (Math.random() - 0.5) * 0.02; // ±2% change
+                const newPrice = currentPrice * (1 + change);
+                
+                element.textContent = '₺' + newPrice.toFixed(2);
+                
+                // Update change indicator
+                const changeElement = changeElements[index];
+                const changePercent = change * 100;
+                
+                if (changePercent > 0) {
+                    changeElement.className = 'stock-change positive';
+                    changeElement.innerHTML = '<i class="fas fa-arrow-up"></i>+' + changePercent.toFixed(2) + '%';
+                } else {
+                    changeElement.className = 'stock-change negative';
+                    changeElement.innerHTML = '<i class="fas fa-arrow-down"></i>' + changePercent.toFixed(2) + '%';
+                }
+            });
+        }
+
+        // Update prices every 5 seconds
+        setInterval(updatePrices, 5000);
+
+        // Add click animation to analyze buttons
+        document.querySelectorAll('.analyze-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                // e.preventDefault(); // KALDIRILDI, link çalışsın istiyorsanız yoruma alın
+                // Create ripple effect
+                const ripple = document.createElement('span');
+                ripple.style.position = 'absolute';
+                ripple.style.borderRadius = '50%';
+                ripple.style.background = 'rgba(255, 255, 255, 0.3)';
+                ripple.style.transform = 'scale(0)';
+                ripple.style.animation = 'ripple 0.6s linear';
+                ripple.style.left = '50%';
+                ripple.style.top = '50%';
+                ripple.style.width = '20px';
+                ripple.style.height = '20px';
+                ripple.style.marginLeft = '-10px';
+                ripple.style.marginTop = '-10px';
+                
+                btn.appendChild(ripple);
+                
+                setTimeout(() => {
+                    ripple.remove();
+                }, 600);
+            });
+        });
+
+        // Add CSS for ripple animation
+        const style = document.createElement('style');
+        style.textContent = `
+@keyframes ripple {
+    to {
+        transform: scale(4);
+        opacity: 0;
+    }
+}
+`;
+        document.head.appendChild(style);
+
+        // Market stats counter animation
+        function animateCounters() {
+            const counters = document.querySelectorAll('.market-stat-card .value');
+            
+            counters.forEach(counter => {
+                const target = counter.textContent;
+                const isPercentage = target.includes('%');
+                const isCurrency = target.includes('₺');
+                const numericValue = parseFloat(target.replace(/[^\d.-]/g, ''));
+                
+                let current = 0;
+                const increment = numericValue / 50;
+                
+                const timer = setInterval(() => {
+                    current += increment;
+                    
+                    if (current >= numericValue) {
+                        current = numericValue;
+                        clearInterval(timer);
+                    }
+                    
+                    let displayValue = current.toFixed(isPercentage ? 2 : 0);
+                    
+                    if (isPercentage) {
+                        displayValue = displayValue + '%';
+                    } else if (isCurrency) {
+                        displayValue = '₺' + displayValue;
+                    }
+                    
+                    counter.textContent = displayValue;
+                }, 50);
+            });
+        }
+
+        // Start counter animation after page load
+        window.addEventListener('load', () => {
+            setTimeout(animateCounters, 1000);
+        });
+
+        // Add loading skeleton effect
+        function addSkeletonEffect() {
+            const cards = document.querySelectorAll('.stock-card');
+            
+            cards.forEach((card, index) => {
+                card.style.opacity = '0';
+                card.style.transform = 'translateY(30px)';
+                
+                setTimeout(() => {
+                    card.style.transition = 'all 0.6s ease';
+                    card.style.opacity = '1';
+                    card.style.transform = 'translateY(0)';
+                }, index * 100);
+            });
+        }
+
+        // Initialize skeleton effect
+        document.addEventListener('DOMContentLoaded', addSkeletonEffect);
+    </script>
+</body>
+</html> 
