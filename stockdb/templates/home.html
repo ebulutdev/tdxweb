@@ -11,133 +11,16 @@
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap');
         @import url('https://fonts.googleapis.com/css2?family=Clash+Display:wght@700;800&display=swap');
         .ai-hero-pro {
-            max-width: 1100px;
-            margin: 2.5rem auto;
-            padding: 2.5rem 2rem;
-            background: linear-gradient(135deg, #101624 60%, #1e2746 100%);
-            border-radius: 28px;
-            box-shadow: 0 8px 40px 0 rgba(59,130,246,0.10), 0 1.5px 18px 0 rgba(24, 24, 28, 0.10);
-            display: flex;
-            align-items: flex-start;
-            gap: 2.5rem;
-            position: relative;
-        }
-        .hero-content {
-            flex: 1;
-            min-width: 0;
-        }
-        .voice-bot-container {
-            width: 280px;
-            min-width: 180px;
-            background: rgba(17, 24, 39, 0.7);
-            border-radius: 18px;
-            padding: 1.2rem 1rem 1.5rem 1rem;
-            border: 1px solid rgba(59, 130, 246, 0.13);
-            box-shadow: 0 4px 16px 0 rgba(59,130,246,0.08);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            position: relative;
-            margin: 0;
-        }
-        .avatar-container {
-            width: 80px;
-            height: 80px;
-            margin: 0 auto 1rem auto;
-            background: #181a20;
-            border-radius: 50%;
-            box-shadow: 0 2px 12px rgba(59,130,246,0.10);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border: 2px solid #23272e;
+            text-align: center;
+            margin: 4.5rem auto 3.5rem auto;
+            max-width: 1200px;
+            padding: 0 2rem;
             position: relative;
             z-index: 2;
-        }
-        #avatarCanvas {
-            width: 72px;
-            height: 72px;
-            border-radius: 50%;
-            background: #23272e;
-            box-shadow: 0 2px 8px rgba(59,130,246,0.08);
-        }
-        .input-container {
-            display: flex;
-            gap: 0.3rem;
-            margin-bottom: 0.7rem;
-            width: 100%;
-        }
-        #voiceMessageInput {
-            flex: 1;
-            background: rgba(17, 24, 39, 0.92);
-            border: 1px solid rgba(59, 130, 246, 0.18);
-            color: #e2e8f0;
-            padding: 0.5rem 0.7rem;
-            border-radius: 10px;
-            font-size: 0.92rem;
-            transition: border 0.2s;
-        }
-        #voiceMessageInput:focus {
-            border-color: #3b82f6;
-            outline: none;
-        }
-        .input-container button {
-            background: linear-gradient(90deg, #3b82f6 0%, #1d4ed8 100%);
-            color: white;
-            border: none;
-            border-radius: 10px;
-            padding: 0 0.7rem;
-            font-size: 1.1rem;
-            cursor: pointer;
-            transition: background 0.2s, box-shadow 0.2s;
-            box-shadow: 0 2px 8px rgba(59,130,246,0.08);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        .input-container button:hover {
-            background: linear-gradient(90deg, #2563eb 0%, #1d4ed8 100%);
-            box-shadow: 0 4px 16px rgba(59,130,246,0.18);
-        }
-        .response-container {
-            background: rgba(17, 24, 39, 0.7);
-            border-radius: 10px;
-            padding: 0.7rem;
-            color: #e2e8f0;
-            border: 1px solid rgba(59, 130, 246, 0.10);
-            font-size: 0.92rem;
-            min-height: 40px;
-            max-height: 120px;
-            overflow-y: auto;
-            width: 100%;
-            margin-top: 0.2rem;
-        }
-        @media (max-width: 1200px) {
-            .ai-hero-pro {
-                flex-direction: column;
-                max-width: 98vw;
-                padding: 1.2rem 0.5rem;
-                gap: 1.5rem;
-            }
-            .voice-bot-container {
-                width: 100%;
-                max-width: 400px;
-                margin: 0 auto;
-            }
-        }
-        @media (max-width: 600px) {
-            .voice-bot-container {
-                padding: 1rem;
-                min-width: unset;
-            }
-            .avatar-container {
-                width: 60px;
-                height: 60px;
-            }
-            #avatarCanvas {
-                width: 54px;
-                height: 54px;
-            }
+            background: linear-gradient(180deg, rgba(14,17,22,0.95) 0%, rgba(17,24,39,0.98) 100%);
+            border-radius: 24px;
+            padding: 3.5rem 2rem;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.2);
         }
         .ai-hero-badge-pro {
             display: inline-flex;
@@ -1200,103 +1083,6 @@
             .ai-hero-title-pro { animation: none; }
             .animate-fade-in-up { animation-delay: 0.3s; }
         }
-        #voiceResponseText ul {
-            padding-left: 1.5em;
-            margin: 0.5em 0;
-            list-style: none;
-        }
-        #voiceResponseText li.analysis-bullet {
-            margin-bottom: 0.4em;
-            font-size: 1.08em;
-            line-height: 1.5;
-            position: relative;
-            padding-left: 1.6em;
-        }
-        #voiceResponseText li.analysis-bullet::before {
-            content: '';
-            position: absolute;
-            left: 0.2em;
-            top: 0.7em;
-            width: 0.8em;
-            height: 0.8em;
-            background: linear-gradient(135deg, #3b82f6 60%, #60a5fa 100%);
-            border-radius: 50%;
-            box-shadow: 0 0 6px #3b82f6aa;
-            display: inline-block;
-        }
-        .analysis-title {
-            font-weight: bold;
-            color: #3b82f6;
-            font-size: 1.15em;
-            margin-top: 1em;
-            margin-bottom: 0.5em;
-            border-left: 4px solid #3b82f6;
-            padding-left: 0.5em;
-            background: rgba(59,130,246,0.07);
-            border-radius: 4px;
-        }
-        .analysis-desc {
-            color: #ffd600;
-            margin-bottom: 0.5em;
-        }
-        .analysis-container {
-            background: #fff;
-            border-radius: 12px;
-            padding: 20px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-        }
-        .analysis-section {
-            margin-bottom: 24px;
-            animation: fadeIn 0.5s ease-in-out;
-        }
-        .section-title {
-            color: #2c3e50;
-            font-size: 1.2rem;
-            font-weight: 600;
-            margin-bottom: 16px;
-            padding-bottom: 8px;
-            border-bottom: 2px solid #eee;
-        }
-        .analysis-list {
-            list-style: none;
-            padding: 0;
-            margin: 0;
-        }
-        .analysis-item {
-            display: flex;
-            align-items: flex-start;
-            margin-bottom: 12px;
-            padding: 8px;
-            border-radius: 6px;
-            transition: background 0.2s;
-            animation: slideIn 0.3s ease-in-out;
-            animation-fill-mode: both;
-        }
-        .analysis-item:hover {
-            background: #f8f9fa;
-        }
-        .bullet {
-            color: #3498db;
-            margin-right: 10px;
-            font-size: 1.1em;
-        }
-        .item-content {
-            color: #34495e;
-            line-height: 1.5;
-        }
-        .analysis-section:nth-child(1) .bullet { color: #2ecc71; }
-        .analysis-section:nth-child(2) .bullet { color: #e74c3c; }
-        .analysis-section:nth-child(3) .bullet { color: #f1c40f; }
-        .analysis-section:nth-child(4) .bullet { color: #9b59b6; }
-        .analysis-section:nth-child(5) .bullet { color: #1abc9c; }
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(-10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        @keyframes slideIn {
-            from { opacity: 0; transform: translateX(-20px); }
-            to { opacity: 1; transform: translateX(0); }
-        }
     </style>
 </head>
 <body>
@@ -1314,43 +1100,24 @@
         </div>
     </nav>
     <div class="ai-hero-pro">
-        <div class="hero-content">
-            <div class="ai-hero-badge-pro animate-slide-down">
-                <i class="fas fa-chart-line"></i>
-                Türkiye'nin En Gelişmiş Borsa İstanbul Analiz Platformu
-            </div>
-            <h1 class="ai-hero-title-pro animate-fade-in">
-                TDX Analytics 
-                <span class="ai-hero-sub-pro glowing-text">Profesyonel Borsa Asistanı</span>
-            </h1>
-            <p class="ai-hero-desc-pro animate-fade-in-up">
-                Yapay zeka destekli gelişmiş analitik araçlar, gerçek zamanlı BIST verileri ve<br>
-                profesyonel yatırım öngörüleriyle finansal kararlarınızı güçlendirin.
-            </p>
-            <div class="cta-container animate-fade-in-up">
-                <a href="/kayıt" class="ai-hero-btn-pro">
-                    Platformu Keşfet <i class="fas fa-arrow-right"></i>
-                </a>
-                <a href="/demo" class="ai-hero-btn-secondary">Demo İncele</a>
-            </div>
+        <div class="glow-effect"></div>
+        <div class="ai-hero-badge-pro animate-slide-down">
+            <i class="fas fa-chart-line"></i>
+            Türkiye'nin En Gelişmiş Borsa İstanbul Analiz Platformu
         </div>
-        <div class="voice-bot-container">
-            <div class="avatar-container">
-                <canvas id="avatarCanvas" width="120" height="120"></canvas>
-            </div>
-            <div class="chat-interface">
-                <div class="input-container">
-                    <input type="text" id="voiceMessageInput" placeholder="Mesajınızı yazın...">
-                    <button onclick="sendVoiceMessage()"><i class="fas fa-paper-plane"></i></button>
-                </div>
-                <div class="loading" id="voiceLoading">İşleniyor...</div>
-                <div class="response-container">
-                    <div id="voiceResponseText"></div>
-                    <div class="audio-container">
-                        <audio id="responseAudio" style="display: none;" autoplay></audio>
-                    </div>
-                </div>
-            </div>
+        <h1 class="ai-hero-title-pro animate-fade-in">
+            TDX Analytics 
+            <span class="ai-hero-sub-pro glowing-text">Profesyonel Borsa Asistanı</span>
+        </h1>
+        <p class="ai-hero-desc-pro animate-fade-in-up">
+            Yapay zeka destekli gelişmiş analitik araçlar, gerçek zamanlı BIST verileri ve<br>
+            profesyonel yatırım öngörüleriyle finansal kararlarınızı güçlendirin.
+        </p>
+        <div class="cta-container animate-fade-in-up">
+            <a href="/kayıt" class="ai-hero-btn-pro">
+                Platformu Keşfet <i class="fas fa-arrow-right"></i>
+            </a>
+            <a href="/demo" class="ai-hero-btn-secondary">Demo İncele</a>
         </div>
     </div>
     <div class="container">
@@ -1432,16 +1199,14 @@
         </div>
     
         <div class="chatbot-input">
-            <input type="text" id="chatUserInput" placeholder="Bir mesaj yazın..." onkeypress="handleChatKeyPress(event)">
-            <button type="button" id="chatSendBtn" onclick="sendChatMessage()">
+            <input type="text" id="userInput" placeholder="Bir mesaj yazın..." onkeypress="handleKeyPress(event)">
+            <button type="button" id="sendBtn" onclick="sendMessage()">
                 <i class="fas fa-paper-plane"></i>
                 <span>Gönder</span>
             </button>
         </div>
     </div>
     
-    <div id="analysis-container"></div>
-
     <script>
         let sendCount = 0;
         let sendTimer = null;
@@ -1544,305 +1309,6 @@
             event.preventDefault();
             const stockGrid = document.getElementById('stock-grid');
             stockGrid.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }
-
-        // Avatar ve ağız için canvas ayarları
-        const canvas = document.getElementById('avatarCanvas');
-        const ctx = canvas.getContext('2d');
-        const avatarImg = new Image();
-        avatarImg.src = '/static/avtr1.png';
-
-        // Ağız görsellerini yükle
-        const mouthImages = [];
-        for (let i = 0; i <= 5; i++) {
-            mouthImages[i] = new Image();
-            mouthImages[i].src = `/static/mouth_${i}.png`;
-        }
-
-        function drawAvatarWithMouth(visemeId) {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-            // Avatarı çiz
-            if (avatarImg.complete) {
-                ctx.save();
-                ctx.beginPath();
-                ctx.arc(canvas.width / 2, canvas.height / 2, canvas.width / 2, 0, Math.PI * 2);
-                ctx.closePath();
-                ctx.clip();
-                ctx.drawImage(avatarImg, 0, 0, canvas.width, canvas.height);
-                ctx.restore();
-            }
-
-            // Ağız görselini ağız merkezine ve boyutuna göre çiz
-            const mouthImg = mouthImages[visemeId] || mouthImages[0];
-            if (mouthImg.complete) {
-                // Oran
-                const scale = canvas.width / 1024;
-                const mouthCenterX = canvas.width / 2 - 20 * scale;
-                const mouthCenterY = 575 * scale;
-                const mouthWidth = 350 * scale;
-                const mouthHeight = 122 * scale;
-                ctx.drawImage(
-                    mouthImg,
-                    mouthCenterX - mouthWidth / 2,
-                    mouthCenterY - mouthHeight / 2,
-                    mouthWidth,
-                    mouthHeight
-                );
-            }
-        }
-
-        let mouthAnimationActive = false;
-
-        function animateMouth(visemes) {
-            mouthAnimationActive = true;
-            let currentVisemeIndex = 0;
-            function updateMouth() {
-                if (!mouthAnimationActive) {
-                    drawAvatarWithMouth(0);
-                    return;
-                }
-                if (currentVisemeIndex >= visemes.length) {
-                    drawAvatarWithMouth(0); // Ağzı kapalı pozisyona getir
-                    return;
-                }
-                const viseme = visemes[currentVisemeIndex];
-                drawAvatarWithMouth(viseme.id);
-                currentVisemeIndex++;
-                setTimeout(updateMouth, viseme.duration || 80);
-            }
-            updateMouth();
-        }
-
-        // Sayfa yüklendiğinde avatarı çiz
-        avatarImg.onload = () => drawAvatarWithMouth(0);
-
-        // Metne dayalı (heuristic) ağız animasyonu üretici
-        function generateHeuristicVisemes(text, durationPerChar) {
-            // Türkçe ünlüler
-            const vowels = "aeıioöuüAEIİOÖUÜ";
-            const pauses = ",?!:;";
-            const visemes = [];
-            for (let char of text) {
-                let id = 0; // kapalı
-                let duration = durationPerChar;
-                if (vowels.includes(char)) {
-                    id = 5; // daha açık ağız
-                } else if (char === " ") {
-                    id = 0; // kapalı ağız
-                } else if (char === ".") {
-                    id = 0;
-                    duration = Math.max(durationPerChar * 3, 3000); // En az 3 saniye
-                } else if (pauses.includes(char)) {
-                    id = 0;
-                    duration = durationPerChar * 3;
-                } else {
-                    id = 3; // daha açık sessiz
-                }
-                visemes.push({ id, duration });
-            }
-            return visemes;
-        }
-
-        // Voice bot için rate limit
-        let voiceSendCount = 0;
-        function resetVoiceSendCount() {
-            voiceSendCount = 0;
-            document.querySelector('.voice-bot-container button').disabled = false;
-        }
-
-        // Chatbot için rate limit
-        let chatSendCount = 0;
-        function resetChatSendCount() {
-            chatSendCount = 0;
-            document.getElementById('chatSendBtn').disabled = false;
-        }
-
-        // Voice bot için mesaj gönderme
-        async function sendVoiceMessage() {
-            if (voiceSendCount >= 5) {
-                document.getElementById('voiceResponseText').textContent = "Çok hızlı mesaj gönderiyorsunuz. Lütfen 1 dakika bekleyin.";
-                return;
-            }
-            voiceSendCount++;
-            if (voiceSendCount === 5) {
-                document.querySelector('.voice-bot-container button').disabled = true;
-                setTimeout(resetVoiceSendCount, 60000); // 1 dakika sonra tekrar açılır
-            }
-            const messageInput = document.getElementById('voiceMessageInput');
-            const loading = document.getElementById('voiceLoading');
-            const responseText = document.getElementById('voiceResponseText');
-            const responseAudio = document.getElementById('responseAudio');
-            
-            const message = messageInput.value.trim();
-            if (!message) return;
-
-            loading.style.display = 'block';
-            responseText.textContent = '';
-            responseAudio.style.display = 'none';
-
-            try {
-                const response = await fetch('/chat/', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({ message: message })
-                });
-
-                const data = await response.json();
-                
-                if (response.ok) {
-                    responseText.textContent = formatAnalysisText(data.text);
-                    responseAudio.src = data.audio_url;
-                    responseAudio.style.display = 'block';
-                    let visemes = data.visemes;
-                    if (!visemes || visemes.length === 0) {
-                        // Sesin toplam süresini al, metin uzunluğuna böl
-                        const durationPerChar = responseAudio.duration * 1000 / (data.text.length || 1);
-                        visemes = generateHeuristicVisemes(data.text || "", durationPerChar);
-                    }
-                    responseAudio.onloadedmetadata = () => {
-                        responseAudio.play();
-                        animateMouth(visemes);
-                    };
-
-                    responseAudio.onended = responseAudio.onpause = () => {
-                        mouthAnimationActive = false;
-                        drawAvatarWithMouth(0);
-                    };
-
-                } else {
-                    responseText.textContent = 'Error: ' + data.error;
-                }
-            } catch (error) {
-                responseText.textContent = 'Error: ' + error.message;
-            } finally {
-                loading.style.display = 'none';
-            }
-        }
-
-        // Chatbot için mesaj gönderme
-        async function sendChatMessage() {
-            if (chatSendCount >= 5) {
-                addMessage("Çok hızlı mesaj gönderiyorsunuz. Lütfen 1 dakika bekleyin.", false);
-                return;
-            }
-            chatSendCount++;
-            if (chatSendCount === 5) {
-                document.getElementById('chatSendBtn').disabled = true;
-                setTimeout(resetChatSendCount, 60000); // 1 dakika sonra tekrar açılır
-            }
-            const input = document.getElementById('chatUserInput');
-            const message = input.value.trim();
-            if (!message) return;
-
-            // Kullanıcı mesajını ekle
-            addMessage(message, true);
-            input.value = '';
-
-            // Botun yanıtını bekle (örnek)
-            const typingIndicator = showTypingIndicator();
-            try {
-                const response = await fetch('/chatbot/', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ message })
-                });
-                const data = await response.json();
-                typingIndicator.remove();
-                addMessage(data.response);
-            } catch (error) {
-                typingIndicator.remove();
-                addMessage('Üzgünüm, bir hata oluştu. Lütfen tekrar deneyin. 😔');
-            }
-        }
-
-        // Voice bot için Enter ile gönderme
-        document.addEventListener('DOMContentLoaded', function() {
-            const voiceInput = document.getElementById('voiceMessageInput');
-            if (voiceInput) {
-                voiceInput.addEventListener('keypress', function(e) {
-                    if (e.key === 'Enter') {
-                        sendVoiceMessage();
-                    }
-                });
-            }
-        });
-
-        // Chatbot için Enter ile gönderme
-        document.getElementById('chatUserInput').addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-                sendChatMessage();
-            }
-        });
-
-        function formatAnalysisText(text) {
-            // Satırlara böl
-            const lines = text.split('\n').filter(line => line.trim() !== '');
-            let html = '';
-            let inList = false;
-
-            lines.forEach(line => {
-                // Başlık (ör: **1. Teknik Görünüm**)
-                if (/^\*\*\d+\..+\*\*$/.test(line.trim())) {
-                    if (inList) {
-                        html += '</ul>';
-                        inList = false;
-                    }
-                    html += `<div class="analysis-title">${line.replace(/\*\*/g, '')}</div>`;
-                }
-                // Madde (ör: * ...)
-                else if (/^\* /.test(line.trim())) {
-                    if (!inList) {
-                        html += '<ul>';
-                        inList = true;
-                    }
-                    html += `<li class="analysis-bullet">${line.replace(/^\* /, '')}</li>`;
-                }
-                // Alt başlık veya açıklama
-                else {
-                    if (inList) {
-                        html += '</ul>';
-                        inList = false;
-                    }
-                    html += `<div class="analysis-desc">${line}</div>`;
-                }
-            });
-            if (inList) html += '</ul>';
-            return html;
-        }
-
-        function formatAnalysisToHTML(text) {
-            const lines = text.split('\n');
-            let html = '<div class="analysis-container">';
-            let inSection = false;
-            lines.forEach(line => {
-                if (!line.trim()) return;
-                // Başlık satırı (1. 2. 3. gibi)
-                if (line.match(/^\d+\./)) {
-                    if (inSection) html += '</ul></div>';
-                    html += `
-                        <div class="analysis-section">
-                            <h3 class="section-title">${line.trim()}</h3>
-                            <ul class="analysis-list">
-                    `;
-                    inSection = true;
-                }
-                // Madde satırı (* ile başlayan)
-                else if (line.startsWith('*')) {
-                    const content = line.substring(1).trim();
-                    html += `
-                        <li class="analysis-item">
-                            <span class="bullet">•</span>
-                            <span class="item-content">${content}</span>
-                        </li>
-                    `;
-                }
-            });
-            if (inSection) html += '</ul></div>';
-            html += '</div>';
-            return html;
         }
     </script>
 </body>
