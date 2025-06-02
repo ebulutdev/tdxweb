@@ -555,7 +555,7 @@ Aşağıdaki başlıklar altında, **her şeyi kısa, net ve madde madde** (bull
         'code': 'INVALID_METHOD'
     }, status=405)
 
-def get_cached_batch_stock_data(symbols, delay=7):
+def get_cached_batch_stock_data(symbols, delay=2):
     result = {}
     for symbol in symbols:
         cache_key = f"stock_data_{symbol}_1mo"
@@ -563,16 +563,8 @@ def get_cached_batch_stock_data(symbols, delay=7):
         if data is not None:
             result[symbol] = data
         else:
-            try:
-                session = curl_requests.Session(impersonate="chrome")
-                df = yf.Ticker(symbol, session=session).history(period="1mo")
-                if not df.empty:
-                    cache.set(cache_key, df, 60*60)  # 1 saat cache
-                    result[symbol] = df
-                # Her yeni istekten sonra bekle
-                time.sleep(delay)
-            except Exception as e:
-                logging.error(f"YFinance error for {symbol}: {str(e)}")
+            # Eksik veri için hemen çekme, sadece bilgi ver
+            result[symbol] = None
     return result
 
 def home(request):
@@ -603,8 +595,8 @@ def home(request):
         change = 0
         volume_str = "-"
         time_str = "-"
-        try:
-            if data is not None and not data.empty:
+        if data is not None and hasattr(data, 'empty') and not data.empty:
+            try:
                 latest_data = data.iloc[-1]
                 price = float(latest_data['Close'])
                 if len(data) > 1:
@@ -619,8 +611,8 @@ def home(request):
                 else:
                     volume_str = str(volume)
                 time_str = latest_data.name.strftime("%d.%m")
-        except Exception as e:
-            logging.error(f"Stock parse error for {symbol}: {str(e)}")
+            except Exception as e:
+                logging.error(f"Stock parse error for {symbol}: {str(e)}")
         stock_data.append({
             'symbol': symbol,
             'company': stock['company'],
