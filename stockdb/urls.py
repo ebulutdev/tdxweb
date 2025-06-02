@@ -1,7 +1,5 @@
 from django.contrib import admin
 from django.urls import path
-from django.conf import settings
-from django.conf.urls.static import static
 from . import views
 
 urlpatterns = [
@@ -14,5 +12,4 @@ urlpatterns = [
     path('get-stock-data/', views.get_stock_data, name='get_stock_data'),
     path('demo/', views.demo_view, name='demo'),
     path('kayıt/', views.kayit_view, name='kayit'),
-    path('chat/', views.chat, name='chat'),
-] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT) 
+] 
