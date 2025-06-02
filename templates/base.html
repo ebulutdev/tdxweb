@@ -1,0 +1,246 @@
+<div id="important-news-section" class="news-section">
+  <div class="news-header">
+    <h2>🔥 Günün En Önemli Piyasa Haberi</h2>
+    <div class="news-refresh">
+      <button onclick="refreshNews()" class="refresh-btn">
+        <span>🔄</span> Yenile
+      </button>
+    </div>
+  </div>
+  <div id="news-cards"></div>
+</div>
+
+<style>
+.news-section {
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+  border-radius: 16px;
+  padding: 24px;
+  margin: 24px 0;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+  color: white;
+  position: relative;
+  overflow: hidden;
+}
+
+.news-section::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, #60a5fa, #3b82f6, #2563eb);
+}
+
+.news-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.news-section h2 {
+  color: #fff;
+  font-size: 1.5em;
+  margin: 0;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+.refresh-btn {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #fff;
+  padding: 8px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.refresh-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+  transform: translateY(-2px);
+}
+
+.refresh-btn span {
+  font-size: 1.2em;
+}
+
+#news-cards {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+}
+
+.news-card {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  border-radius: 12px;
+  padding: 24px;
+  width: 100%;
+  max-width: 800px;
+  transition: all 0.3s ease;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  animation: fadeIn 0.5s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.news-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 30px rgba(0,0,0,0.2);
+  border-color: rgba(96, 165, 250, 0.3);
+}
+
+.news-title {
+  font-weight: bold;
+  font-size: 1.4em;
+  margin-bottom: 16px;
+  color: #fff;
+  line-height: 1.4;
+}
+
+.news-title a {
+  color: #fff;
+  text-decoration: none;
+  transition: color 0.2s;
+  display: block;
+}
+
+.news-title a:hover {
+  color: #60a5fa;
+}
+
+.news-meta {
+  font-size: 0.95em;
+  color: #94a3b8;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.news-meta b {
+  color: #60a5fa;
+  background: rgba(96, 165, 250, 0.1);
+  padding: 4px 8px;
+  border-radius: 6px;
+}
+
+.news-effect {
+  background: rgba(96, 165, 250, 0.1);
+  border-radius: 12px;
+  padding: 16px 20px;
+  font-size: 1.1em;
+  margin-top: 16px;
+  color: #60a5fa;
+  border: 1px solid rgba(96, 165, 250, 0.2);
+  line-height: 1.6;
+}
+
+.news-effect strong {
+  display: block;
+  margin-bottom: 8px;
+  color: #fff;
+}
+
+.no-news {
+  text-align: center;
+  color: #94a3b8;
+  padding: 40px 20px;
+  font-style: italic;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  margin: 20px 0;
+}
+
+.loading {
+  text-align: center;
+  padding: 40px;
+  color: #94a3b8;
+}
+
+.loading::after {
+  content: '⏳';
+  display: block;
+  font-size: 2em;
+  margin-top: 10px;
+  animation: spin 1s infinite linear;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@media (max-width: 768px) {
+  .news-header {
+    flex-direction: column;
+    gap: 16px;
+    text-align: center;
+  }
+  
+  .news-card {
+    padding: 16px;
+  }
+  
+  .news-title {
+    font-size: 1.2em;
+  }
+  
+  .news-meta {
+    font-size: 0.9em;
+  }
+}
+</style>
+
+<script>
+function refreshNews() {
+  const container = document.getElementById("news-cards");
+  container.innerHTML = '<div class="loading">Haberler yükleniyor...</div>';
+  
+  fetch("/important-news/")
+    .then(res => res.json())
+    .then(data => {
+      if (!data.news || !data.news.length) {
+        container.innerHTML = '<div class="no-news">Bugün için önemli haber bulunamadı.</div>';
+        return;
+      }
+      
+      const news = data.news[0];
+      const card = document.createElement("div");
+      card.className = "news-card";
+      card.innerHTML = `
+        <div class="news-title">
+          <a href="${news.link}" target="_blank">${news.title}</a>
+        </div>
+        <div class="news-meta">
+          <span>📰 Tür:</span> <b>${news.category.replace("_", " ").toUpperCase()}</b>
+          <span>|</span>
+          <span>🕒 ${news.datetime}</span>
+        </div>
+        <div class="news-effect">
+          <strong>📊 Tahmini Piyasa Etkisi:</strong>
+          ${news.effect}
+        </div>
+      `;
+      container.innerHTML = '';
+      container.appendChild(card);
+    })
+    .catch(error => {
+      console.error("Haber yüklenirken hata oluştu:", error);
+      container.innerHTML = 
+        '<div class="no-news">Haberler yüklenirken bir hata oluştu. Lütfen daha sonra tekrar deneyin.</div>';
+    });
+}
+
+document.addEventListener("DOMContentLoaded", function() {
+  refreshNews();
+});
+</script> 
