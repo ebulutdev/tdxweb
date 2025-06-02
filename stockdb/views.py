@@ -27,6 +27,13 @@ from google.generativeai import GenerativeModel
 import random
 from .models import Stock, RecommendedStock, QuestionAnswer
 from django.urls import reverse
+from django.conf import settings
+import google.generativeai as genai
+import edge_tts
+import asyncio
+from pathlib import Path
+import aiofiles
+from curl_cffi import requests as curl_requests
 
 CACHE_DIR = "cache"
 CACHE_TIMEOUTS = {
@@ -103,6 +110,34 @@ class TDXBotRateLimiter:
         return True
 
 rate_limiter = TDXBotRateLimiter()
+
+class AdvancedRateLimiter:
+    def __init__(self, key_prefix, limit, period):
+        self.key_prefix = key_prefix
+        self.limit = limit
+        self.period = period
+
+    def is_allowed(self, identifier):
+        cache_key = f"{self.key_prefix}_{identifier}"
+        current = cache.get(cache_key)
+        if current is None:
+            cache.set(cache_key, 1, self.period)
+            return True, self.period
+        if current >= self.limit:
+            try:
+                ttl = cache.ttl(cache_key)
+            except Exception:
+                ttl = self.period
+            return False, ttl
+        cache.incr(cache_key)
+        try:
+            ttl = cache.ttl(cache_key)
+        except Exception:
+            ttl = self.period
+        return True, ttl
+
+# Eski rate_limiter yerine gelişmişi kullan
+advanced_rate_limiter = AdvancedRateLimiter('analysis', 1, 10)  # 10 saniyede 1 istek
 
 def get_latest_news(symbol="MIATK", count=10):
     symbol = symbol.upper()
@@ -266,7 +301,6 @@ def save_news_to_json(symbol, news, out_dir=CACHE_DIR):
 
 def stock_plot(request):
     symbol = request.GET.get('symbol', 'MIATK.IS').upper()
-    # Sembol-şirket adı eşleştirmesi (örnek, genişletebilirsiniz)
     symbol_to_company = {
         'THYAO.IS': 'Türk Hava Yolları',
         'GARAN.IS': 'Garanti Bankası',
@@ -281,18 +315,20 @@ def stock_plot(request):
         'MIATK.IS': 'Mia Teknoloji',
     }
     company_name = symbol_to_company.get(symbol, None)
-    end_date = datetime.now()
-    start_date = end_date - timedelta(days=30)
-    cache_key = f"yf_{symbol}_{start_date.date()}_{end_date.date()}"
+    cache_key = f"yf_{symbol}_1mo"
     hist = cache.get(cache_key)
     if hist is None:
-        stock = yf.Ticker(symbol)
-        hist_df = stock.history(start=start_date, end=end_date)
-        hist = {
-            'index': [str(d.date()) for d in hist_df.index],
-            'close': [float(c) for c in hist_df['Close']]
-        }
-        cache.set(cache_key, hist, timeout=60*60)
+        try:
+            session = curl_requests.Session(impersonate="chrome")
+            stock = yf.Ticker(symbol, session=session)
+            hist_df = stock.history(period='1mo')
+            hist = {
+                'index': [str(d.date()) for d in hist_df.index],
+                'close': [float(c) for c in hist_df['Close']]
+            }
+            cache.set(cache_key, hist, timeout=60*60)  # 1 saat
+        except Exception as e:
+            hist = cache.get(cache_key, {'index': [], 'close': []})
     dates = hist['index']
     closes = hist['close']
     support_levels, resistance_levels = find_support_resistance(closes)
@@ -373,14 +409,15 @@ def get_analysis(request):
     if request.method == 'POST':
         symbol = request.GET.get('symbol', 'MIATK.IS').upper()
         ip = request.META.get('REMOTE_ADDR')
-        # Rate limiting check
-        if cache.get(f"ratelimit_{ip}"):
+        # Gelişmiş rate limiting check
+        allowed, wait_time = advanced_rate_limiter.is_allowed(ip)
+        if not allowed:
             return JsonResponse({
                 'status': 'error',
-                'message': 'Lütfen 10 saniye bekleyip tekrar deneyiniz.',
-                'code': 'RATE_LIMIT_EXCEEDED'
+                'message': f'Lütfen {wait_time} saniye bekleyin.',
+                'code': 'RATE_LIMIT_EXCEEDED',
+                'retry_after': wait_time
             }, status=429)
-        cache.set(f"ratelimit_{ip}", True, timeout=10)
         try:
             data = json.loads(request.body)
             closes = data.get('closes', [])
@@ -423,44 +460,30 @@ def get_analysis(request):
                 except Exception:
                     continue
             prompt = f"""
-Lütfen {symbol} hissesi için aşağıdaki verilere dayalı, kutular ve başlıklarla bölümlenmiş, profesyonel ve okunaklı bir analiz raporu hazırla.
-Raporu HTML formatında üret:
-- Her ana başlık için <div class='analysis-section'><h3>Başlık</h3>...</div> kullan.
-- Önemli noktaları <ul><li> ile vurgula.
-- Sonuç ve uyarı bölümlerini <strong> ve <em> ile öne çıkar.
-- Paragrafları <p> ile yaz.
-- Gerekiyorsa <span style='color:#ffd600'>renkli</span> vurgular ekle.
+Sen TDX AI Bot'sun. {symbol} hissesi için aşağıdaki YFINANCE verilerine dayanarak, matematiksel analiz ve senaryo üretimiyle, kullanıcının bu hissede neler yapabileceğini, farklı stratejiler ve olası senaryolar üzerinden açıkla:
 
-Aşağıda, son 1 ayın tarih ve kapanış fiyatları ile, ilgili günlerde çıkan haberler tablo halinde verilmiştir. Teknik analizini bu fiyat serisine ve haberlerin fiyat üzerindeki olası etkisine göre yap. Özellikle haberlerin fiyat hareketleriyle ilişkisini analiz et.
+- Son fiyat: {last_price:.2f} TL
+- Aylık değişim: {price_change_pct:.2f}%
+- En yüksek: {closes[-1]:.2f} TL
+- En düşük: {closes[0]:.2f} TL
+- Ortalama hacim: {avg_price:.2f} TL
+- Hedef fiyat: {closes[-1]:.2f} TL
+- Piyasa değeri: {closes[-1]:.2f} TL
+- F/K oranı: {closes[-1]/closes[0]:.2f}
 
-FİYAT TABLOSU:
-{price_table}
+Aşağıdaki başlıklar altında, **her şeyi kısa, net ve madde madde** (bullet point) yaz:
+1. Teknik Görünüm (yalnızca fiyat serisi ve trend, sayısal verilerle)
+2. Hisse Gidişatı: Olası senaryolar (ör. düşüş devam ederse, destek/direnç kırılırsa, haber etkisiyle sıçrama olursa vb.)
+3. Kullanıcı için Stratejiler: Kısa, orta ve uzun vadede hangi matematiksel seviyelerden alım/satım yapılabilir? Hangi risk/fırsat noktaları var? Hangi stop-loss ve hedef fiyatlar mantıklı?
+4. Riskler ve Fırsatlar: Sayısal ve senaryolu risk/fırsat analizi yap. Olası volatilite, haber etkisi, piyasa koşulları gibi faktörleri matematiksel örneklerle açıkla.
+5. Destek ve Direnç seviyelerine göre fiyat hedefleri ve olası senaryoları net, sayısal ve **kısa maddelerle** belirt.
 
-HABER TABLOSU:
-{news_table}
-
-PIYASA VERILERI:
-- Son Kapanış: {last_price:.2f} TL
-- Değişim: {price_change:.2f} TL (%{price_change_pct:.2f})
-- 30 Günlük Ortalama: {avg_price:.2f} TL
-- Analiz Periyodu: {dates[0]} - {dates[-1]}
-
-GÜNCEL HABERLER:
-{news_text}
-
-Aşağıdaki başlıklar altında analiz yap:
-1. Teknik Görünüm (Yalnızca yukarıdaki fiyat serisine ve trende göre)
-2. Hisse Gidişatı nasıl olacak?
-3. <strong>Bana Göre hangisi daha iyi?</strong>: Analizlerini oku ve ortaya bir kendince olabilecek senaryoyu nedeniyle açıkla.
-4. Hissenin Son Fiyat Verilerine Göre Riskler ve Fırsatlar
-5. Destek ve Direnç seviyelerine göre fiyat hedefleri ve Senaryoları
-
-Notlar:
-- Teknik analizde sadece yukarıdaki fiyat serisini ve trendi kullan.
-- Haberleri ve fiyat serisini birlikte analiz et, haberlerin fiyat üzerindeki etkisini yorumla.
-- Hiçbir başlıkta 'veri yok', 'analiz yapılamaz' veya benzeri bir ifade kullanma.
-- Gerekirse genel piyasa bilgisini ve tipik hisse senedi analiz yöntemlerini kullanarak açıklama üret.
-- Her başlık için, elindeki tüm verileri ve genel piyasa bilgisini kullanarak açıklama ve analiz üret.
+**Notlar:**
+- Her başlıkta, **sadece kısa ve madde madde** (• veya - ile) yaz. Paragraf veya uzun açıklama kullanma.
+- Sadece net, okunabilir, göze hoş gelen ve kolayca taranabilir maddeler üret.
+- Gereksiz tekrar ve akademik dil kullanma.
+- Yatırım tavsiyesi verme, ama olası matematiksel ve senaryolu analizlerle kullanıcıya yol göster.
+- **Her başlık ve maddeyi yeni satırda başlat. Her maddeyi * ile başlat ve satır sonunda mutlaka \n karakteri koy. Sadece bu formatı kullan. Eğer bu kurala uymazsan yanıtı tekrar üret.**
 """
             # Make API call to Gemini
             api_key = 'AIzaSyCpdN84xuqoi5wKKYBq9GRyhxIIq6RFtyc'
@@ -485,24 +508,23 @@ Notlar:
             response = requests.post(url, headers=headers, json=payload)
             response.raise_for_status()
             result = response.json()
-            raw_analysis = result['candidates'][0]['content']['parts'][0]['text']
             # Format the analysis response
-            formatted_analysis = {
+            formatted_analysis_data = {
                 'summary': {
                     'last_price': last_price,
                     'change': price_change,
                     'change_percentage': price_change_pct,
                     'average_price': avg_price
                 },
-                'analysis': raw_analysis,
+                'analysis': result['candidates'][0]['content']['parts'][0]['text'],
                 'generated_at': datetime.now().isoformat(),
                 'news_count': len(news)
             }
             # Cache the formatted result
-            cache.set(cache_key, formatted_analysis, timeout=60*60)  # 1 hour cache
+            cache.set(cache_key, formatted_analysis_data, timeout=60*60)  # 1 hour cache
             return JsonResponse({
                 'status': 'success',
-                'data': formatted_analysis,
+                'data': formatted_analysis_data,
                 'cached': False
             })
         except json.JSONDecodeError:
@@ -535,7 +557,7 @@ def get_cached_batch_stock_data(symbols):
     result = {}
     symbols_to_fetch = []
     for symbol in symbols:
-        cache_key = f"stock_data_{symbol}"
+        cache_key = f"stock_data_{symbol}_1mo"
         data = cache.get(cache_key)
         if data is not None:
             result[symbol] = data
@@ -543,14 +565,19 @@ def get_cached_batch_stock_data(symbols):
             symbols_to_fetch.append(symbol)
     if symbols_to_fetch:
         try:
-            batch_data = yf.download(symbols_to_fetch, period="5d", interval="1d", progress=False, group_by='ticker')
+            batch_data = yf.download(symbols_to_fetch, period="1mo", interval="1d", progress=False, group_by='ticker')
             for symbol in symbols_to_fetch:
                 data = batch_data[symbol] if symbol in batch_data else None
                 if data is not None:
-                    cache.set(f"stock_data_{symbol}", data, CACHE_TIMEOUTS['stock_data'])
+                    cache.set(f"stock_data_{symbol}_1mo", data, 60*60)
                     result[symbol] = data
         except Exception as e:
             logging.error(f"YFinance batch error: {str(e)}")
+            # Veri çekilemezse eski cache'i döndür
+            for symbol in symbols_to_fetch:
+                data = cache.get(f"stock_data_{symbol}_1mo")
+                if data is not None:
+                    result[symbol] = data
     return result
 
 def home(request):
@@ -660,7 +687,8 @@ def process_user_message(message, user_id=None):
 def get_stock_info(symbol):
     """Get comprehensive stock information"""
     try:
-        stock = yf.Ticker(symbol)
+        session = curl_requests.Session(impersonate="chrome")
+        stock = yf.Ticker(symbol, session=session)
         info = {
             'history': stock.history(period='1mo'),
             'info': stock.info,
@@ -825,7 +853,7 @@ def get_stock_data(request):
             symbol = data.get('symbol', '')
             
             # Check cache
-            cache_key = f"stock_data_{symbol}"
+            cache_key = f"stock_data_{symbol}_1mo"
             cached_data = cache.get(cache_key)
             if cached_data:
                 return JsonResponse(cached_data)
@@ -864,4 +892,94 @@ def demo_view(request):
     return render(request, 'demo.html')
 
 def kayit_view(request):
-    return render(request, 'kayıt.html') 
+    return render(request, 'kayıt.html')
+
+# Configure Gemini API
+genai.configure(api_key='AIzaSyAJYQvoAW4Rgy7p4qxR8-0L9BT-WYISJY4')
+model = genai.GenerativeModel('gemini-1.5-flash')
+
+async def text_to_speech(text, output_file):
+    communicate = edge_tts.Communicate(text, "tr-TR-AhmetNeural")
+    visemes = []
+    async with aiofiles.open(output_file, "wb") as file:
+        async for chunk in communicate.stream():
+            print(f"Chunk type: {chunk['type']}")  # Debug için
+            if chunk["type"] == "audio":
+                await file.write(chunk["data"])
+            elif chunk["type"] == "viseme":
+                print(f"Viseme data: {chunk}")  # Debug için
+                visemes.append({
+                    "offset": chunk["offset"],
+                    "duration": chunk["duration"],
+                    "id": chunk["id"]
+                })
+    print(f"Total visemes collected: {len(visemes)}")  # Debug için
+    return visemes
+
+@csrf_exempt
+def chat(request):
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            user_message = data.get('message', '')
+            
+            # Add instruction for Turkish response
+            prompt = (
+                "Sen bir TDX AI Danışman Botusun. Türkiye'nin en gelişmiş Borsa İstanbul analiz platformu olan TDX bot'u temsil ediyorsun. "
+                "Platform Tanıtımı: TDX bot, yapay zeka destekli Borsa İstanbul analiz platformudur. Gerçek zamanlı BIST verileri ile yatırım kararlarını destekler. Teknik analiz, haber yorumlama, önerilen hisseler, destek-direnç analizleri sunar. "
+                "Kullanıcılara platform hakkında bilgi verir, özellikleri açıklar, ücretsiz ve ücretli abonelik farklarını anlatır, teknik analiz verilerini yorumlayabilir ve platform üzerinden yapılabilecek işlemler hakkında detaylı bilgilendirme sunarsın. "
+                "Yatırım tavsiyesi vermezsin, yasal sınırlar dahilinde bilgi sağlarsın. "
+                "TDX reklamı yapmaktan çekinme. "
+                "Borsa ve hisse sorularında TDX AI Teknik Değerlendirme Sistemini açıkla: "
+                "Teknik Görünüm: Trendin yönü ve fiyat ortalamaları. "
+                "Hisse Gidişatı: Kısa ve uzun vadeli beklentiler. "
+                "Karar Yönlendirmesi: Yatırım yapılabilirlik önerisi (ancak yatırım tavsiyesi değildir). "
+                "Risk ve Fırsatlar: Mevcut destek/direnç seviyeleri ve senaryo analizi. "
+                "Platform Özellikleri: Yapay zeka destekli hisse önerileri, teknik analizler (grafik çizimi, destek-direnç seviyeleri, indikatör analizi), gerçek zamanlı fiyat ve grafik görüntüleme, KAP haberlerini otomatik çekme ve analiz etme, risk seviyesi ve hedef fiyat gösterimi, anlık fiyat uyarıları, haftalık algoritmik analiz sonuçları, demo modda analiz denemeleri. "
+                "Kullanıcıdan gelen soruya, yukarıdaki çerçevede, kısa ve net, tek cümlelik bir özetle ve noktalama işareti kullanmadan cevap ver. "
+                f"Soru: {user_message}"
+            )
+            
+            # Get response from Gemini
+            response = model.generate_content(prompt)
+            response_text = response.text
+            
+            # Create media directory if it doesn't exist
+            media_dir = Path(settings.MEDIA_ROOT)
+            media_dir.mkdir(exist_ok=True)
+            
+            # Save audio file
+            audio_path = media_dir / 'response.mp3'
+            
+            # Convert text to speech using Edge TTS and get viseme data
+            visemes = asyncio.run(text_to_speech(response_text, str(audio_path)))
+            
+            return JsonResponse({
+                'text': response_text,
+                'audio_url': f'/media/response.mp3',
+                'visemes': visemes
+            })
+            
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=500)
+    
+    return JsonResponse({'error': 'Invalid request method'}, status=400)
+
+def format_gemini_response(raw_response):
+    # Başlıkları bul ve satır başına al
+    text = re.sub(r'(\d+\. [^*]+)', r'\n\1\n', raw_response)
+    # Hem ** hem de * ile başlayanları satır başına al
+    text = re.sub(r'\*\*', r'\n* ', text)
+    text = re.sub(r'\* ', r'\n* ', text)
+    # Gereksiz boşlukları temizle
+    lines = [line.strip() for line in text.split('\n') if line.strip()]
+    # Her maddeyi * ile başlat, başlıkları olduğu gibi bırak
+    formatted = []
+    for line in lines:
+        if re.match(r'\d+\.', line):
+            formatted.append(f'\n{line}\n')
+        elif line.startswith('*'):
+            formatted.append(f'{line}\n')
+        else:
+            formatted.append(f'* {line}\n')
+    return ''.join(formatted) 
