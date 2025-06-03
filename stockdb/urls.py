@@ -1,6 +1,10 @@
 from django.contrib import admin
 from django.urls import path
+from django.http import HttpResponse
 from . import views
+
+def health_check(request):
+    return HttpResponse("OK", content_type="text/plain")
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -13,4 +17,5 @@ urlpatterns = [
     path('demo/', views.demo_view, name='demo'),
     path('kayıt/', views.kayit_view, name='kayit'),
     path('stock-card/', views.stock_card, name='stock_card'),
+    path('health/', health_check, name='health_check'),
 ] 

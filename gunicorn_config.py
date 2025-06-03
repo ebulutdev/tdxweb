@@ -1,7 +1,9 @@
 import multiprocessing
+import os
 
 # Server socket
-bind = "0.0.0.0:10000"
+port = int(os.environ.get("PORT", 10000))
+bind = f"0.0.0.0:{port}"
 backlog = 2048
 
 # Worker processes
@@ -29,4 +31,8 @@ tmp_upload_dir = None
 
 # SSL
 keyfile = None
-certfile = None 
+certfile = None
+
+# Health check
+graceful_timeout = 120
+preload_app = True 
