@@ -1406,24 +1406,8 @@
 
         <div class="important-news-section">
             <h2>Önemli Piyasa Haberleri</h2>
-            <div class="important-news-list">
-                {% regroup important_news by category as category_list %}
-                {% for category in category_list %}
-                    {% for news in category.list %}
-                    <div class="important-news-card">
-                        <div class="news-row">
-                            <span class="category-badge {{ category.grouper|lower|cut:' ' }}">{{ category.grouper }}</span>
-                            <span class="news-date">{{ news.published_dt|date:"d.m.Y H:i" }}</span>
-                        </div>
-                        <div class="news-title">{{ news.title }}</div>
-                        <div class="news-summary">{{ news.summary|striptags|truncatechars:120 }}</div>
-                        <div class="news-row">
-                            <span class="news-source">{{ news.source }}</span>
-                            <a href="{{ news.link }}" target="_blank" class="news-link">Detay</a>
-                        </div>
-                    </div>
-                    {% endfor %}
-                {% endfor %}
+            <div id="important-news-list" class="important-news-list">
+                <div class="important-news-card"><em>Yükleniyor...</em></div>
             </div>
         </div>
     </div>
@@ -1585,6 +1569,40 @@
                     placeholder.innerHTML = '<div class="error">Bir hata oluştu.</div>';
                 });
         }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            fetch('/api/important-news/')
+                .then(response => response.json())
+                .then(data => {
+                    const newsList = document.getElementById('important-news-list');
+                    newsList.innerHTML = '';
+                    if (data.important_news.length === 0) {
+                        newsList.innerHTML = '<div class="important-news-card">Hiç haber bulunamadı.</div>';
+                        return;
+                    }
+                    data.important_news.forEach(news => {
+                        const card = document.createElement('div');
+                        card.className = 'important-news-card';
+                        card.innerHTML = `
+                            <div class="news-row">
+                                <span class="category-badge ${news.category.toLowerCase().replace(/\s/g, '-')}">${news.category}</span>
+                                <span class="news-date">${news.published_dt}</span>
+                            </div>
+                            <div class="news-title">${news.title}</div>
+                            <div class="news-summary">${news.summary.replace(/<[^>]+>/g, '').slice(0, 120)}</div>
+                            <div class="news-row">
+                                <span class="news-source">${news.source}</span>
+                                <a href="${news.link}" target="_blank" class="news-link">Detay</a>
+                            </div>
+                        `;
+                        newsList.appendChild(card);
+                    });
+                })
+                .catch(() => {
+                    const newsList = document.getElementById('important-news-list');
+                    newsList.innerHTML = '<div class="important-news-card">Haberler yüklenemedi.</div>';
+                });
+        });
     </script>
 </body>
 </html>

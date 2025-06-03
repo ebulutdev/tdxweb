@@ -19,6 +19,8 @@ from .models import Stock, RecommendedStock, QuestionAnswer
 from .utils import get_stock_data
 from yfinance.data import YFRateLimitError
 from curl_cffi import requests as curl_requests
+from django.views.decorators.cache import cache_page
+from django.views.decorators.http import require_GET
 
 # Logging setup
 logging.basicConfig(level=logging.INFO)
@@ -385,7 +387,11 @@ def stock_plot(request):
     })
 
 def get_important_news(days=2):
-    """Piyasayı etkileyecek önemli haberleri kategorilere göre çeker"""
+    """Piyasayı etkileyecek önemli haberleri kategorilere göre çeker (cache'li)"""
+    cache_key = f"important_news_{days}"
+    cached = cache.get(cache_key)
+    if cached:
+        return cached
     categories = {
         'Merkez Bankası': [
             'tcmb faiz kararı', 'politika faizi', 'faiz artışı', 'faiz indirimi',
@@ -480,8 +486,10 @@ def get_important_news(days=2):
             }
             news_data.append(news_item)
     news_data.sort(key=lambda x: x['published_dt'], reverse=True)
+    cache.set(cache_key, news_data, 60*10)  # 10 dakika cache
     return news_data
 
+@cache_page(60 * 5)
 def home(request):
     # Önemli haberleri çek
     important_news = get_important_news(days=2)
@@ -822,3 +830,21 @@ Lütfen aşağıdaki gibi detaylı ve HTML formatında teknik analiz hazırla:
     except Exception as e:
         logger.error(f"get_analysis error: {str(e)}")
         return JsonResponse({'status': 'error', 'error': 'Analiz alınırken hata oluştu.'}, status=500) 
+
+@require_GET
+def important_news_api(request):
+    days = int(request.GET.get('days', 2))
+    news = get_important_news(days=days)
+    # Sadece gerekli alanları döndür
+    news_data = [
+        {
+            'title': n['title'],
+            'summary': n['summary'],
+            'link': n['link'],
+            'source': n['source'],
+            'published_dt': n['published_dt'].strftime('%d.%m.%Y %H:%M') if n['published_dt'] else '',
+            'category': n['category']
+        }
+        for n in news
+    ]
+    return JsonResponse({'important_news': news_data}) 

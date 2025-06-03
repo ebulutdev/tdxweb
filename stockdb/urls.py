@@ -18,4 +18,5 @@ urlpatterns = [
     path('kayıt/', views.kayit_view, name='kayit'),
     path('stock-card/', views.stock_card, name='stock_card'),
     path('health/', health_check, name='health_check'),
+    path('api/important-news/', views.important_news_api, name='important_news_api'),
 ] 
