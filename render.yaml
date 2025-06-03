@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: stockdb
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn stockdb.wsgi:application --config gunicorn_config.py
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.0
+      - key: PORT
+        value: 10000
+    healthCheckPath: /
+    autoDeploy: true 

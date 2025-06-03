@@ -1,35 +1,30 @@
-import matplotlib
-matplotlib.use('Agg')
-import yfinance as yf
-import matplotlib.pyplot as plt
-from django.http import HttpResponse, JsonResponse
-from django.views.decorators.csrf import csrf_exempt
-from io import BytesIO
-import datetime
+import logging
+import json
+from datetime import datetime, timedelta, timezone
 import base64
 import requests
-import json
-from django.shortcuts import render, redirect, get_object_or_404
-from django.core.cache import cache
-from bs4 import BeautifulSoup
-import logging
-import feedparser
 import urllib.parse
 import re
-import plotly.graph_objs as go
-import plotly.io as pio
-import os
-from datetime import datetime, timedelta, timezone
-from dateutil import parser as dateparser
-import pandas as pd
 import time
-from .models import Stock, RecommendedStock, QuestionAnswer
+import hashlib
+from django.http import HttpResponse, JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+from django.shortcuts import render, redirect, get_object_or_404
+from django.core.cache import cache
 from django.urls import reverse
+from bs4 import BeautifulSoup
+import feedparser
+from dateutil import parser as dateparser
+from .models import Stock, RecommendedStock, QuestionAnswer
 from .utils import get_stock_data
 from yfinance.data import YFRateLimitError
 from curl_cffi import requests as curl_requests
-import hashlib
 
+# Logging setup
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+# Cache settings
 CACHE_DIR = "cache"
 CACHE_TIMEOUTS = {
     'stock_data': 5 * 60,  # 5 minutes
@@ -37,10 +32,6 @@ CACHE_TIMEOUTS = {
     'news': 30 * 60,      # 30 minutes
     'chat_history': 30 * 60,  # 30 minutes
 }
-
-# Logging setup
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
 
 # Samimi karşılama mesajları
 GREETING_MESSAGES = [
@@ -267,6 +258,11 @@ def save_news_to_json(symbol, news, out_dir=CACHE_DIR):
         print(f"Error saving news for {symbol}: {e}")
 
 def stock_plot(request):
+    import plotly.graph_objs as go
+    import plotly.io as pio
+    import pandas as pd
+    import yfinance as yf
+    
     symbol = request.GET.get('symbol', 'MIATK.IS').upper()
     symbol_to_company = {
         'THYAO.IS': 'Türk Hava Yolları',
