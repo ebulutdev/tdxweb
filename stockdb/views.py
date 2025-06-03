@@ -23,8 +23,6 @@ from datetime import datetime, timedelta, timezone
 from dateutil import parser as dateparser
 import pandas as pd
 import time
-from google.generativeai import GenerativeModel
-import random
 from .models import Stock, RecommendedStock, QuestionAnswer
 from django.urls import reverse
 from .utils import get_stock_data
