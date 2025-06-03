@@ -1128,39 +1128,11 @@
 
         <div class="stock-grid" id="stock-grid">
             {% for stock in stocks %}
-            <div class="stock-card">
-                <div class="stock-header">
-                    <div class="stock-symbol">
-                        <i class="fas fa-chart-line"></i>
-                        {{ stock.symbol }}
-                    </div>
-                    <div class="stock-change {% if stock.change > 0 %}positive{% elif stock.change < 0 %}negative{% endif %}">
-                        <i class="fas fa-{% if stock.change > 0 %}arrow-up{% elif stock.change < 0 %}arrow-down{% endif %}"></i>
-                        {% if stock.change > 0 %}+{% endif %}{{ stock.change|floatformat:2 }}%
-                    </div>
-                </div>
-
-                <div class="stock-company">{{ stock.company }}</div>
-
-                <div class="stock-price-container">
-                    <div class="stock-price">₺{{ stock.price|floatformat:2 }}</div>
-                </div>
-
-                <div class="stats-container">
-                    <div class="stat-item">
-                        <div class="stat-label">Hacim</div>
-                        <div class="stat-value">{{ stock.volume }}</div>
-                    </div>
-                    <div class="stat-item">
-                        <div class="stat-label">Son Güncelleme</div>
-                        <div class="stat-value">{{ stock.time }}</div>
-                    </div>
-                </div>
-
-                <a href="{% url 'stock_plot' %}?symbol={{ stock.symbol }}" class="analyze-btn">
+            <div class="stock-card-placeholder" id="placeholder-{{ stock.symbol }}">
+                <button class="analyze-btn" onclick="loadStockCard('{{ stock.symbol }}')">
                     <i class="fas fa-chart-bar"></i>
-                    Detaylı Analiz
-                </a>
+                    {{ stock.symbol }} Analiz
+                </button>
             </div>
             {% endfor %}
         </div>
@@ -1309,6 +1281,19 @@
             event.preventDefault();
             const stockGrid = document.getElementById('stock-grid');
             stockGrid.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        function loadStockCard(symbol) {
+            const placeholder = document.getElementById('placeholder-' + symbol);
+            placeholder.innerHTML = '<div class="loading">Yükleniyor...</div>';
+            fetch(`/stock-card/?symbol=${symbol}`)
+                .then(response => response.text())
+                .then(html => {
+                    placeholder.innerHTML = html;
+                })
+                .catch(err => {
+                    placeholder.innerHTML = '<div class="error">Bir hata oluştu.</div>';
+                });
         }
     </script>
 </body>

@@ -27,6 +27,9 @@ from google.generativeai import GenerativeModel
 import random
 from .models import Stock, RecommendedStock, QuestionAnswer
 from django.urls import reverse
+from .utils import get_stock_data
+from yfinance.data import YFRateLimitError
+from curl_cffi import requests
 
 CACHE_DIR = "cache"
 CACHE_TIMEOUTS = {
@@ -264,9 +267,10 @@ def save_news_to_json(symbol, news, out_dir=CACHE_DIR):
     except Exception as e:
         print(f"Error saving news for {symbol}: {e}")
 
+session = requests.Session(impersonate="chrome")
+
 def stock_plot(request):
     symbol = request.GET.get('symbol', 'MIATK.IS').upper()
-    # Sembol-şirket adı eşleştirmesi (örnek, genişletebilirsiniz)
     symbol_to_company = {
         'THYAO.IS': 'Türk Hava Yolları',
         'GARAN.IS': 'Garanti Bankası',
@@ -286,13 +290,32 @@ def stock_plot(request):
     cache_key = f"yf_{symbol}_{start_date.date()}_{end_date.date()}"
     hist = cache.get(cache_key)
     if hist is None:
-        stock = yf.Ticker(symbol)
-        hist_df = stock.history(start=start_date, end=end_date)
-        hist = {
-            'index': [str(d.date()) for d in hist_df.index],
-            'close': [float(c) for c in hist_df['Close']]
-        }
-        cache.set(cache_key, hist, timeout=60*60)
+        try:
+            stock = yf.Ticker(symbol, session=session)
+            hist_df = stock.history(start=start_date, end=end_date)
+            hist = {
+                'index': [str(d.date()) for d in hist_df.index],
+                'close': [float(c) for c in hist_df['Close']]
+            }
+            cache.set(cache_key, hist, timeout=60*60)
+        except YFRateLimitError:
+            return render(request, 'stock_plot.html', {
+                'plotly_html': '',
+                'dates': '[]',
+                'closes': '[]',
+                'news': [],
+                'symbol': symbol,
+                'error': 'Çok fazla istek gönderdiniz. Lütfen birkaç dakika sonra tekrar deneyin.'
+            })
+        except Exception as e:
+            return render(request, 'stock_plot.html', {
+                'plotly_html': '',
+                'dates': '[]',
+                'closes': '[]',
+                'news': [],
+                'symbol': symbol,
+                'error': f'Hata: {str(e)}'
+            })
     dates = hist['index']
     closes = hist['close']
     support_levels, resistance_levels = find_support_resistance(closes)
@@ -368,19 +391,38 @@ def stock_plot(request):
         'error': ''
     })
 
+GEMINI_ANALYSIS_CACHE_TIMEOUT = 600  # 10 dakika
+GEMINI_USER_LIMIT = 3  # 10 dakikada 3 analiz
+GEMINI_GLOBAL_LIMIT = 10  # 1 dakikada 10 analiz
+
 @csrf_exempt
 def get_analysis(request):
     if request.method == 'POST':
         symbol = request.GET.get('symbol', 'MIATK.IS').upper()
-        ip = request.META.get('REMOTE_ADDR')
-        # Rate limiting check
-        if cache.get(f"ratelimit_{ip}"):
+        user_ip = request.META.get('REMOTE_ADDR', 'unknown')
+
+        # Kullanıcı bazlı rate limit
+        user_key = f"gemini_user_{user_ip}"
+        user_count = cache.get(user_key, 0)
+        if user_count >= GEMINI_USER_LIMIT:
             return JsonResponse({
                 'status': 'error',
-                'message': 'Lütfen 10 saniye bekleyip tekrar deneyiniz.',
-                'code': 'RATE_LIMIT_EXCEEDED'
+                'message': 'Çok sık analiz istediniz. Lütfen 10 dakika bekleyin.',
+                'code': 'USER_RATE_LIMIT'
             }, status=429)
-        cache.set(f"ratelimit_{ip}", True, timeout=10)
+        cache.set(user_key, user_count + 1, timeout=GEMINI_ANALYSIS_CACHE_TIMEOUT)
+
+        # Global rate limit
+        global_key = "gemini_global_count"
+        global_count = cache.get(global_key, 0)
+        if global_count >= GEMINI_GLOBAL_LIMIT:
+            return JsonResponse({
+                'status': 'error',
+                'message': 'Sistemde çok fazla analiz isteği var. Lütfen 1 dakika sonra tekrar deneyin.',
+                'code': 'GLOBAL_RATE_LIMIT'
+            }, status=429)
+        cache.set(global_key, global_count + 1, timeout=60)
+
         try:
             data = json.loads(request.body)
             closes = data.get('closes', [])
@@ -391,6 +433,15 @@ def get_analysis(request):
                     'message': 'Geçersiz veri formatı',
                     'code': 'INVALID_DATA'
                 }, status=400)
+            # Cache anahtarı: sembol + veri hash
+            cache_key = f"gemini_analysis_{symbol}_{hash(str(closes))}_{hash(str(dates))}"
+            cached_result = cache.get(cache_key)
+            if cached_result:
+                return JsonResponse({
+                    'status': 'success',
+                    'data': cached_result,
+                    'cached': True
+                })
             # Get latest news and prepare analysis context
             news = get_latest_news(symbol, count=5)  # Son 5 haber
             news_text = "\n".join([
@@ -402,15 +453,6 @@ def get_analysis(request):
             price_change = closes[-1] - closes[0]
             price_change_pct = (price_change / closes[0]) * 100
             avg_price = sum(closes) / len(closes)
-            # Create cache key based on data hash
-            cache_key = f"analysis_{symbol}_{hash(str(closes))}_{hash(str(dates))}_{hash(news_text)}"
-            cached_result = cache.get(cache_key)
-            if cached_result:
-                return JsonResponse({
-                    'status': 'success',
-                    'data': cached_result,
-                    'cached': True
-                })
             # Prepare enhanced prompt for better analysis (HTML output with explicit news analysis)
             price_table = "\n".join([f"{d}: {c:.2f} TL" for d, c in zip(dates, closes)])
             news_table = ""
@@ -430,6 +472,9 @@ Raporu HTML formatında üret:
 - Sonuç ve uyarı bölümlerini <strong> ve <em> ile öne çıkar.
 - Paragrafları <p> ile yaz.
 - Gerekiyorsa <span style='color:#ffd600'>renkli</span> vurgular ekle.
+- Raporda HTML yazısı gösterme.
+- Açıklamaları kısa ve öz tut. Senaryolar hariç tüm başlıkların açıklamalarını özetle. Sadece 'Destek ve Direnç seviyelerine göre fiyat hedefleri ve Senaryoları' başlığında detaylı analiz ve senaryo üret.
+- Matematiksel senaryoları sadece ilgili başlıkta detaylandır.
 
 Aşağıda, son 1 ayın tarih ve kapanış fiyatları ile, ilgili günlerde çıkan haberler tablo halinde verilmiştir. Teknik analizini bu fiyat serisine ve haberlerin fiyat üzerindeki olası etkisine göre yap. Özellikle haberlerin fiyat hareketleriyle ilişkisini analiz et.
 
@@ -451,9 +496,8 @@ GÜNCEL HABERLER:
 Aşağıdaki başlıklar altında analiz yap:
 1. Teknik Görünüm (Yalnızca yukarıdaki fiyat serisine ve trende göre)
 2. Hisse Gidişatı nasıl olacak?
-3. <strong>Bana Göre hangisi daha iyi?</strong>: Analizlerini oku ve ortaya bir kendince olabilecek senaryoyu nedeniyle açıkla.
-4. Hissenin Son Fiyat Verilerine Göre Riskler ve Fırsatlar
-5. Destek ve Direnç seviyelerine göre fiyat hedefleri ve Senaryoları
+3. <strong>Bana Göre hangisi daha iyi?</strong>: Analizlerini özet ver.
+4. Destek ve Direnç seviyelerine göre fiyat hedefleri ve Senaryoları (burada detaylı analiz ve senaryo üret)
 
 Notlar:
 - Teknik analizde sadece yukarıdaki fiyat serisini ve trendi kullan.
@@ -499,7 +543,7 @@ Notlar:
                 'news_count': len(news)
             }
             # Cache the formatted result
-            cache.set(cache_key, formatted_analysis, timeout=60*60)  # 1 hour cache
+            cache.set(cache_key, formatted_analysis, timeout=GEMINI_ANALYSIS_CACHE_TIMEOUT)
             return JsonResponse({
                 'status': 'success',
                 'data': formatted_analysis,
@@ -568,46 +612,7 @@ def home(request):
         {'symbol': 'MIATK.IS', 'company': 'Mia Teknoloji'},
         {'symbol': 'FROTO.IS', 'company': 'Ford Otosan'},
     ]
-    symbols = [stock['symbol'] for stock in stocks]
-    user_ip = request.META.get('REMOTE_ADDR', 'unknown')
-    if not STOCK_LIMITER.is_allowed(user_ip):
-        return render(request, 'home.html', {'stocks': [], 'error': 'Çok fazla istek! Lütfen bekleyin.'})
-    batch_data = get_cached_batch_stock_data(symbols)
-    stock_data = []
-    for stock in stocks:
-        symbol = stock['symbol']
-        data = batch_data.get(symbol)
-        price = 0
-        change = 0
-        volume_str = "-"
-        time_str = "-"
-        try:
-            if data is not None and not data.empty:
-                latest_data = data.iloc[-1]
-                price = float(latest_data['Close'])
-                if len(data) > 1:
-                    prev_close = float(data.iloc[-2]['Close'])
-                    if prev_close != 0:
-                        change = round((price - prev_close) / prev_close * 100, 2)
-                volume = latest_data['Volume']
-                if volume >= 1_000_000:
-                    volume_str = f"{volume/1_000_000:.1f}M"
-                elif volume >= 1_000:
-                    volume_str = f"{volume/1_000:.1f}K"
-                else:
-                    volume_str = str(volume)
-                time_str = latest_data.name.strftime("%d.%m")
-        except Exception as e:
-            logging.error(f"Stock parse error for {symbol}: {str(e)}")
-        stock_data.append({
-            'symbol': symbol,
-            'company': stock['company'],
-            'price': price,
-            'change': change,
-            'volume': volume_str,
-            'time': time_str,
-        })
-    return render(request, 'home.html', {'stocks': stock_data})
+    return render(request, 'home.html', {'stocks': stocks})
 
 def tavsiye_hisse(request):
     recommended_stocks = RecommendedStock.objects.filter(is_active=True)
@@ -817,26 +822,23 @@ def generate_conversation_response(message):
         return random.choice(GREETING_MESSAGES)
 
 @csrf_exempt
-def get_stock_data(request):
+def get_stock_data_view(request):
     """Enhanced stock data endpoint"""
     if request.method == 'POST':
         try:
             data = json.loads(request.body)
             symbol = data.get('symbol', '')
-            
             # Check cache
             cache_key = f"stock_data_{symbol}"
             cached_data = cache.get(cache_key)
             if cached_data:
                 return JsonResponse(cached_data)
-            
             # Get fresh data
             stock_info = get_stock_info(symbol)
             if not stock_info:
                 return JsonResponse({
                     'error': 'Üzgünüm, bu hisse için veri bulamadım. Doğru yazdığınızdan emin misiniz? 🤔'
                 }, status=404)
-            
             # Prepare response
             response_data = {
                 'data': stock_info['history'].to_dict(orient='records'),
@@ -846,22 +848,24 @@ def get_stock_data(request):
                 'major_holders': stock_info['major_holders'].to_dict(orient='records') if stock_info['major_holders'] is not None else [],
                 'news': stock_info['news']
             }
-            
             # Cache the response
             cache.set(cache_key, response_data, CACHE_TIMEOUTS['stock_data'])
-            
             return JsonResponse(response_data)
-            
         except Exception as e:
             logger.error(f"Stock data error: {str(e)}")
             return JsonResponse({
                 'error': 'Veri çekilirken bir hata oluştu. Lütfen tekrar deneyin! 🔄'
             }, status=500)
-            
     return JsonResponse({'error': 'Geçersiz istek metodu'}, status=400)
 
 def demo_view(request):
     return render(request, 'demo.html')
 
 def kayit_view(request):
-    return render(request, 'kayıt.html') 
+    return render(request, 'kayıt.html')
+
+def stock_card(request):
+    symbol = request.GET.get('symbol')
+    user_ip = request.META.get('REMOTE_ADDR', 'unknown')
+    stock = get_stock_data(symbol, user_ip=user_ip)
+    return render(request, "partials/stock_card.html", {"stock": stock}) 

@@ -1,0 +1,33 @@
+<div class="stock-card">
+    <div class="stock-header">
+        <div class="stock-symbol">
+            <i class="fas fa-chart-line"></i>
+            {{ stock.symbol }}
+        </div>
+        <div class="stock-change {% if stock.change > 0 %}positive{% elif stock.change < 0 %}negative{% endif %}">
+            <i class="fas fa-{% if stock.change > 0 %}arrow-up{% elif stock.change < 0 %}arrow-down{% endif %}"></i>
+            {% if stock.change > 0 %}+{% endif %}{{ stock.change|floatformat:2 }}%
+        </div>
+    </div>
+    <div class="stock-company">{{ stock.company }}</div>
+    <div class="stock-price-container">
+        <div class="stock-price">₺{{ stock.price|floatformat:2 }}</div>
+    </div>
+    <div class="stats-container">
+        <div class="stat-item">
+            <div class="stat-label">Hacim</div>
+            <div class="stat-value">{{ stock.volume }}</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-label">Son Güncelleme</div>
+            <div class="stat-value">{{ stock.time }}</div>
+        </div>
+    </div>
+    <a href="{% url 'stock_plot' %}?symbol={{ stock.symbol }}" class="analyze-btn">
+        <i class="fas fa-chart-bar"></i>
+        Detaylı Analiz
+    </a>
+    {% if stock.error %}
+        <div class="error-message" style="color:#ff5252; margin-top:10px;">{{ stock.error }}</div>
+    {% endif %}
+</div> 

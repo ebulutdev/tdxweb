@@ -12,4 +12,5 @@ urlpatterns = [
     path('get-stock-data/', views.get_stock_data, name='get_stock_data'),
     path('demo/', views.demo_view, name='demo'),
     path('kayıt/', views.kayit_view, name='kayit'),
+    path('stock-card/', views.stock_card, name='stock_card'),
 ] 
