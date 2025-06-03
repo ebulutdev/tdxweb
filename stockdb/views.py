@@ -29,7 +29,8 @@ from .models import Stock, RecommendedStock, QuestionAnswer
 from django.urls import reverse
 from .utils import get_stock_data
 from yfinance.data import YFRateLimitError
-from curl_cffi import requests
+from curl_cffi import requests as curl_requests
+import hashlib
 
 CACHE_DIR = "cache"
 CACHE_TIMEOUTS = {
@@ -267,8 +268,6 @@ def save_news_to_json(symbol, news, out_dir=CACHE_DIR):
     except Exception as e:
         print(f"Error saving news for {symbol}: {e}")
 
-session = requests.Session(impersonate="chrome")
-
 def stock_plot(request):
     symbol = request.GET.get('symbol', 'MIATK.IS').upper()
     symbol_to_company = {
@@ -291,7 +290,7 @@ def stock_plot(request):
     hist = cache.get(cache_key)
     if hist is None:
         try:
-            stock = yf.Ticker(symbol, session=session)
+            stock = yf.Ticker(symbol)
             hist_df = stock.history(start=start_date, end=end_date)
             hist = {
                 'index': [str(d.date()) for d in hist_df.index],
@@ -391,215 +390,111 @@ def stock_plot(request):
         'error': ''
     })
 
-GEMINI_ANALYSIS_CACHE_TIMEOUT = 600  # 10 dakika
-GEMINI_USER_LIMIT = 3  # 10 dakikada 3 analiz
-GEMINI_GLOBAL_LIMIT = 10  # 1 dakikada 10 analiz
-
-@csrf_exempt
-def get_analysis(request):
-    if request.method == 'POST':
-        symbol = request.GET.get('symbol', 'MIATK.IS').upper()
-        user_ip = request.META.get('REMOTE_ADDR', 'unknown')
-
-        # Kullanıcı bazlı rate limit
-        user_key = f"gemini_user_{user_ip}"
-        user_count = cache.get(user_key, 0)
-        if user_count >= GEMINI_USER_LIMIT:
-            return JsonResponse({
-                'status': 'error',
-                'message': 'Çok sık analiz istediniz. Lütfen 10 dakika bekleyin.',
-                'code': 'USER_RATE_LIMIT'
-            }, status=429)
-        cache.set(user_key, user_count + 1, timeout=GEMINI_ANALYSIS_CACHE_TIMEOUT)
-
-        # Global rate limit
-        global_key = "gemini_global_count"
-        global_count = cache.get(global_key, 0)
-        if global_count >= GEMINI_GLOBAL_LIMIT:
-            return JsonResponse({
-                'status': 'error',
-                'message': 'Sistemde çok fazla analiz isteği var. Lütfen 1 dakika sonra tekrar deneyin.',
-                'code': 'GLOBAL_RATE_LIMIT'
-            }, status=429)
-        cache.set(global_key, global_count + 1, timeout=60)
-
-        try:
-            data = json.loads(request.body)
-            closes = data.get('closes', [])
-            dates = data.get('dates', [])
-            if not closes or not dates:
-                return JsonResponse({
-                    'status': 'error',
-                    'message': 'Geçersiz veri formatı',
-                    'code': 'INVALID_DATA'
-                }, status=400)
-            # Cache anahtarı: sembol + veri hash
-            cache_key = f"gemini_analysis_{symbol}_{hash(str(closes))}_{hash(str(dates))}"
-            cached_result = cache.get(cache_key)
-            if cached_result:
-                return JsonResponse({
-                    'status': 'success',
-                    'data': cached_result,
-                    'cached': True
-                })
-            # Get latest news and prepare analysis context
-            news = get_latest_news(symbol, count=5)  # Son 5 haber
-            news_text = "\n".join([
-                f"• {item['title']}\n  Kaynak: {item['source']}\n  Özet: {item['summary']}"
-                for item in news
-            ])
-            # Calculate key metrics
-            last_price = closes[-1]
-            price_change = closes[-1] - closes[0]
-            price_change_pct = (price_change / closes[0]) * 100
-            avg_price = sum(closes) / len(closes)
-            # Prepare enhanced prompt for better analysis (HTML output with explicit news analysis)
-            price_table = "\n".join([f"{d}: {c:.2f} TL" for d, c in zip(dates, closes)])
-            news_table = ""
-            for item in news:
-                try:
-                    news_date = pd.to_datetime(item['published']).date()
-                    if str(news_date) in dates:
-                        price = closes[dates.index(str(news_date))]
-                        news_table += f"- {news_date}: {price:.2f} TL | {item['title']} | {item['summary']}\n"
-                except Exception:
-                    continue
-            prompt = f"""
-Lütfen {symbol} hissesi için aşağıdaki verilere dayalı, kutular ve başlıklarla bölümlenmiş, profesyonel ve okunaklı bir analiz raporu hazırla.
-Raporu HTML formatında üret:
-- Her ana başlık için <div class='analysis-section'><h3>Başlık</h3>...</div> kullan.
-- Önemli noktaları <ul><li> ile vurgula.
-- Sonuç ve uyarı bölümlerini <strong> ve <em> ile öne çıkar.
-- Paragrafları <p> ile yaz.
-- Gerekiyorsa <span style='color:#ffd600'>renkli</span> vurgular ekle.
-- Raporda HTML yazısı gösterme.
-- Açıklamaları kısa ve öz tut. Senaryolar hariç tüm başlıkların açıklamalarını özetle. Sadece 'Destek ve Direnç seviyelerine göre fiyat hedefleri ve Senaryoları' başlığında detaylı analiz ve senaryo üret.
-- Matematiksel senaryoları sadece ilgili başlıkta detaylandır.
-
-Aşağıda, son 1 ayın tarih ve kapanış fiyatları ile, ilgili günlerde çıkan haberler tablo halinde verilmiştir. Teknik analizini bu fiyat serisine ve haberlerin fiyat üzerindeki olası etkisine göre yap. Özellikle haberlerin fiyat hareketleriyle ilişkisini analiz et.
-
-FİYAT TABLOSU:
-{price_table}
-
-HABER TABLOSU:
-{news_table}
-
-PIYASA VERILERI:
-- Son Kapanış: {last_price:.2f} TL
-- Değişim: {price_change:.2f} TL (%{price_change_pct:.2f})
-- 30 Günlük Ortalama: {avg_price:.2f} TL
-- Analiz Periyodu: {dates[0]} - {dates[-1]}
-
-GÜNCEL HABERLER:
-{news_text}
-
-Aşağıdaki başlıklar altında analiz yap:
-1. Teknik Görünüm (Yalnızca yukarıdaki fiyat serisine ve trende göre)
-2. Hisse Gidişatı nasıl olacak?
-3. <strong>Bana Göre hangisi daha iyi?</strong>: Analizlerini özet ver.
-4. Destek ve Direnç seviyelerine göre fiyat hedefleri ve Senaryoları (burada detaylı analiz ve senaryo üret)
-
-Notlar:
-- Teknik analizde sadece yukarıdaki fiyat serisini ve trendi kullan.
-- Haberleri ve fiyat serisini birlikte analiz et, haberlerin fiyat üzerindeki etkisini yorumla.
-- Hiçbir başlıkta 'veri yok', 'analiz yapılamaz' veya benzeri bir ifade kullanma.
-- Gerekirse genel piyasa bilgisini ve tipik hisse senedi analiz yöntemlerini kullanarak açıklama üret.
-- Her başlık için, elindeki tüm verileri ve genel piyasa bilgisini kullanarak açıklama ve analiz üret.
-"""
-            # Make API call to Gemini
-            api_key = 'AIzaSyCpdN84xuqoi5wKKYBq9GRyhxIIq6RFtyc'
-            url = f'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={api_key}'
-            headers = {
-                'Content-Type': 'application/json',
-                'Accept': 'application/json'
+def get_important_news(days=2):
+    """Piyasayı etkileyecek önemli haberleri kategorilere göre çeker"""
+    categories = {
+        'Merkez Bankası': [
+            'tcmb faiz kararı', 'politika faizi', 'faiz artışı', 'faiz indirimi',
+            'tcmb başkanı', 'tcmb toplantısı', 'faiz kararı', 'faiz beklentisi',
+            'swap', 'rezerv', 'döviz müdahalesi', 'piyasa likiditesi'
+        ],
+        'Ekonomik Veriler': [
+            'enflasyon verisi', 'işsizlik verisi', 'büyüme verisi', 'gsyh',
+            'cari açık', 'dış ticaret açığı', 'bütçe açığı', 'merkez bankası rezerv',
+            'döviz rezervi', 'altın rezervi', 'sanayi üretimi', 'perakende satış',
+            'konut satışları', 'tüketici güven endeksi', 'reel sektör güven endeksi'
+        ],
+        'Kurumsal Haberler': [
+            'hisse senedi', 'temettü', 'bedelsiz', 'bedelli', 'halka arz',
+            'yatırım kararı', 'yatırım planı', 'fabrika yatırımı', 'ihracat anlaşması',
+            'stratejik ortaklık', 'birleşme', 'satın alma', 'borçlanma', 'kredi',
+            'finansman', 'sermaye artırımı', 'özel durum açıklaması'
+        ],
+        'Sektörel Gelişmeler': [
+            'enerji fiyatları', 'petrol fiyatı', 'doğalgaz fiyatı', 'elektrik fiyatı',
+            'çelik fiyatı', 'demir fiyatı', 'bakır fiyatı', 'altın fiyatı',
+            'tarım ürünleri', 'gıda fiyatları', 'emlak fiyatları', 'kiralar',
+            'inşaat maliyetleri', 'hammadde fiyatları', 'lojistik maliyetleri'
+        ],
+        'Piyasa Analizleri': [
+            'piyasa analizi', 'teknik analiz', 'yatırım tavsiyesi', 'portföy yönetimi',
+            'risk analizi', 'piyasa beklentisi', 'piyasa görünümü', 'sektör raporu',
+            'ekonomi raporu', 'piyasa değerlendirmesi', 'yatırımcı görüşü',
+            'analist görüşü', 'piyasa yorumu'
+        ]
+    }
+    queries = [
+        "BIST borsa istanbul önemli gelişme",
+        "TCMB faiz kararı politika faizi",
+        "ekonomik veri açıklaması enflasyon büyüme",
+        "hisse senedi temettü bedelsiz halka arz",
+        "piyasa analizi yatırım tavsiyesi",
+        "enerji fiyatları petrol doğalgaz elektrik",
+        "çelik demir bakır altın fiyatları",
+        "döviz kuru analizi piyasa yorumu",
+        "özel durum açıklaması sermaye artırımı",
+        "yatırım kararı fabrika yatırımı"
+    ]
+    news_data = []
+    seen_links = set()
+    now = datetime.now(timezone.utc)
+    min_date = now - timedelta(days=days)
+    for query in queries:
+        query_encoded = urllib.parse.quote(query)
+        url = f"https://news.google.com/rss/search?q={query_encoded}&hl=tr&gl=TR&ceid=TR:tr"
+        feed = feedparser.parse(url)
+        for entry in feed.entries:
+            if entry.link in seen_links:
+                continue
+            seen_links.add(entry.link)
+            title_lower = entry.title.lower()
+            summary_lower = (entry.summary if 'summary' in entry else '').lower()
+            category = 'Diğer'
+            for cat, keywords in categories.items():
+                if any(keyword in title_lower or keyword in summary_lower for keyword in keywords):
+                    category = cat
+                    break
+            if category == 'Diğer':
+                continue
+            source = ''
+            if 'source' in entry and entry.source and hasattr(entry.source, 'title'):
+                source = entry.source.title
+            elif 'summary' in entry and entry.summary:
+                match = re.search(r'-\s*([\wÇçĞğİıÖöŞşÜü\s]+)$', entry.summary)
+                if match:
+                    source = match.group(1).strip()
+            elif 'title' in entry and entry.title:
+                match = re.search(r'-\s*([\wÇçĞğİıÖöŞşÜü\s]+)$', entry.title)
+                if match:
+                    source = match.group(1).strip()
+            published = entry.published if 'published' in entry else ""
+            try:
+                published_dt = dateparser.parse(published)
+                if published_dt is not None and published_dt.tzinfo is None:
+                    published_dt = published_dt.replace(tzinfo=timezone.utc)
+            except Exception:
+                published_dt = None
+            if published_dt is None or published_dt < min_date or published_dt > now + timedelta(days=1):
+                continue
+            news_item = {
+                'title': entry.title,
+                'summary': entry.summary if 'summary' in entry else '',
+                'link': entry.link,
+                'source': source,
+                'published_dt': published_dt,
+                'category': category
             }
-            payload = {
-                "contents": [{
-                    "parts": [{
-                        "text": prompt
-                    }]
-                }],
-                "generationConfig": {
-                    "temperature": 0.7,
-                    "topK": 40,
-                    "topP": 0.95,
-                    "maxOutputTokens": 1024
-                }
-            }
-            response = requests.post(url, headers=headers, json=payload)
-            response.raise_for_status()
-            result = response.json()
-            raw_analysis = result['candidates'][0]['content']['parts'][0]['text']
-            # Format the analysis response
-            formatted_analysis = {
-                'summary': {
-                    'last_price': last_price,
-                    'change': price_change,
-                    'change_percentage': price_change_pct,
-                    'average_price': avg_price
-                },
-                'analysis': raw_analysis,
-                'generated_at': datetime.now().isoformat(),
-                'news_count': len(news)
-            }
-            # Cache the formatted result
-            cache.set(cache_key, formatted_analysis, timeout=GEMINI_ANALYSIS_CACHE_TIMEOUT)
-            return JsonResponse({
-                'status': 'success',
-                'data': formatted_analysis,
-                'cached': False
-            })
-        except json.JSONDecodeError:
-            return JsonResponse({
-                'status': 'error',
-                'message': 'Geçersiz JSON formatı',
-                'code': 'INVALID_JSON'
-            }, status=400)
-        except requests.exceptions.RequestException as e:
-            logging.error(f"API request failed: {str(e)}")
-            return JsonResponse({
-                'status': 'error',
-                'message': 'API servis hatası',
-                'code': 'API_ERROR'
-            }, status=503)
-        except Exception as e:
-            logging.error(f"Unexpected error: {str(e)}")
-            return JsonResponse({
-                'status': 'error',
-                'message': 'Beklenmeyen bir hata oluştu',
-                'code': 'INTERNAL_ERROR'
-            }, status=500)
-    return JsonResponse({
-        'status': 'error',
-        'message': 'Geçersiz istek metodu',
-        'code': 'INVALID_METHOD'
-    }, status=405)
-
-def get_cached_batch_stock_data(symbols):
-    result = {}
-    symbols_to_fetch = []
-    for symbol in symbols:
-        cache_key = f"stock_data_{symbol}"
-        data = cache.get(cache_key)
-        if data is not None:
-            result[symbol] = data
-        else:
-            symbols_to_fetch.append(symbol)
-    if symbols_to_fetch:
-        try:
-            batch_data = yf.download(symbols_to_fetch, period="5d", interval="1d", progress=False, group_by='ticker')
-            for symbol in symbols_to_fetch:
-                data = batch_data[symbol] if symbol in batch_data else None
-                if data is not None:
-                    cache.set(f"stock_data_{symbol}", data, CACHE_TIMEOUTS['stock_data'])
-                    result[symbol] = data
-        except Exception as e:
-            logging.error(f"YFinance batch error: {str(e)}")
-    return result
+            news_data.append(news_item)
+    news_data.sort(key=lambda x: x['published_dt'], reverse=True)
+    return news_data
 
 def home(request):
+    # Önemli haberleri çek
+    important_news = get_important_news(days=2)
+    
+    # Popüler hisseleri çek
     stocks = [
-        {'symbol': 'THYAO.IS', 'company': 'Türk Hava Yolları'},
+            {'symbol': 'THYAO.IS', 'company': 'Türk Hava Yolları'},
         {'symbol': 'GARAN.IS', 'company': 'Garanti Bankası'},
         {'symbol': 'AKBNK.IS', 'company': 'Akbank'},
         {'symbol': 'SISE.IS', 'company': 'Şişecam'},
@@ -612,7 +507,11 @@ def home(request):
         {'symbol': 'MIATK.IS', 'company': 'Mia Teknoloji'},
         {'symbol': 'FROTO.IS', 'company': 'Ford Otosan'},
     ]
-    return render(request, 'home.html', {'stocks': stocks})
+    
+    return render(request, 'home.html', {
+        'stocks': stocks,
+        'important_news': important_news
+    })
 
 def tavsiye_hisse(request):
     recommended_stocks = RecommendedStock.objects.filter(is_active=True)
@@ -663,7 +562,11 @@ def process_user_message(message, user_id=None):
         return random.choice(GREETING_MESSAGES)
 
 def get_stock_info(symbol):
-    """Get comprehensive stock information"""
+    """Get comprehensive stock information with curl_cffi session for yfinance and improved rate limit handling."""
+    cache_key = f"stock_info_{symbol}"
+    cached = cache.get(cache_key)
+    if cached:
+        return cached
     try:
         stock = yf.Ticker(symbol)
         info = {
@@ -674,40 +577,36 @@ def get_stock_info(symbol):
             'institutional_holders': stock.institutional_holders,
             'news': stock.news
         }
-        return info if not info['history'].empty else None
+        if not info['history'].empty:
+            cache.set(cache_key, info, 60*30)  # 30 dakika cache
+            return info
+        return None
     except Exception as e:
+        if 'rate limit' in str(e).lower() or 'too many requests' in str(e).lower():
+            return {'error': 'Çok sık sorgu yapıldı, lütfen birkaç dakika sonra tekrar deneyin.'}
         logger.error(f"Stock info error: {str(e)}")
         return None
 
 def generate_stock_analysis(symbol, stock_data):
-    """Generate detailed stock analysis"""
+    """Kısa ve sohbet için uygun hisse özeti döndürür."""
     try:
         history = stock_data['history']
         info = stock_data['info']
-        
-        # Calculate key metrics
         current_price = history['Close'][-1]
         price_change = current_price - history['Close'][0]
         price_change_pct = (price_change / history['Close'][0]) * 100
-        
-        technical_data = f"""
-        🎯 Güncel Fiyat: {current_price:.2f} TL
-        📊 Aylık Değişim: {price_change_pct:.2f}%
-        📈 En Yüksek: {history['High'].max():.2f} TL
-        📉 En Düşük: {history['Low'].min():.2f} TL
-        """
-        
-        # Generate analysis prompt
-        prompt = STOCK_ANALYSIS_TEMPLATE.format(
-            symbol=symbol,
-            technical_data=technical_data,
-            performance_summary=generate_performance_summary(history),
-            key_indicators=generate_key_indicators(info),
-            analysis=generate_ai_analysis(symbol, stock_data)
+        target_price = info.get('targetMeanPrice', 'N/A')
+        market_cap = info.get('marketCap', 'N/A')
+        pe_ratio = info.get('trailingPE', 'N/A')
+        company = info.get('shortName', symbol)
+        return (
+            f"{company} ({symbol}) Hisse Özeti:\n"
+            f"- Güncel Fiyat: {current_price:.2f} TL\n"
+            f"- Hedef Fiyat: {target_price} TL\n"
+            f"- Piyasa Değeri: {market_cap:,} TL\n"
+            f"- F/K Oranı: {pe_ratio}\n"
+            f"- Son 1 Aylık Değişim: {price_change_pct:+.2f}%"
         )
-        
-        return prompt
-    
     except Exception as e:
         logger.error(f"Analysis generation error: {str(e)}")
         return "Üzgünüm, analiz oluştururken bir hata oluştu. Lütfen tekrar deneyin! 🔄"
@@ -868,4 +767,64 @@ def stock_card(request):
     symbol = request.GET.get('symbol')
     user_ip = request.META.get('REMOTE_ADDR', 'unknown')
     stock = get_stock_data(symbol, user_ip=user_ip)
-    return render(request, "partials/stock_card.html", {"stock": stock}) 
+    return render(request, "partials/stock_card.html", {"stock": stock})
+
+@csrf_exempt
+def get_analysis(request):
+    """Grafik verilerinden destek/direnç ve kapanış fiyatları ile Gemini API'den açıklayıcı, senaryolu ve HTML formatında analiz alır."""
+    if request.method != 'POST':
+        return JsonResponse({'status': 'error', 'error': 'Geçersiz istek.'}, status=400)
+    try:
+        data = json.loads(request.body)
+        closes = data.get('closes', [])
+        dates = data.get('dates', [])
+        symbol = request.GET.get('symbol', '')
+        if not closes or not dates or not symbol:
+            return JsonResponse({'status': 'error', 'error': 'Veri eksik.'}, status=400)
+        # Destek/direnç hesapla
+        support_levels, resistance_levels = find_support_resistance(closes)
+        # Daha açıklayıcı, senaryolu ve HTML formatında analiz için prompt
+        prompt = f"""
+Sen bir borsa teknik analiz asistanısın. Kullanıcı sana {symbol} hissesinin son 1 aylık kapanış fiyatlarını, destek ve direnç seviyelerini verdi.
+Kapanış fiyatları: {closes}
+Tarihler: {dates}
+Destek seviyeleri: {support_levels}
+Direnç seviyeleri: {resistance_levels}
+
+Lütfen aşağıdaki gibi detaylı ve HTML formatında teknik analiz hazırla:
+- <h2>{symbol} Hisse Senedi Teknik Analizi (Son 1 Ay)</h2>
+- <b>Fiyat Hareketi</b> başlığı altında kısa ve açıklayıcı bir özet ver.
+- <b>Destek Seviyeleri</b> ve <b>Direnç Seviyeleri</b> başlıkları ile seviyeleri <ul><li>maddeler halinde</li></ul> belirt.
+- <b>Olası Senaryolar</b> başlığı altında en az 3 farklı teknik senaryo üret:
+    <ul>
+      <li><b>Destek Kırılırsa:</b> ...</li>
+      <li><b>Direnç Aşılırsa:</b> ...</li>
+      <li><b>Yatayda Kalırsa:</b> ...</li>
+      <li><b>Ekstra Senaryo:</b> (hacim artışı, haber etkisi, vb. gibi hisseye özel bir durum)</li>
+    </ul>
+- Her senaryoda fiyatın hangi seviyelere gidebileceğini, yatırımcıların nelere dikkat etmesi gerektiğini ve teknik göstergelerin ne anlama geldiğini kısa kısa açıkla.
+- Sonucu <b>şık ve okunaklı HTML</b> ile, başlıklar, <ul> listeler, <span style='color:...'> gibi vurgularla sun.
+- Yatırım tavsiyesi verme, sadece teknik veriye dayalı özet sun.
+"""
+        api_key = 'AIzaSyCpdN84xuqoi5wKKYBq9GRyhxIIq6RFtyc'
+        url = f'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={api_key}'
+        response = requests.post(
+            url,
+            headers={'Content-Type': 'application/json'},
+            json={
+                "contents": [{"parts": [{"text": prompt}]}],
+                "generationConfig": {
+                    "temperature": 0.7,
+                    "maxOutputTokens": 1024
+                }
+            }
+        )
+        result = response.json()
+        analysis = result['candidates'][0]['content']['parts'][0]['text'] if 'candidates' in result else 'Analiz alınamadı.'
+        cache_key_raw = f"analysis_{symbol}_{str(closes)}_{str(dates)}"
+        cache_key = 'analysis_' + hashlib.sha256(cache_key_raw.encode('utf-8')).hexdigest()
+        cache.set(cache_key, analysis, 60*60)  # 1 saat cache
+        return JsonResponse({'status': 'success', 'data': {'analysis': analysis, 'cached': False}})
+    except Exception as e:
+        logger.error(f"get_analysis error: {str(e)}")
+        return JsonResponse({'status': 'error', 'error': 'Analiz alınırken hata oluştu.'}, status=500) 

@@ -1083,6 +1083,273 @@
             .ai-hero-title-pro { animation: none; }
             .animate-fade-in-up { animation-delay: 0.3s; }
         }
+        .important-news-section {
+            margin: 2rem 0;
+            padding: 1rem;
+            background: var(--bg-secondary);
+            border-radius: 12px;
+            box-shadow: 0 4px 32px 0 rgba(59, 130, 246, 0.18);
+        }
+
+        .important-news-section h2 {
+            color: var(--text-primary);
+            margin-bottom: 1.5rem;
+            font-size: 1.8rem;
+            text-align: center;
+            background: linear-gradient(to right, #60a5fa, #3b82f6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .news-categories {
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+        }
+
+        .news-category {
+            background: var(--bg-card);
+            border-radius: 8px;
+            padding: 1rem;
+            border: 1px solid var(--card-border);
+        }
+
+        .news-category h3 {
+            color: var(--accent-primary);
+            margin-bottom: 1rem;
+            font-size: 1.4rem;
+            border-bottom: 2px solid var(--accent-primary);
+            padding-bottom: 0.5rem;
+        }
+
+        .news-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1rem;
+        }
+
+        .news-card {
+            background: var(--bg-secondary);
+            border-radius: 8px;
+            padding: 1rem;
+            transition: transform 0.2s ease;
+            border: 1px solid var(--card-border);
+        }
+
+        .news-card:hover {
+            transform: translateY(-2px);
+            border-color: var(--accent-primary);
+        }
+
+        .news-content {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .news-source {
+            color: var(--accent-primary);
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        .news-headline {
+            color: var(--text-primary);
+            font-size: 1.1rem;
+            font-weight: 600;
+            line-height: 1.4;
+        }
+
+        .news-summary {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+            line-height: 1.5;
+        }
+
+        .news-meta {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+        }
+
+        .news-link {
+            color: var(--accent-primary);
+            text-decoration: none;
+            font-size: 0.9rem;
+            margin-top: 0.5rem;
+            display: inline-block;
+            transition: color 0.2s ease;
+        }
+
+        .news-link:hover {
+            color: var(--text-primary);
+            text-decoration: underline;
+        }
+
+        .news-table-container {
+            margin: 20px 0;
+            overflow-x: auto;
+        }
+
+        .news-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: #1e222d;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .news-table th {
+            background: #2a2e39;
+            color: #fff;
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+            border-bottom: 2px solid #3a3f4b;
+        }
+
+        .news-table td {
+            padding: 12px;
+            border-bottom: 1px solid #3a3f4b;
+            color: #e0e0e0;
+        }
+
+        .news-title {
+            font-weight: 600;
+            margin-bottom: 4px;
+            color: #fff;
+        }
+
+        .news-summary {
+            font-size: 0.9em;
+            color: #a0a0a0;
+        }
+
+        .category-badge {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.85em;
+            font-weight: 500;
+        }
+
+        .merkez-bankası { background: #ffd600; color: #000; }
+        .ekonomik-veriler { background: #00c853; color: #fff; }
+        .kurumsal-haberler { background: #2196f3; color: #fff; }
+        .sektörel-gelişmeler { background: #ff5722; color: #fff; }
+        .piyasa-analizleri { background: #9c27b0; color: #fff; }
+
+        .impact-up {
+            color: #00c853;
+            font-weight: bold;
+            font-size: 1.2em;
+        }
+
+        .impact-down {
+            color: #f44336;
+            font-weight: bold;
+            font-size: 1.2em;
+        }
+
+        .impact-neutral {
+            color: #ffd600;
+            font-weight: bold;
+            font-size: 1.2em;
+        }
+
+        .read-more {
+            color: #2196f3;
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .read-more:hover {
+            text-decoration: underline;
+        }
+
+        @media (max-width: 768px) {
+            .news-table th, .news-table td {
+                padding: 8px;
+                font-size: 0.9em;
+            }
+            
+            .news-summary {
+                display: none;
+            }
+        }
+
+        .news-expectation {
+            font-size: 0.9em;
+            line-height: 1.3;
+            color: #444;
+            max-width: 200px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .news-table td span[title] {
+            cursor: help;
+        }
+
+        .important-news-list {
+            display: flex;
+            flex-direction: column;
+            gap: 1.2rem;
+            padding: 0.5rem;
+        }
+        .important-news-card {
+            background: #1e222d;
+            border-radius: 12px;
+            padding: 1rem 1.2rem;
+            box-shadow: 0 2px 8px rgba(30,34,90,0.08);
+            border: 1px solid #232323;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        .news-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 0.7rem;
+            flex-wrap: wrap;
+        }
+        .news-title {
+            font-size: 1.08rem;
+            font-weight: 700;
+            color: #3b82f6;
+            word-break: break-word;
+            margin: 0.2rem 0;
+        }
+        .news-summary {
+            font-size: 0.97rem;
+            color: #a0a0a0;
+            margin-top: 0.3rem;
+            word-break: break-word;
+        }
+        .news-link {
+            color: #3b82f6;
+            font-size: 0.93rem;
+            margin-left: 0.5rem;
+        }
+        @media (max-width: 600px) {
+            .important-news-list {
+                gap: 0.7rem;
+                padding: 0.2rem;
+            }
+            .important-news-card {
+                padding: 0.7rem 0.4rem;
+                border-radius: 9px;
+            }
+            .news-title {
+                font-size: 1rem;
+            }
+            .news-summary, .news-link {
+                font-size: 0.85rem;
+            }
+        }
     </style>
 </head>
 <body>
@@ -1135,6 +1402,29 @@
                 </button>
             </div>
             {% endfor %}
+        </div>
+
+        <div class="important-news-section">
+            <h2>Önemli Piyasa Haberleri</h2>
+            <div class="important-news-list">
+                {% regroup important_news by category as category_list %}
+                {% for category in category_list %}
+                    {% for news in category.list %}
+                    <div class="important-news-card">
+                        <div class="news-row">
+                            <span class="category-badge {{ category.grouper|lower|cut:' ' }}">{{ category.grouper }}</span>
+                            <span class="news-date">{{ news.published_dt|date:"d.m.Y H:i" }}</span>
+                        </div>
+                        <div class="news-title">{{ news.title }}</div>
+                        <div class="news-summary">{{ news.summary|striptags|truncatechars:120 }}</div>
+                        <div class="news-row">
+                            <span class="news-source">{{ news.source }}</span>
+                            <a href="{{ news.link }}" target="_blank" class="news-link">Detay</a>
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% endfor %}
+            </div>
         </div>
     </div>
 
