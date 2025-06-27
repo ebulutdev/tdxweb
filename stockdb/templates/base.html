@@ -185,7 +185,13 @@
             <a href="/" class="nav-brand">BIST Analiz</a>
             <a href="/tavsiye-hisse" class="nav-button">Tavsiye Hisse</a>
             {% if user.is_authenticated %}
-                <span style="color:#fff; margin-left:20px; font-weight:600;">{{ user.first_name }}</span>
+                <span style="color:#fff; margin-left:20px; font-weight:600;">
+                    {% if user.first_name or user.last_name %}
+                        {{ user.first_name }} {{ user.last_name }}
+                    {% else %}
+                        {{ user.username }}
+                    {% endif %}
+                </span>
                 <a href="/cikis/" class="nav-button" style="background:#444; margin-left:10px;">Çıkış Yap</a>
             {% else %}
                 <a href="/giris/" class="nav-button" style="background:#444; margin-left:10px;">Giriş Yap</a>

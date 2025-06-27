@@ -768,7 +768,7 @@ def demo_view(request):
 @csrf_protect
 def kayit_view(request):
     if request.method == 'POST':
-        name = request.POST.get('name')
+        name = request.POST.get('name', '').strip()
         email = request.POST.get('email')
         password = request.POST.get('password')
         password_confirm = request.POST.get('password_confirm')
@@ -778,7 +778,12 @@ def kayit_view(request):
         if User.objects.filter(username=email).exists():
             messages.error(request, 'Bu e-posta ile zaten bir hesap var.')
             return render(request, 'kayıt.html')
-        user = User.objects.create_user(username=email, email=email, password=password, first_name=name)
+        # Ad ve soyadı ayır
+        if ' ' in name:
+            first_name, last_name = name.split(' ', 1)
+        else:
+            first_name, last_name = name, ''
+        user = User.objects.create_user(username=email, email=email, password=password, first_name=first_name, last_name=last_name)
         user.save()
         login(request, user)
         return redirect('home')
