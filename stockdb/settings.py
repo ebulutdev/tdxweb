@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 
 from pathlib import Path
 import os
+import dj_database_url
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -80,18 +81,27 @@ WSGI_APPLICATION = 'stockdb.wsgi.application'
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'tdx_db',
-        'USER': 'tdx_user',
-        'PASSWORD': 'dShAuqRo6bRpjUME8NClZtLcpv06x',
-        'HOST': 'dpg-d1b4oemcj7s78a9kuurq-a.oregon-postgres.render.com',
-        'PORT': '5432',
-        'OPTIONS': {
-            'sslmode': 'require',
-        },
-    }
+    'default': dj_database_url.config(
+        default='postgres://tdx_user:dShAuqRo6bRpjUME8NClZtLcpv06x@dpg-d1b4oemcj7s78a9kuurq-a.oregon-postgres.render.com:5432/tdx_db?sslmode=require',
+        conn_max_age=600,
+        ssl_require=True
+    )
 }
+
+# Eski ayar (gerekirse geri dönebilirsin)
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.postgresql',
+#         'NAME': 'tdx_db',
+#         'USER': 'tdx_user',
+#         'PASSWORD': 'dShAuqRo6bRpjUME8NClZtLcpv06x',
+#         'HOST': 'dpg-d1b4oemcj7s78a9kuurq-a.oregon-postgres.render.com',
+#         'PORT': '5432',
+#         'OPTIONS': {
+#             'sslmode': 'require',
+#         },
+#     }
+# }
 
 
 # Password validation
