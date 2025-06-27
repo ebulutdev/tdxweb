@@ -1,3 +1,6 @@
+{% extends "base.html" %}
+{% load static %}
+{% block content %}
 {% load static %}
 <!DOCTYPE html>
 <html lang="tr">
@@ -1353,19 +1356,6 @@
     </style>
 </head>
 <body>
-    <nav class="navbar">
-        <div class="nav-container">
-            <a href="/" class="nav-brand">
-                <i class="fas fa-chart-line"></i>
-                BIST Analiz
-            </a>
-           
-            <a href="/tavsiye-hisse" class="nav-button">
-                <i class="fas fa-lightbulb"></i>
-                Tavsiye Hisse
-            </a>
-        </div>
-    </nav>
     <div class="ai-hero-pro">
         <div class="glow-effect"></div>
         <div class="ai-hero-badge-pro animate-slide-down">
@@ -1606,3 +1596,4 @@
     </script>
 </body>
 </html>
+{% endblock %}

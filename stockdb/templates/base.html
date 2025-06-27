@@ -52,6 +52,33 @@
             background: #1565c0;
             transform: translateY(-1px);
         }
+        .nav-user-actions {
+            display: flex;
+            align-items: center;
+            gap: 1.2rem;
+            margin-left: auto;
+        }
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: rgba(59,130,246,0.08);
+            padding: 0.4rem 1rem;
+            border-radius: 8px;
+            font-weight: 600;
+            color: #fff;
+        }
+        .user-avatar {
+            font-size: 1.3rem;
+            color: #3b82f6;
+        }
+        .logout-btn {
+            background: #444;
+            margin-left: 0.7rem;
+        }
+        .login-btn, .register-btn {
+            background: #222;
+        }
         .container {
             width: 95vw;
             max-width: 1200px;
@@ -142,6 +169,16 @@
                 max-width: 99vw;
             }
         }
+        @media (max-width: 700px) {
+            .nav-user-actions {
+                flex-direction: column;
+                gap: 0.5rem;
+                margin-left: 0;
+            }
+            .user-info {
+                padding: 0.3rem 0.7rem;
+            }
+        }
         @media (max-width: 600px) {
             .container {
                 padding: 2vw 0 2vw 0;
@@ -184,19 +221,21 @@
         <div class="nav-container">
             <a href="/" class="nav-brand">BIST Analiz</a>
             <a href="/tavsiye-hisse" class="nav-button">Tavsiye Hisse</a>
-            {% if user.is_authenticated %}
-                <span style="color:#fff; margin-left:20px; font-weight:600;">
-                    {% if user.first_name or user.last_name %}
-                        {{ user.first_name }} {{ user.last_name }}
-                    {% else %}
-                        {{ user.username }}
-                    {% endif %}
-                </span>
-                <a href="/cikis/" class="nav-button" style="background:#444; margin-left:10px;">Çıkış Yap</a>
-            {% else %}
-                <a href="/giris/" class="nav-button" style="background:#444; margin-left:10px;">Giriş Yap</a>
-                <a href="/kayıt/" class="nav-button" style="background:#444; margin-left:10px;">Kayıt Ol</a>
-            {% endif %}
+            <div class="nav-user-actions">
+                {% if user.is_authenticated %}
+                    <span style="color:#fff; margin-right:16px; font-weight:600;">
+                        {% if user.first_name or user.last_name %}
+                            {{ user.first_name }} {{ user.last_name }}
+                        {% else %}
+                            {{ user.username }}
+                        {% endif %}
+                    </span>
+                    <a href="/cikis/" class="nav-button logout-btn">Çıkış Yap</a>
+                {% else %}
+                    <a href="/giris/" class="nav-button login-btn">Giriş Yap</a>
+                    <a href="/kayıt/" class="nav-button register-btn">Kayıt Ol</a>
+                {% endif %}
+            </div>
         </div>
     </nav>
     <div class="container">
