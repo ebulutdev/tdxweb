@@ -11,3 +11,4 @@ gunicorn
 numpy>=1.24.3
 google-generativeai
 whitenoise
+psycopg2-binary
