@@ -26,6 +26,7 @@ from django.contrib.auth.models import User
 from django.contrib import messages
 from django.core.mail import send_mail
 import random
+import yfinance as yf
 
 # Logging setup
 logging.basicConfig(level=logging.INFO)
@@ -556,19 +557,24 @@ def chatbot(request):
 def process_user_message(message, user_id=None):
     """Process user message and generate appropriate response"""
     try:
-        stock_data = get_stock_info(message)
-        if stock_data:
-            return generate_stock_analysis(message, stock_data)
+        # Otomatik BIST hisse kodu algılama (başında $ olsa da)
+        match = re.search(r'\b\$?([A-Z]{3,5}\.IS)\b', message.upper())
+        symbol = match.group(1) if match else None
+        if symbol:
+            symbol = symbol.upper().strip().replace('$', '')  # Tamamen temizle
+            stock_data = get_stock_info(symbol)
+            if stock_data:
+                return generate_stock_analysis(symbol, stock_data)
         # Only apply rate limit for Gemini API/general conversation
         if user_id and not rate_limiter.is_allowed(user_id):
-            return "Üzgünüm, çok fazla istek aldım. Lütfen biraz bekleyip tekrar deneyin! 😅"
+            return "Üzgünüm, çok fazla istek aldım. Lütfen birkaç dakika sonra tekrar deneyin! 😅"
         return generate_conversation_response(message)
     except Exception as e:
         logger.error(f"Message processing error: {str(e)}")
         return random.choice(GREETING_MESSAGES)
 
 def get_stock_info(symbol):
-    """Get comprehensive stock information with curl_cffi session for yfinance and improved rate limit handling."""
+    symbol = symbol.upper().strip().replace('$', '')  # Tamamen temizle
     cache_key = f"stock_info_{symbol}"
     cached = cache.get(cache_key)
     if cached:
@@ -586,12 +592,12 @@ def get_stock_info(symbol):
         if not info['history'].empty:
             cache.set(cache_key, info, 60*30)  # 30 dakika cache
             return info
-        return None
+        return None  # Veri yoksa None dön
     except Exception as e:
         if 'rate limit' in str(e).lower() or 'too many requests' in str(e).lower():
             return {'error': 'Çok sık sorgu yapıldı, lütfen birkaç dakika sonra tekrar deneyin.'}
         logger.error(f"Stock info error: {str(e)}")
-        return None
+        return None  # Hata olursa da None dön
 
 def generate_stock_analysis(symbol, stock_data):
     """Kısa ve sohbet için uygun hisse özeti döndürür."""
@@ -704,7 +710,7 @@ def generate_conversation_response(message):
         1. Samimi ve arkadaşça bir tonda yanıt ver
         2. Emoji kullan
         3. Borsa ve finans konularında yardımcı ol
-        4. Gerektiğinde ek sorular sor
+        4. soru sorma kısa ve özlü yanıt ver.
         """
         
         response = requests.post(
