@@ -81,11 +81,17 @@ WSGI_APPLICATION = 'stockdb.wsgi.application'
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
 DATABASES = {
-    'default': dj_database_url.config(
-        default='postgresql://tdx_user:oShsAuqCRc6BRplMEC9NcClZfLcpv66z@dpg-d1fb4oemcj7s739kuurg-a.oregon-postgres.render.com:5432/tdx_db?sslmode=require',
-        conn_max_age=600,
-        ssl_require=True
-    )
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'tdx_db',
+        'USER': 'tdx_user',
+        'PASSWORD': 'oShsAuqCRc6BRplMEC9NcClZfLcpv66z',
+        'HOST': 'dpg-d1fb4oemcj7s739kuurg-a.oregon-postgres.render.com',
+        'PORT': '5432',
+        'OPTIONS': {
+            'sslmode': 'require',
+        },
+    }
 }
 
 # Eski ayar (gerekirse geri dönebilirsin)
