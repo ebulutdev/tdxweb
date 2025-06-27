@@ -492,7 +492,6 @@ def get_important_news(days=2):
     cache.set(cache_key, news_data, 60*10)  # 10 dakika cache
     return news_data
 
-@cache_page(60 * 5)
 def home(request):
     # Önemli haberleri çek
     important_news = get_important_news(days=2)
