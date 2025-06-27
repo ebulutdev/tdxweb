@@ -24,6 +24,8 @@ from django.views.decorators.http import require_GET
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.models import User
 from django.contrib import messages
+from django.core.mail import send_mail
+import random
 
 # Logging setup
 logging.basicConfig(level=logging.INFO)
@@ -767,25 +769,56 @@ def demo_view(request):
 @csrf_protect
 def kayit_view(request):
     if request.method == 'POST':
-        name = request.POST.get('name', '').strip()
-        email = request.POST.get('email')
-        password = request.POST.get('password')
-        password_confirm = request.POST.get('password_confirm')
-        if password != password_confirm:
-            messages.error(request, 'Şifreler eşleşmiyor.')
-            return render(request, 'kayıt.html')
-        if User.objects.filter(username=email).exists():
-            messages.error(request, 'Bu e-posta ile zaten bir hesap var.')
-            return render(request, 'kayıt.html')
-        # Ad ve soyadı ayır
-        if ' ' in name:
-            first_name, last_name = name.split(' ', 1)
+        if 'email_code' in request.POST:
+            # Kod doğrulama aşaması
+            input_code = request.POST.get('email_code')
+            session_code = request.session.get('email_code')
+            name = request.session.get('reg_name')
+            email = request.session.get('reg_email')
+            password = request.session.get('reg_password')
+            if input_code == session_code:
+                # Kullanıcıyı oluştur
+                if ' ' in name:
+                    first_name, last_name = name.split(' ', 1)
+                else:
+                    first_name, last_name = name, ''
+                user = User.objects.create_user(username=email, email=email, password=password, first_name=first_name, last_name=last_name)
+                user.save()
+                login(request, user)
+                # Temizle
+                for key in ['email_code', 'reg_name', 'reg_email', 'reg_password']:
+                    if key in request.session:
+                        del request.session[key]
+                return redirect('home')
+            else:
+                messages.error(request, 'Kod yanlış!')
+                return render(request, 'email_code.html')
         else:
-            first_name, last_name = name, ''
-        user = User.objects.create_user(username=email, email=email, password=password, first_name=first_name, last_name=last_name)
-        user.save()
-        login(request, user)
-        return redirect('home')
+            # İlk kayıt formu aşaması
+            name = request.POST.get('name', '').strip()
+            email = request.POST.get('email')
+            password = request.POST.get('password')
+            password_confirm = request.POST.get('password_confirm')
+            if password != password_confirm:
+                messages.error(request, 'Şifreler eşleşmiyor.')
+                return render(request, 'kayıt.html')
+            if User.objects.filter(username=email).exists():
+                messages.error(request, 'Bu e-posta ile zaten bir hesap var.')
+                return render(request, 'kayıt.html')
+            # Kod üret ve gönder
+            code = str(random.randint(100000, 999999))
+            request.session['email_code'] = code
+            request.session['reg_name'] = name
+            request.session['reg_email'] = email
+            request.session['reg_password'] = password
+            send_mail(
+                'TDXBOT E-posta Doğrulama Kodu',
+                f'Kayıt işlemini tamamlamak için doğrulama kodunuz: {code}',
+                None,
+                [email],
+                fail_silently=False,
+            )
+            return render(request, 'email_code.html')
     return render(request, 'kayıt.html')
 
 @csrf_protect

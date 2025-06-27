@@ -242,7 +242,7 @@
         {% block content %}{% endblock %}
         {% block news_section %}
         <div class="news-section">
-            <div class="news-title-main">İlgili Haberler</div>
+            <div class="news-title-main"></div>
             <div class="news-cards">
                 {% for news in all_news %}
                 <div class="news-card">
@@ -256,7 +256,7 @@
                     </div>
                 </div>
                 {% empty %}
-                <div style="color:#aaa;">Hiç haber bulunamadı.</div>
+                <div style="color:#aaa;"></div>
                 {% endfor %}
             </div>
         </div>

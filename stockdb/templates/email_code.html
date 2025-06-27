@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <title>E-posta Doğrulama</title>
+    <style>
+        body { background: #181818; color: #fff; font-family: 'Inter', Arial, sans-serif; display: flex; align-items: center; justify-content: center; min-height: 100vh; }
+        .container { background: #232323; padding: 2rem 2.5rem; border-radius: 16px; box-shadow: 0 4px 24px rgba(0,0,0,0.18); }
+        h2 { margin-bottom: 1.5rem; }
+        label { display: block; margin-bottom: 0.5rem; }
+        input[type="text"] { width: 100%; padding: 0.7rem; border-radius: 8px; border: none; margin-bottom: 1rem; font-size: 1.1rem; }
+        button { background: #1976d2; color: #fff; border: none; padding: 0.8rem 1.5rem; border-radius: 8px; font-size: 1rem; font-weight: 600; cursor: pointer; }
+        button:hover { background: #1565c0; }
+        .error { color: #ff6b6b; margin-bottom: 1rem; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>E-posta Doğrulama</h2>
+        <form method="post">
+            {% csrf_token %}
+            <label for="email_code">E-posta adresinize gelen kodu girin:</label>
+            <input type="text" name="email_code" id="email_code" required maxlength="6">
+            <button type="submit">Doğrula</button>
+        </form>
+        {% if messages %}
+            {% for message in messages %}
+                <div class="error">{{ message }}</div>
+            {% endfor %}
+        {% endif %}
+    </div>
+</body>
+</html> 
