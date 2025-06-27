@@ -8,7 +8,7 @@ import re
 import time
 import hashlib
 from django.http import HttpResponse, JsonResponse
-from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.csrf import csrf_exempt, csrf_protect
 from django.shortcuts import render, redirect, get_object_or_404
 from django.core.cache import cache
 from django.urls import reverse
@@ -21,6 +21,9 @@ from yfinance.data import YFRateLimitError
 from curl_cffi import requests as curl_requests
 from django.views.decorators.cache import cache_page
 from django.views.decorators.http import require_GET
+from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth.models import User
+from django.contrib import messages
 
 # Logging setup
 logging.basicConfig(level=logging.INFO)
@@ -762,8 +765,42 @@ def get_stock_data_view(request):
 def demo_view(request):
     return render(request, 'demo.html')
 
+@csrf_protect
 def kayit_view(request):
+    if request.method == 'POST':
+        name = request.POST.get('name')
+        email = request.POST.get('email')
+        password = request.POST.get('password')
+        password_confirm = request.POST.get('password_confirm')
+        if password != password_confirm:
+            messages.error(request, 'Şifreler eşleşmiyor.')
+            return render(request, 'kayıt.html')
+        if User.objects.filter(username=email).exists():
+            messages.error(request, 'Bu e-posta ile zaten bir hesap var.')
+            return render(request, 'kayıt.html')
+        user = User.objects.create_user(username=email, email=email, password=password, first_name=name)
+        user.save()
+        login(request, user)
+        return redirect('home')
     return render(request, 'kayıt.html')
+
+@csrf_protect
+def giris_view(request):
+    if request.method == 'POST':
+        email = request.POST.get('email')
+        password = request.POST.get('password')
+        user = authenticate(request, username=email, password=password)
+        if user is not None:
+            login(request, user)
+            return redirect('home')
+        else:
+            messages.error(request, 'E-posta veya şifre hatalı.')
+            return render(request, 'login.html')
+    return render(request, 'login.html')
+
+def cikis_view(request):
+    logout(request)
+    return redirect('home')
 
 def stock_card(request):
     symbol = request.GET.get('symbol')
