@@ -82,7 +82,7 @@ WSGI_APPLICATION = 'stockdb.wsgi.application'
 
 DATABASES = {
     'default': dj_database_url.config(
-        default='postgres://tdx_user:dShAuqRo6bRpjUME8NClZtLcpv06x@dpg-d1b4oemcj7s78a9kuurq-a.oregon-postgres.render.com:5432/tdx_db?sslmode=require',
+        default='postgresql://tdx_user:oShsAuqCRc6BRplMEC9NcClZfLcpv66z@dpg-d1fb4oemcj7s739kuurg-a.oregon-postgres.render.com:5432/tdx_db?sslmode=require',
         conn_max_age=600,
         ssl_require=True
     )
