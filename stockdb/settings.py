@@ -81,8 +81,15 @@ WSGI_APPLICATION = 'stockdb.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'tdx_db',
+        'USER': 'tdx_user',
+        'PASSWORD': 'dShAuqRo6bRpjUME8NClZtLcpv06x',
+        'HOST': 'dpg-d1b4oemcj7s78a9kuurq-a.oregon-postgres.render.com',
+        'PORT': '5432',
+        'OPTIONS': {
+            'sslmode': 'require',
+        },
     }
 }
 
