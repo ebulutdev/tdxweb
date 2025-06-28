@@ -1,5 +1,7 @@
 from django.contrib import admin
-from django.urls import path
+from django.urls import path, include
+from django.conf import settings
+from django.conf.urls.static import static
 from django.http import HttpResponse
 from . import views
 
@@ -21,4 +23,9 @@ urlpatterns = [
     path('stock-card/', views.stock_card, name='stock_card'),
     path('health/', health_check, name='health_check'),
     path('api/important-news/', views.important_news_api, name='important_news_api'),
-] 
+    path('stock-image-analysis/', views.stock_image_analysis_view, name='stock_image_analysis'),
+    path('stock-image-analysis/delete/<int:image_id>/', views.delete_stock_image, name='delete_stock_image'),
+]
+
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT) 

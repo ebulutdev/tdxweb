@@ -26,6 +26,7 @@ class RecommendedStock(models.Model):
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
     recommendation_text = models.TextField()
+    image = models.ImageField(upload_to='stock_images/', blank=True, null=True, verbose_name='Hisse Fotoğrafı')
 
     def __str__(self):
         return self.symbol
@@ -39,3 +40,21 @@ class QuestionAnswer(models.Model):
 
     def __str__(self):
         return f"{self.stock.symbol} - {self.question[:30]}..."
+
+class StockImage(models.Model):
+    title = models.CharField(max_length=200, verbose_name='Başlık')
+    image = models.ImageField(upload_to='stock_analysis_images/', verbose_name='PNG Fotoğraf')
+    description = models.TextField(blank=True, null=True, verbose_name='Açıklama')
+    gemini_analysis = models.TextField(blank=True, null=True, verbose_name='Gemini Analizi')
+    created_at = models.DateTimeField(auto_now_add=True)
+    is_analyzed = models.BooleanField(default=False, verbose_name='Analiz Edildi mi?')
+
+    def __str__(self):
+        return self.title
+
+    class Meta:
+        verbose_name = 'Hisse Analiz Görseli'
+        verbose_name_plural = 'Hisse Analiz Görselleri'
+        permissions = [
+            ("can_upload_stock_image", "Stok görseli yükleyebilir")
+        ]

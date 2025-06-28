@@ -15,7 +15,7 @@ from django.urls import reverse
 from bs4 import BeautifulSoup
 import feedparser
 from dateutil import parser as dateparser
-from .models import Stock, RecommendedStock, QuestionAnswer
+from .models import Stock, RecommendedStock, QuestionAnswer, StockImage
 from .utils import get_stock_data
 from yfinance.data import YFRateLimitError
 from curl_cffi import requests as curl_requests
@@ -27,6 +27,9 @@ from django.contrib import messages
 from django.core.mail import send_mail
 import random
 import yfinance as yf
+import google.generativeai as genai
+from PIL import Image
+from django.contrib.auth.decorators import login_required, permission_required
 
 # Logging setup
 logging.basicConfig(level=logging.INFO)
@@ -928,3 +931,63 @@ def important_news_api(request):
         for n in news
     ]
     return JsonResponse({'important_news': news_data}) 
+
+def analyze_stock_image_with_gemini(image_path):
+    try:
+        GEMINI_API_KEY = 'AIzaSyBSJJob1ovfUYHgyV4pbKGF0uBuL5v7VxQ'
+        genai.configure(api_key=GEMINI_API_KEY)
+        model = genai.GenerativeModel('gemini-1.5-flash')
+
+        image = Image.open(image_path)
+        image = image.convert('RGB')
+
+        prompt = """
+        Aşağıdaki görselde bir tablo var. Lütfen:
+        - Tablodaki tüm başlıkları ve satırları eksiksiz olarak oku.
+        - Tabloyu, başlıkları ve satırlarıyla birlikte, sadece HTML <table> etiketiyle döndür.
+        - Tabloyu profesyonel ve okunaklı yap: <table> etiketine border, başlık satırına <thead>, zebra (alternatif satır rengi) ve okunabilirlik için stil ekle.
+        - Tablo başlığını <caption> etiketiyle ekle (varsa).
+        - Sadece tabloyu döndür, başka açıklama veya yorum ekleme.
+        """
+
+        response = model.generate_content([prompt, image])
+        return response.text
+
+    except Exception as e:
+        logging.error(f"Gemini API error: {str(e)}")
+        return f"Analiz sırasında hata oluştu: {str(e)}"
+
+def stock_image_analysis_view(request):
+    """Hisse görsel analizi sayfası (yetkili kullanıcı yükleyebilir, diğerleri sadece görebilir)"""
+    can_upload = request.user.has_perm('stockdb.can_upload_stock_image')
+    if can_upload and request.method == 'POST':
+        title = request.POST.get('title')
+        description = request.POST.get('description')
+        image = request.FILES.get('image')
+        if title and image:
+            stock_image = StockImage.objects.create(
+                title=title,
+                description=description,
+                image=image
+            )
+            image_path = stock_image.image.path
+            analysis = analyze_stock_image_with_gemini(image_path)
+            stock_image.gemini_analysis = analysis
+            stock_image.is_analyzed = True
+            stock_image.save()
+            messages.success(request, 'Görsel başarıyla yüklendi ve analiz edildi!')
+            return redirect('stock_image_analysis')
+    stock_images = StockImage.objects.all().order_by('-created_at')
+    return render(request, 'stock_image_analysis.html', {
+        'stock_images': stock_images,
+        'can_upload': can_upload
+    })
+
+@login_required
+def delete_stock_image(request, image_id):
+    if not request.user.has_perm('stockdb.can_upload_stock_image'):
+        return HttpResponse('Yetkiniz yok.', status=403)
+    stock_image = get_object_or_404(StockImage, id=image_id)
+    stock_image.delete()
+    messages.success(request, 'Görsel başarıyla silindi!')
+    return redirect('stock_image_analysis') 

@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hisse Görsel Analizi - TDXBOT</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #1a1b2e;
+            --secondary-color: #232323;
+            --accent-color: #6c63ff;
+            --text-primary: #ffffff;
+            --text-secondary: #8a8d93;
+            --card-border: rgba(255, 255, 255, 0.1);
+            --gradient-primary: linear-gradient(135deg, #6c63ff 0%, #ff6b9d 100%);
+            --table-header-bg: #232a3b;
+            --table-header-text: #fff;
+            --table-row-bg: #232323;
+            --table-row-alt-bg: #181a24;
+            --table-border: #444a5a;
+            --table-caption: #6c63ff;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--primary-color);
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            background: var(--gradient-primary);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .header p {
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+        }
+
+        .upload-section {
+            background: var(--secondary-color);
+            border-radius: 16px;
+            padding: 30px;
+            margin-bottom: 40px;
+            border: 1px solid var(--card-border);
+        }
+
+        .upload-form {
+            display: grid;
+            gap: 20px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .form-group label {
+            font-weight: 600;
+            color: var(--text-secondary);
+        }
+
+        .form-group input,
+        .form-group textarea {
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid var(--card-border);
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--text-primary);
+            font-size: 1rem;
+        }
+
+        .form-group input:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: var(--accent-color);
+            box-shadow: 0 0 0 3px rgba(108, 99, 255, 0.2);
+        }
+
+        .upload-btn {
+            background: var(--gradient-primary);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .upload-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(108, 99, 255, 0.3);
+        }
+
+        .images-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 30px;
+        }
+
+        .image-card {
+            background: var(--secondary-color);
+            border-radius: 16px;
+            overflow: hidden;
+            border: 1px solid var(--card-border);
+            transition: transform 0.3s ease;
+        }
+
+        .image-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .image-header {
+            padding: 20px;
+            border-bottom: 1px solid var(--card-border);
+        }
+
+        .image-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .image-meta {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        .image-content {
+            padding: 20px;
+        }
+
+        .stock-image {
+            width: 100%;
+            height: 300px;
+            object-fit: cover;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .analysis-section {
+            margin-top: 20px;
+        }
+
+        .analysis-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 15px;
+            color: var(--accent-color);
+        }
+
+        .analysis-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .analysis-table th,
+        .analysis-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid var(--card-border);
+        }
+
+        .analysis-table th {
+            background: rgba(108, 99, 255, 0.1);
+            font-weight: 600;
+            color: var(--accent-color);
+        }
+
+        .analysis-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .status-analyzed {
+            background: rgba(76, 175, 80, 0.2);
+            color: #4caf50;
+        }
+
+        .status-pending {
+            background: rgba(255, 152, 0, 0.2);
+            color: #ff9800;
+        }
+
+        .no-images {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--text-secondary);
+        }
+
+        .no-images i {
+            font-size: 3rem;
+            margin-bottom: 20px;
+            opacity: 0.5;
+        }
+
+        @media (max-width: 768px) {
+            .images-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+        }
+
+        /* Gemini tablosu için özel stil */
+        .analysis-section table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 0 auto;
+            background: var(--table-row-bg);
+            border: 1.5px solid var(--table-border);
+            border-radius: 10px;
+            overflow: hidden;
+            font-size: 1rem;
+            color: var(--text-primary);
+            box-shadow: 0 2px 16px rgba(0,0,0,0.12);
+        }
+        .analysis-section caption {
+            caption-side: top;
+            font-size: 1.15rem;
+            font-weight: 700;
+            color: var(--table-caption);
+            padding: 0.7em 0 0.3em 0;
+            letter-spacing: 0.5px;
+        }
+        .analysis-section th, .analysis-section td {
+            padding: 12px 10px;
+            border: 1px solid var(--table-border);
+            text-align: left;
+        }
+        .analysis-section th {
+            background: var(--table-header-bg);
+            color: var(--table-header-text);
+            font-weight: 700;
+            letter-spacing: 0.5px;
+        }
+        .analysis-section tr {
+            background: var(--table-row-bg);
+            transition: background 0.2s;
+        }
+        .analysis-section tr:nth-child(even) {
+            background: var(--table-row-alt-bg);
+        }
+        .analysis-section tr:hover {
+            background: #2d3142;
+        }
+        .analysis-section td {
+            color: var(--text-primary);
+        }
+        /* Kod bloklarını gizle (```html ... ```) */
+        .analysis-section pre, .analysis-section code {
+            display: none !important;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1><i class="fas fa-chart-line"></i> Hisse Görsel Analizi</h1>
+            <p>Admin panelinden eklenen PNG görseller ve Gemini AI analizleri</p>
+        </div>
+
+        {% if can_upload %}
+        <div class="upload-section">
+            <h2 style="margin-bottom: 20px; color: var(--accent-color);">
+                <i class="fas fa-upload"></i> Yeni Görsel Yükle
+            </h2>
+            <form method="post" enctype="multipart/form-data" class="upload-form">
+                {% csrf_token %}
+                <div class="form-group">
+                    <label for="title">Başlık</label>
+                    <input type="text" id="title" name="title" required placeholder="Görsel başlığını girin">
+                </div>
+                <div class="form-group">
+                    <label for="description">Açıklama (İsteğe bağlı)</label>
+                    <textarea id="description" name="description" rows="3" placeholder="Görsel hakkında açıklama ekleyin"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="image">PNG Fotoğraf</label>
+                    <input type="file" id="image" name="image" accept="image/png" required>
+                </div>
+                <button type="submit" class="upload-btn">
+                    <i class="fas fa-upload"></i> Yükle ve Analiz Et
+                </button>
+            </form>
+        </div>
+        {% endif %}
+
+        <div class="images-grid">
+            {% for stock_image in stock_images %}
+            <div class="image-card">
+                <div class="image-header">
+                    <div class="image-title">{{ stock_image.title }}</div>
+                    <div class="image-meta">
+                        <i class="fas fa-calendar"></i> {{ stock_image.created_at|date:"d M Y H:i" }}
+                        <span class="status-badge {% if stock_image.is_analyzed %}status-analyzed{% else %}status-pending{% endif %}">
+                            {% if stock_image.is_analyzed %}
+                                <i class="fas fa-check"></i> Analiz Edildi
+                            {% else %}
+                                <i class="fas fa-clock"></i> Bekliyor
+                            {% endif %}
+                        </span>
+                        {% if can_upload %}
+                        <form method="post" action="{% url 'delete_stock_image' stock_image.id %}" style="display:inline; float:right; margin-left:10px;">
+                            {% csrf_token %}
+                            <button type="submit" onclick="return confirm('Bu görseli silmek istediğinize emin misiniz?');" style="background:#ff6b6b; color:#fff; border:none; border-radius:6px; padding:6px 14px; font-weight:600; cursor:pointer; margin-left:10px;">
+                                <i class="fas fa-trash"></i> Sil
+                            </button>
+                        </form>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="image-content">
+                    {# Görsel gösterilmeyecek #}
+                    {# <img src="{{ stock_image.image.url }}" alt="{{ stock_image.title }}" class="stock-image"> #}
+                    {% if stock_image.description %}
+                    <div style="margin-bottom: 15px; color: var(--text-secondary);">
+                        <strong>Açıklama:</strong> {{ stock_image.description }}
+                    </div>
+                    {% endif %}
+
+                    {% if stock_image.is_analyzed and stock_image.gemini_analysis %}
+                    <div class="analysis-section">
+                        <div class="analysis-title">
+                            <i class="fas fa-robot"></i> Gemini AI Analizi
+                        </div>
+                        <div style="background: rgba(255, 255, 255, 0.05); padding: 15px; border-radius: 8px; white-space: pre-line;">
+                            {{ stock_image.gemini_analysis|safe }}
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% empty %}
+            <div class="no-images">
+                <i class="fas fa-image"></i>
+                <h3>Henüz görsel yüklenmemiş</h3>
+                <p>Admin panelinden görsel ekleyin.</p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</body>
+</html> 
