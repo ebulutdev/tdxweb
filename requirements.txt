@@ -13,3 +13,4 @@ google-generativeai
 whitenoise
 psycopg2-binary
 dj-database-url
+Pillow>=10.0.0

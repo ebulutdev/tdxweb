@@ -28,7 +28,15 @@ from django.core.mail import send_mail
 import random
 import yfinance as yf
 import google.generativeai as genai
-from PIL import Image
+
+# PIL import'unu koşullu hale getir
+try:
+    from PIL import Image
+    PIL_AVAILABLE = True
+except ImportError:
+    PIL_AVAILABLE = False
+    print("PIL (Pillow) modülü bulunamadı. Görsel analizi özelliği devre dışı.")
+
 from django.contrib.auth.decorators import login_required, permission_required
 
 # Logging setup
@@ -933,6 +941,9 @@ def important_news_api(request):
     return JsonResponse({'important_news': news_data}) 
 
 def analyze_stock_image_with_gemini(image_path):
+    if not PIL_AVAILABLE:
+        return "PIL (Pillow) modülü bulunamadı. Görsel analizi özelliği devre dışı."
+    
     try:
         GEMINI_API_KEY = 'AIzaSyBSJJob1ovfUYHgyV4pbKGF0uBuL5v7VxQ'
         genai.configure(api_key=GEMINI_API_KEY)
@@ -961,6 +972,10 @@ def stock_image_analysis_view(request):
     """Hisse görsel analizi sayfası (yetkili kullanıcı yükleyebilir, diğerleri sadece görebilir)"""
     can_upload = request.user.has_perm('stockdb.can_upload_stock_image')
     if can_upload and request.method == 'POST':
+        if not PIL_AVAILABLE:
+            messages.error(request, 'PIL (Pillow) modülü bulunamadı. Görsel analizi özelliği devre dışı.')
+            return redirect('stock_image_analysis')
+            
         title = request.POST.get('title')
         description = request.POST.get('description')
         image = request.FILES.get('image')
@@ -980,7 +995,8 @@ def stock_image_analysis_view(request):
     stock_images = StockImage.objects.all().order_by('-created_at')
     return render(request, 'stock_image_analysis.html', {
         'stock_images': stock_images,
-        'can_upload': can_upload
+        'can_upload': can_upload,
+        'pil_available': PIL_AVAILABLE
     })
 
 @login_required

@@ -304,6 +304,14 @@
             <h2 style="margin-bottom: 20px; color: var(--accent-color);">
                 <i class="fas fa-upload"></i> Yeni Görsel Yükle
             </h2>
+            
+            {% if not pil_available %}
+            <div style="background: rgba(255, 152, 0, 0.1); border: 1px solid #ff9800; border-radius: 8px; padding: 15px; margin-bottom: 20px; color: #ff9800;">
+                <i class="fas fa-exclamation-triangle"></i>
+                <strong>Uyarı:</strong> PIL (Pillow) modülü bulunamadı. Görsel analizi özelliği devre dışı.
+            </div>
+            {% endif %}
+            
             <form method="post" enctype="multipart/form-data" class="upload-form">
                 {% csrf_token %}
                 <div class="form-group">
@@ -318,8 +326,13 @@
                     <label for="image">PNG Fotoğraf</label>
                     <input type="file" id="image" name="image" accept="image/png" required>
                 </div>
-                <button type="submit" class="upload-btn">
-                    <i class="fas fa-upload"></i> Yükle ve Analiz Et
+                <button type="submit" class="upload-btn" {% if not pil_available %}disabled{% endif %}>
+                    <i class="fas fa-upload"></i> 
+                    {% if pil_available %}
+                        Yükle ve Analiz Et
+                    {% else %}
+                        Analiz Özelliği Devre Dışı
+                    {% endif %}
                 </button>
             </form>
         </div>
