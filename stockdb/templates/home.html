@@ -6,7 +6,10 @@
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>En Çok Hacimli 10 Türk Hissesi</title>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
@@ -159,29 +162,44 @@
                 padding: 12px 18px;
                 font-size: 0.98rem;
             }
+            .cta-container {
+                flex-direction: column;
+                gap: 0.8rem;
+            }
+            .ai-hero-btn-pro,
+            .ai-hero-btn-secondary {
+                width: 100%;
+                font-size: 1rem;
+                padding: 14px 20px;
+                justify-content: center;
+            }
         }
         @media (max-width: 600px) {
             .ai-hero-pro {
                 margin: 1rem auto;
-                padding: 1.2rem 0.5rem;
+                padding: 1.5rem 1rem;
+                border-radius: 16px;
             }
             .ai-hero-title-pro {
-                font-size: 1.6rem;
-                line-height: 1.15;
+                font-size: 1.8rem;
+                line-height: 1.2;
             }
             .ai-hero-title-pro .ai-hero-sub-pro {
-                font-size: 1.05rem;
+                font-size: 1.1rem;
+                margin-top: 0.3em;
             }
             .ai-hero-badge-pro {
                 min-width: 0;
-                padding: 10px 10px;
-                font-size: 0.92rem;
-                margin-bottom: 18px;
+                padding: 10px 16px;
+                font-size: 0.9rem;
+                margin-bottom: 20px;
+                border-radius: 12px;
             }
             .ai-hero-desc-pro {
-                font-size: 0.98rem;
-                padding: 0 0.2rem;
-                margin-bottom: 24px;
+                font-size: 0.95rem;
+                padding: 0;
+                margin-bottom: 20px;
+                line-height: 1.6;
             }
             .cta-container {
                 flex-direction: column;
@@ -190,40 +208,115 @@
             .ai-hero-btn-pro,
             .ai-hero-btn-secondary {
                 width: 100%;
-                font-size: 1rem;
-                padding: 13px 0;
+                font-size: 0.95rem;
+                padding: 12px 16px;
                 justify-content: center;
+                border-radius: 10px;
             }
-            .dashboard-header {
+            .container {
                 padding: 1rem;
             }
+            .dashboard-header {
+                padding: 1.5rem 1rem;
+                border-radius: 16px;
+                margin-bottom: 2rem;
+            }
             .dashboard-header h1 {
-                font-size: 1.2rem;
+                font-size: 1.8rem;
+                margin-bottom: 0.8rem;
+            }
+            .dashboard-header p {
+                font-size: 1rem;
             }
             .stock-grid {
                 grid-template-columns: 1fr;
                 gap: 1rem;
-                padding: 0.2rem;
+                padding: 0.5rem;
+            }
+            .stock-card {
+                padding: 1.2rem;
+                border-radius: 16px;
+            }
+            .stat-item {
+                padding: 0.8rem;
+            }
+        }
+        @media (max-width: 480px) {
+            .ai-hero-pro {
+                margin: 0.5rem auto;
+                padding: 1.2rem 0.8rem;
+                border-radius: 12px;
+            }
+            .ai-hero-title-pro {
+                font-size: 1.5rem;
+                line-height: 1.3;
+            }
+            .ai-hero-title-pro .ai-hero-sub-pro {
+                font-size: 1rem;
+            }
+            .ai-hero-badge-pro {
+                font-size: 0.85rem;
+                padding: 8px 12px;
+                margin-bottom: 15px;
+                border-radius: 10px;
+            }
+            .ai-hero-desc-pro {
+                font-size: 0.9rem;
+                margin-bottom: 15px;
+            }
+            .ai-hero-btn-pro,
+            .ai-hero-btn-secondary {
+                font-size: 0.9rem;
+                padding: 10px 14px;
+                border-radius: 8px;
+            }
+            .container {
+                padding: 0.8rem;
+            }
+            .dashboard-header {
+                padding: 1.2rem 0.8rem;
+                border-radius: 12px;
+                margin-bottom: 1.5rem;
+            }
+            .dashboard-header h1 {
+                font-size: 1.5rem;
+            }
+            .dashboard-header p {
+                font-size: 0.9rem;
+            }
+            .stock-grid {
+                gap: 0.8rem;
+                padding: 0.3rem;
             }
             .stock-card {
                 padding: 1rem;
-            }
-            .stat-item {
-                padding: 0.7rem;
+                border-radius: 12px;
             }
         }
         @media (max-width: 400px) {
             .ai-hero-title-pro {
-                font-size: 1.1rem;
+                font-size: 1.3rem;
             }
             .ai-hero-badge-pro {
                 font-size: 0.8rem;
-                padding: 7px 5px;
+                padding: 7px 10px;
             }
             .ai-hero-btn-pro,
             .ai-hero-btn-secondary {
-                font-size: 0.95rem;
-                padding: 10px 0;
+                font-size: 0.85rem;
+                padding: 9px 12px;
+            }
+            .container {
+                padding: 0.5rem;
+            }
+            .dashboard-header {
+                padding: 1rem 0.6rem;
+            }
+            .dashboard-header h1 {
+                font-size: 1.3rem;
+            }
+            .stock-card {
+                padding: 0.8rem;
             }
         }
         :root {
@@ -468,12 +561,9 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: linear-gradient(90deg, 
-                transparent,
-                rgba(59, 130, 246, 0.2),
-                transparent);
-            transform: translateX(-100%);
-            transition: transform 0.5s ease;
+            background: linear-gradient(45deg, transparent, rgba(255,255,255,0.1), transparent);
+            transform: rotate(45deg);
+            animation: shine 3s infinite;
         }
 
         .analyze-btn:hover::before {
@@ -553,8 +643,106 @@
             }
 
             .chatbot-icon {
-                width: 48px;
-                height: 48px;
+                width: 56px;
+                height: 56px;
+                bottom: 20px;
+                right: 20px;
+            }
+            .chatbot-icon i {
+                font-size: 24px;
+            }
+            .chatbot-modal {
+                width: 95vw;
+                max-width: 95vw;
+                height: 75vh;
+                min-height: 400px;
+                right: 2.5vw;
+                left: 2.5vw;
+                bottom: 80px;
+                border-radius: 20px;
+                padding: 0;
+            }
+            .chatbot-header {
+                padding: 15px;
+            }
+            .chatbot-header-title img {
+                width: 32px;
+                height: 32px;
+            }
+            .chatbot-header-info h3 {
+                font-size: 1.1rem;
+            }
+            .chatbot-header-info span {
+                font-size: 0.85rem;
+            }
+            .chatbot-messages {
+                padding: 15px;
+                font-size: 0.95rem;
+            }
+            .chatbot-input {
+                padding: 15px;
+            }
+            .chatbot-input input {
+                font-size: 0.95rem;
+                padding: 12px 16px;
+            }
+            .chatbot-input button {
+                padding: 12px 20px;
+                font-size: 0.95rem;
+            }
+            .message-content {
+                font-size: 0.95rem;
+                padding: 12px 16px;
+                max-width: 85%;
+            }
+            
+            .news-table th, .news-table td {
+                padding: 8px;
+                font-size: 0.9em;
+            }
+            
+            .news-summary {
+                display: none;
+            }
+            
+            .important-news-section {
+                margin: 1.5rem 0;
+                padding: 0.8rem;
+                border-radius: 10px;
+            }
+            
+            .important-news-section h2 {
+                font-size: 1.5rem;
+                margin-bottom: 1rem;
+            }
+            
+            .important-news-list {
+                gap: 1rem;
+                padding: 0.3rem;
+            }
+            
+            .important-news-card {
+                padding: 0.8rem 1rem;
+                border-radius: 10px;
+            }
+            
+            .news-title {
+                font-size: 1rem;
+            }
+            
+            .news-summary {
+                font-size: 0.9rem;
+            }
+            
+            .news-link {
+                font-size: 0.85rem;
+            }
+        }
+        
+        @media (max-width: 600px) {
+            .chatbot-icon {
+                width: 52px;
+                height: 52px;
                 bottom: 16px;
                 right: 16px;
             }
@@ -570,7 +758,6 @@
                 left: 1vw;
                 bottom: 70px;
                 border-radius: 16px;
-                padding: 0;
             }
             .chatbot-header {
                 padding: 12px;
@@ -587,22 +774,158 @@
             }
             .chatbot-messages {
                 padding: 10px;
-                font-size: 0.95rem;
+                font-size: 0.9rem;
             }
             .chatbot-input {
                 padding: 10px;
             }
             .chatbot-input input {
-                font-size: 0.95rem;
-                padding: 10px;
+                font-size: 0.9rem;
+                padding: 10px 14px;
             }
             .chatbot-input button {
                 padding: 10px 16px;
-                font-size: 0.95rem;
+                font-size: 0.9rem;
             }
             .message-content {
-                font-size: 0.95rem;
+                font-size: 0.9rem;
                 padding: 10px 14px;
+                max-width: 90%;
+            }
+            
+            .important-news-section {
+                margin: 1rem 0;
+                padding: 0.6rem;
+                border-radius: 8px;
+            }
+            
+            .important-news-section h2 {
+                font-size: 1.3rem;
+                margin-bottom: 0.8rem;
+            }
+            
+            .important-news-list {
+                gap: 0.8rem;
+                padding: 0.2rem;
+            }
+            
+            .important-news-card {
+                padding: 0.7rem 0.8rem;
+                border-radius: 8px;
+            }
+            
+            .news-row {
+                gap: 0.5rem;
+            }
+            
+            .news-title {
+                font-size: 0.95rem;
+            }
+            
+            .news-summary {
+                font-size: 0.85rem;
+            }
+            
+            .news-link {
+                font-size: 0.8rem;
+            }
+            
+            .category-badge {
+                font-size: 0.75em;
+                padding: 3px 6px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .chatbot-icon {
+                width: 48px;
+                height: 48px;
+                bottom: 12px;
+                right: 12px;
+            }
+            .chatbot-icon i {
+                font-size: 20px;
+            }
+            .chatbot-modal {
+                width: 100vw;
+                max-width: 100vw;
+                height: 65vh;
+                min-height: 300px;
+                right: 0;
+                left: 0;
+                bottom: 60px;
+                border-radius: 12px;
+            }
+            .chatbot-header {
+                padding: 10px;
+            }
+            .chatbot-header-title img {
+                width: 24px;
+                height: 24px;
+            }
+            .chatbot-header-info h3 {
+                font-size: 0.9rem;
+            }
+            .chatbot-header-info span {
+                font-size: 0.75rem;
+            }
+            .chatbot-messages {
+                padding: 8px;
+                font-size: 0.85rem;
+            }
+            .chatbot-input {
+                padding: 8px;
+            }
+            .chatbot-input input {
+                font-size: 0.85rem;
+                padding: 8px 12px;
+            }
+            .chatbot-input button {
+                padding: 8px 12px;
+                font-size: 0.85rem;
+            }
+            .message-content {
+                font-size: 0.85rem;
+                padding: 8px 12px;
+                max-width: 95%;
+            }
+            
+            .important-news-section {
+                margin: 0.8rem 0;
+                padding: 0.5rem;
+                border-radius: 6px;
+            }
+            
+            .important-news-section h2 {
+                font-size: 1.1rem;
+                margin-bottom: 0.6rem;
+            }
+            
+            .important-news-list {
+                gap: 0.6rem;
+                padding: 0.1rem;
+            }
+            
+            .important-news-card {
+                padding: 0.6rem 0.6rem;
+                border-radius: 6px;
+            }
+            
+            .news-title {
+                font-size: 0.9rem;
+            }
+            
+            .news-summary {
+                font-size: 0.8rem;
+            }
+            
+            .news-link {
+                font-size: 0.75rem;
+            }
+            
+            .category-badge {
+                font-size: 0.7em;
+                padding: 2px 5px;
             }
         }
 
@@ -914,6 +1237,7 @@
             top: 0;
             z-index: 1000;
             backdrop-filter: blur(10px);
+            margin-bottom: 2rem;
         }
 
         .nav-container {
@@ -1280,22 +1604,318 @@
             .news-summary {
                 display: none;
             }
+            
+            .important-news-section {
+                margin: 1.5rem 0;
+                padding: 0.8rem;
+                border-radius: 10px;
+            }
+            
+            .important-news-section h2 {
+                font-size: 1.5rem;
+                margin-bottom: 1rem;
+            }
+            
+            .important-news-list {
+                gap: 1rem;
+                padding: 0.3rem;
+            }
+            
+            .important-news-card {
+                padding: 0.8rem 1rem;
+                border-radius: 10px;
+            }
+            
+            .news-title {
+                font-size: 1rem;
+            }
+            
+            .news-summary {
+                font-size: 0.9rem;
+            }
+            
+            .news-link {
+                font-size: 0.85rem;
+            }
+        }
+        
+        @media (max-width: 600px) {
+            .important-news-section {
+                margin: 1rem 0;
+                padding: 0.6rem;
+                border-radius: 8px;
+            }
+            
+            .important-news-section h2 {
+                font-size: 1.3rem;
+                margin-bottom: 0.8rem;
+            }
+            
+            .important-news-list {
+                gap: 0.8rem;
+                padding: 0.2rem;
+            }
+            
+            .important-news-card {
+                padding: 0.7rem 0.8rem;
+                border-radius: 8px;
+            }
+            
+            .news-row {
+                gap: 0.5rem;
+            }
+            
+            .news-title {
+                font-size: 0.95rem;
+            }
+            
+            .news-summary {
+                font-size: 0.85rem;
+            }
+            
+            .news-link {
+                font-size: 0.8rem;
+            }
+            
+            .category-badge {
+                font-size: 0.75em;
+                padding: 3px 6px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .important-news-section {
+                margin: 0.8rem 0;
+                padding: 0.5rem;
+                border-radius: 6px;
+            }
+            
+            .important-news-section h2 {
+                font-size: 1.1rem;
+                margin-bottom: 0.6rem;
+            }
+            
+            .important-news-list {
+                gap: 0.6rem;
+                padding: 0.1rem;
+            }
+            
+            .important-news-card {
+                padding: 0.6rem 0.6rem;
+                border-radius: 6px;
+            }
+            
+            .news-title {
+                font-size: 0.9rem;
+            }
+            
+            .news-summary {
+                font-size: 0.8rem;
+            }
+            
+            .news-link {
+                font-size: 0.75rem;
+            }
+            
+            .category-badge {
+                font-size: 0.7em;
+                padding: 2px 5px;
+            }
         }
 
-        .news-expectation {
-            font-size: 0.9em;
-            line-height: 1.3;
-            color: #444;
-            max-width: 200px;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
+        /* Mobile-specific improvements */
+        @media (max-width: 768px) {
+            /* Improve touch targets */
+            .ai-hero-btn-pro,
+            .ai-hero-btn-secondary,
+            .analyze-btn,
+            .chatbot-input button {
+                min-height: 44px; /* Apple's recommended minimum touch target size */
+            }
+            
+            /* Better spacing for mobile */
+            .stock-card {
+                margin-bottom: 1rem;
+            }
+            
+            /* Improve text readability */
+            .stock-price {
+                font-size: 1.8rem;
+            }
+            
+            .stock-symbol {
+                font-size: 1.2rem;
+            }
+            
+            .stock-company {
+                font-size: 0.9rem;
+            }
+            
+            /* Better button spacing */
+            .cta-container {
+                gap: 0.8rem;
+            }
+            
+            /* Improve card animations for mobile */
+            .stock-card:hover {
+                transform: translateY(-2px);
+            }
+        }
+        
+        @media (max-width: 600px) {
+            /* Further improve touch targets */
+            .ai-hero-btn-pro,
+            .ai-hero-btn-secondary,
+            .analyze-btn,
+            .chatbot-input button {
+                min-height: 40px;
+            }
+            
+            /* Better text sizing */
+            .stock-price {
+                font-size: 1.6rem;
+            }
+            
+            .stock-symbol {
+                font-size: 1.1rem;
+            }
+            
+            /* Improve spacing */
+            .stats-container {
+                gap: 0.8rem;
+            }
+            
+            .stat-item {
+                padding: 0.8rem 0.6rem;
+            }
+            
+            /* Better card layout */
+            .stock-card {
+                margin-bottom: 0.8rem;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            /* Optimize for very small screens */
+            .ai-hero-btn-pro,
+            .ai-hero-btn-secondary,
+            .analyze-btn,
+            .chatbot-input button {
+                min-height: 36px;
+                font-size: 0.85rem;
+            }
+            
+            /* Compact layout */
+            .stock-price {
+                font-size: 1.4rem;
+            }
+            
+            .stock-symbol {
+                font-size: 1rem;
+            }
+            
+            .stats-container {
+                gap: 0.6rem;
+            }
+            
+            .stat-item {
+                padding: 0.6rem 0.4rem;
+            }
+            
+            .stat-label {
+                font-size: 0.8rem;
+            }
+            
+            .stat-value {
+                font-size: 1rem;
+            }
+            
+            /* Better spacing for very small screens */
+            .stock-card {
+                margin-bottom: 0.6rem;
+                padding: 0.8rem;
+            }
+            
+            .stock-price-container {
+                padding: 1rem;
+                margin-bottom: 1rem;
+            }
+        }
+        
+        /* Improve loading states for mobile */
+        @media (max-width: 768px) {
+            .loading {
+                text-align: center;
+                padding: 2rem 1rem;
+                color: var(--text-secondary);
+                font-size: 0.9rem;
+            }
+            
+            .error {
+                text-align: center;
+                padding: 2rem 1rem;
+                color: var(--danger-color);
+                font-size: 0.9rem;
+            }
+        }
+        
+        /* Better scrollbar for mobile */
+        @media (max-width: 768px) {
+            ::-webkit-scrollbar {
+                width: 6px;
+            }
+            
+            ::-webkit-scrollbar-thumb {
+                background: var(--accent-primary);
+                border-radius: 3px;
+            }
         }
 
-        .news-table td span[title] {
-            cursor: help;
+        .nav-hamburger {
+            display: none;
+            background: none;
+            border: none;
+            color: #fff;
+            font-size: 2rem;
+            cursor: pointer;
         }
-
+        @media (max-width: 700px) {
+            .nav-menu {
+                display: none;
+                position: absolute;
+                top: 60px;
+                right: 16px;
+                background: #18181c;
+                border-radius: 12px;
+                box-shadow: 0 4px 24px rgba(0,0,0,0.2);
+                flex-direction: column;
+                gap: 0.5rem;
+                padding: 1rem 1.2rem;
+                z-index: 2000;
+                min-width: 160px;
+                animation: fadeInMenu 0.3s;
+            }
+            .nav-menu.active {
+                display: flex;
+            }
+            .nav-hamburger {
+                display: block;
+            }
+            .nav-container {
+                position: relative;
+            }
+            .nav-button {
+                width: 100%;
+                text-align: left;
+                margin: 0.2rem 0;
+                font-size: 1rem;
+                padding: 12px 0.8rem;
+            }
+        }
+        @keyframes fadeInMenu {
+            from { opacity: 0; transform: translateY(-10px);}
+            to { opacity: 1; transform: translateY(0);}
+        }
         .important-news-list {
             display: flex;
             flex-direction: column;
@@ -1303,14 +1923,20 @@
             padding: 0.5rem;
         }
         .important-news-card {
-            background: #1e222d;
-            border-radius: 12px;
-            padding: 1rem 1.2rem;
-            box-shadow: 0 2px 8px rgba(30,34,90,0.08);
-            border: 1px solid #232323;
+            background: linear-gradient(135deg, #18181c 0%, #23233a 100%);
+            border-radius: 18px;
+            padding: 1.2rem 1.5rem;
+            box-shadow: 0 4px 24px 0 rgba(59, 130, 246, 0.10), 0 1.5px 18px 0 rgba(24, 24, 28, 0.10);
+            border: 1.5px solid #23233a;
             display: flex;
             flex-direction: column;
-            gap: 0.5rem;
+            gap: 0.7rem;
+            transition: box-shadow 0.2s, border 0.2s, transform 0.15s;
+        }
+        .important-news-card:hover {
+            box-shadow: 0 8px 32px 0 rgba(59, 130, 246, 0.18), 0 3px 12px 0 rgba(24, 24, 28, 0.18);
+            border: 1.5px solid #3b82f6;
+            transform: translateY(-2px) scale(1.012);
         }
         .news-row {
             display: flex;
@@ -1319,52 +1945,71 @@
             gap: 0.7rem;
             flex-wrap: wrap;
         }
+        .category-badge {
+            font-size: 0.92em;
+            font-weight: 600;
+            padding: 4px 12px;
+            border-radius: 6px;
+            margin-right: 0.5rem;
+            letter-spacing: 0.01em;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+        }
         .news-title {
-            font-size: 1.08rem;
+            font-size: 1.13rem;
             font-weight: 700;
-            color: #3b82f6;
-            word-break: break-word;
+            color: #fff;
             margin: 0.2rem 0;
+            word-break: break-word;
         }
         .news-summary {
-            font-size: 0.97rem;
-            color: #a0a0a0;
-            margin-top: 0.3rem;
+            font-size: 1.01rem;
+            color: #bfc7d5;
+            margin-top: 0.2rem;
             word-break: break-word;
         }
-        .news-link {
+        .news-source {
             color: #3b82f6;
-            font-size: 0.93rem;
+            font-size: 0.97rem;
+            font-weight: 600;
+        }
+        .news-link {
+            color: #60a5fa;
+            font-size: 0.97rem;
             margin-left: 0.5rem;
+            font-weight: 500;
+        }
+        .news-date {
+            color: #bfc7d5;
+            font-size: 0.93rem;
+            font-weight: 500;
         }
         @media (max-width: 600px) {
-            .important-news-list {
-                gap: 0.7rem;
-                padding: 0.2rem;
-            }
             .important-news-card {
-                padding: 0.7rem 0.4rem;
-                border-radius: 9px;
+                padding: 0.8rem 0.6rem;
+                border-radius: 12px;
             }
             .news-title {
                 font-size: 1rem;
             }
             .news-summary, .news-link {
-                font-size: 0.85rem;
+                font-size: 0.89rem;
+            }
+            .category-badge {
+                font-size: 0.8em;
+                padding: 3px 8px;
             }
         }
     </style>
 </head>
-<body>
-    <div class="ai-hero-pro">
+<body><div class="ai-hero-pro">
         <div class="glow-effect"></div>
         <div class="ai-hero-badge-pro animate-slide-down">
             <i class="fas fa-chart-line"></i>
-            Türkiye'nin En Gelişmiş Borsa İstanbul Analiz Platformu
+            Türkiye'nin Borsa İstanbul Analiz Platformu
         </div>
         <h1 class="ai-hero-title-pro animate-fade-in">
             TDX Analytics 
-            <span class="ai-hero-sub-pro glowing-text">Profesyonel Borsa Asistanı</span>
+            <span class="ai-hero-sub-pro glowing-text">Dijital Borsa Asistanı</span>
         </h1>
         <p class="ai-hero-desc-pro animate-fade-in-up">
             Yapay zeka destekli gelişmiş analitik araçlar, gerçek zamanlı BIST verileri ve<br>
@@ -1376,14 +2021,14 @@
             </a>
             <a href="/demo" class="ai-hero-btn-secondary">Demo İncele</a>
             <a href="/stock-image-analysis/" class="ai-hero-btn-pro" style="background: linear-gradient(90deg, #6c63ff 0%, #ff6b9d 100%); margin-left: 0.5rem;">
-                <i class="fas fa-table"></i> Görselden Tablo Analizi
+                <i class="fas fa-table"></i> Prim Potansiyelli Hisse Analizi
             </a>
         </div>
     </div>
     <div class="container">
         <header class="dashboard-header">
            
-            <p>BIST'in en çok işlem gören hisselerinin canlı market verileri ve detaylı analizleri</p>
+            <p>BIST'in en çok işlem gören bazı hisselerinin canlı market verileri ve detaylı analizleri</p>
         </header>
 
         <div class="stock-grid" id="stock-grid">
@@ -1539,6 +2184,38 @@
         // Initial greeting
         document.addEventListener('DOMContentLoaded', () => {
             addMessage('Merhaba! Ben TDX AI Premium Bot. Size nasıl yardımcı olabilirim? Hisse Analizi için hisse sonuna .ıs ekleyin. örnek: MIATK.IS (Buradaki bilgiler yatırım tavsiyesi niteliği taşımaz.) 😊');
+            
+            // Mobile-specific improvements
+            if (window.innerWidth <= 768) {
+                // Improve touch interactions
+                document.addEventListener('touchstart', function() {}, {passive: true});
+                
+                // Better scroll behavior for mobile
+                const smoothScrollElements = document.querySelectorAll('a[href^="#"]');
+                smoothScrollElements.forEach(link => {
+                    link.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        const target = document.querySelector(this.getAttribute('href'));
+                        if (target) {
+                            target.scrollIntoView({
+                                behavior: 'smooth',
+                                block: 'start'
+                            });
+                        }
+                    });
+                });
+                
+                // Improve button touch feedback
+                const buttons = document.querySelectorAll('.ai-hero-btn-pro, .ai-hero-btn-secondary, .analyze-btn');
+                buttons.forEach(button => {
+                    button.addEventListener('touchstart', function() {
+                        this.style.transform = 'scale(0.95)';
+                    });
+                    button.addEventListener('touchend', function() {
+                        this.style.transform = '';
+                    });
+                });
+            }
         });
 
         function scrollToStocks(event) {
@@ -1593,6 +2270,11 @@
                     newsList.innerHTML = '<div class="important-news-card">Haberler yüklenemedi.</div>';
                 });
         });
+
+        function toggleMobileMenu() {
+            const menu = document.querySelector('.nav-menu');
+            menu.classList.toggle('active');
+        }
     </script>
 </body>
 </html>

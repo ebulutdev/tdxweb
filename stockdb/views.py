@@ -676,10 +676,21 @@ Kullanıcıya kısa, samimi ve maddeler halinde bilgi ver. Yatırım tavsiyesi v
             }
         )
         result = response.json()
-        return result['candidates'][0]['content']['parts'][0]['text']
+        analysis = result['candidates'][0]['content']['parts'][0]['text'] if 'candidates' in result else 'Analiz alınamadı.'
+        # Kod bloğu işaretlerini daha güvenli temizle
+        analysis = analysis.strip()
+        analysis = re.sub(r'^```html\s*', '', analysis, flags=re.IGNORECASE)
+        analysis = re.sub(r'```\s*$', '', analysis)
+        analysis = analysis.strip()
+        cache_key_raw = f"analysis_{symbol}_{str(closes)}_{str(dates)}"
+        cache_key = 'analysis_' + hashlib.sha256(cache_key_raw.encode('utf-8')).hexdigest()
+        cache.set(cache_key, analysis, 60*60)  # 1 saat cache
+        return JsonResponse({'status': 'success', 'data': {'analysis': analysis, 'cached': False}})
     except Exception as e:
         logger.error(f"AI analysis error: {str(e)}")
-        return "Analiz oluşturulurken bir hata oluştu, ama elimdeki verilere göre dikkatli olmanızı öneririm! 🤔"
+        return JsonResponse({
+            'response': "Analiz oluşturulurken bir hata oluştu, ama elimdeki verilere göre dikkatli olmanızı öneririm! 🤔"
+        }, status=500)
 
 def generate_performance_summary(history):
     """Generate performance summary"""
@@ -737,7 +748,13 @@ def generate_conversation_response(message):
         )
         
         result = response.json()
-        return result['candidates'][0]['content']['parts'][0]['text']
+        response_text = result['candidates'][0]['content']['parts'][0]['text']
+        # Kod bloğu işaretlerini temizle
+        if response_text.strip().startswith('```html'):
+            response_text = response_text.strip()[7:]
+        if response_text.strip().endswith('```'):
+            response_text = response_text.strip()[:-3]
+        return response_text.strip()
     
     except Exception as e:
         logger.error(f"Conversation response error: {str(e)}")
@@ -914,6 +931,11 @@ Lütfen aşağıdaki gibi detaylı ve HTML formatında teknik analiz hazırla:
         )
         result = response.json()
         analysis = result['candidates'][0]['content']['parts'][0]['text'] if 'candidates' in result else 'Analiz alınamadı.'
+        # Kod bloğu işaretlerini daha güvenli temizle
+        analysis = analysis.strip()
+        analysis = re.sub(r'^```html\s*', '', analysis, flags=re.IGNORECASE)
+        analysis = re.sub(r'```\s*$', '', analysis)
+        analysis = analysis.strip()
         cache_key_raw = f"analysis_{symbol}_{str(closes)}_{str(dates)}"
         cache_key = 'analysis_' + hashlib.sha256(cache_key_raw.encode('utf-8')).hexdigest()
         cache.set(cache_key, analysis, 60*60)  # 1 saat cache
@@ -962,11 +984,17 @@ def analyze_stock_image_with_gemini(image_path):
         """
 
         response = model.generate_content([prompt, image])
-        return response.text
+        analysis = response.text
 
+        # Kod bloğu işaretlerini daha güvenli temizle
+        analysis = analysis.strip()
+        analysis = re.sub(r'^```html\s*', '', analysis, flags=re.IGNORECASE)
+        analysis = re.sub(r'```\s*$', '', analysis)
+        analysis = analysis.strip()
+        return analysis.strip()
+    
     except Exception as e:
-        logging.error(f"Gemini API error: {str(e)}")
-        return f"Analiz sırasında hata oluştu: {str(e)}"
+        return f"Hata: {str(e)}"
 
 def stock_image_analysis_view(request):
     """Hisse görsel analizi sayfası (yetkili kullanıcı yükleyebilir, diğerleri sadece görebilir)"""
